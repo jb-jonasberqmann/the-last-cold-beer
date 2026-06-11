@@ -164,7 +164,7 @@ export async function unlockRoom(
         AND room_id = ANY(${room.unlockRequires}::text[])
     `;
     const completedSet = new Set(
-      prereqs.filter((r: { status: string }) => r.status === "complete").map((r: { room_id: string }) => r.room_id)
+      (prereqs as { room_id: string; status: string }[]).filter((r) => r.status === "complete").map((r) => r.room_id)
     );
     const missing = room.unlockRequires.filter((r) => !completedSet.has(r));
     if (missing.length > 0) {
