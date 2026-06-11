@@ -27,10 +27,17 @@ export default function JoinPage({ params }: Props) {
     }
 
     startTransition(async () => {
-      const result = await joinGame(code, name.trim());
+      let result;
+      try {
+        result = await joinGame(code, name.trim());
+      } catch (err) {
+        setError("Connection error — check your network and try again.");
+        console.error("joinGame threw:", err);
+        return;
+      }
 
       if (!result.success) {
-        setError(result.error);
+        setError(result.error ?? "Unknown error joining game.");
         return;
       }
 

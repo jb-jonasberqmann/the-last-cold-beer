@@ -230,13 +230,12 @@ export default function LobbyPage({ params }: Props) {
               className="w-full"
               onClick={handleStartGame}
               loading={isPending}
-              disabled={players.length < 2}
             >
               🍺 Start the Ritual
             </Button>
             {players.length < 2 && (
               <p className="text-center text-xs text-stone-500">
-                Waiting for at least 2 players…
+                Tip: share the room code so others can join before you start.
               </p>
             )}
           </div>
