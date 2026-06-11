@@ -39,8 +39,23 @@ export default function LobbyPage({ params }: Props) {
   }, [gameId, router, session]);
 
   useEffect(() => {
-    if (isLoaded && gameId) fetchLobby();
-  }, [isLoaded, gameId, fetchLobby]);
+    if (!isLoaded || !gameId) return;
+    // No session or session is for a different game → redirect to join
+    if (!session || session.gameId !== gameId) {
+      fetch(`/api/game/${gameId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.game?.code) {
+            router.replace(`/join/${data.game.code}`);
+          } else {
+            router.replace("/");
+          }
+        })
+        .catch(() => router.replace("/"));
+      return;
+    }
+    fetchLobby();
+  }, [isLoaded, gameId, session, router, fetchLobby]);
 
   useRealtimeLobby(gameId ?? undefined, fetchLobby);
 
@@ -106,10 +121,12 @@ export default function LobbyPage({ params }: Props) {
               </span>
             </div>
             <button
-              onClick={() => navigator.clipboard.writeText(shareUrl)}
-              className="text-xs text-stone-400 hover:text-white transition-colors bg-stone-800 rounded-lg px-3 py-2 border border-stone-600"
+              onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+              }}
+              className="text-xs text-amber-400 hover:text-amber-300 transition-colors bg-amber-950/40 rounded-lg px-3 py-2 border border-amber-700/60 font-medium"
             >
-              Copy Link
+              📋 Share Join Link
             </button>
           </div>
         </div>
