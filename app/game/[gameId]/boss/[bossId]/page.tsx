@@ -64,7 +64,9 @@ export default function BossFightPage({ params }: Props) {
   const phase = boss.phases.find((p) => p.phase === currentPhase) ?? boss.phases[0];
   const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
   const otherTeamName = teamId === "team-a" ? game.team_b_name : game.team_a_name;
-  const isMyTeam = session?.teamId === teamId;
+  // Trust the URL — localStorage can be stale in shared-session testing.
+  // Host (isHost=true) observes only; players always can interact.
+  const canInteract = !session?.isHost;
 
   const hasClue = (clueId: string) => teamClues.some((tc) => tc.clue_id === clueId);
 
@@ -180,7 +182,7 @@ export default function BossFightPage({ params }: Props) {
             </div>
           )}
 
-          {isMyTeam && phase && (
+          {canInteract && phase && (
             <div className="space-y-3 mb-4">
               <h3 className="text-xs text-stone-500 uppercase tracking-widest font-medium">
                 Available Actions

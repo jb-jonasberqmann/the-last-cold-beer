@@ -44,7 +44,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const chapter = getChapter(game.current_chapter_id);
   const rooms = chapter ? getRoomsByChapter(chapter.id) : [];
   const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
-  const isMyTeam = session?.teamId === teamId;
+  // Trust the URL, not the session — localStorage can be stale when testing
+  // with multiple players on the same browser. Host (isHost=true) observes only.
+  const canInteract = !session?.isHost;
 
   const getRoomStatus = (roomId: string): DbRoomProgress["status"] => {
     const rp = roomProgress.find((r) => r.room_id === roomId);
@@ -115,7 +117,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 questsCompleted={completed}
                 questsTotal={total}
               />
-              {status === "locked" && isMyTeam && (() => {
+              {status === "locked" && canInteract && (() => {
                 const prereqsComplete = room.unlockRequires.every(
                   (req) => getRoomStatus(req) === "complete"
                 );
@@ -151,7 +153,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 Complete rooms to unlock boss abilities
               </div>
             </div>
-            {isMyTeam && (
+            {canInteract && (
               <a
                 href={`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`}
                 className="text-sm bg-red-700/50 hover:bg-red-700/70 text-red-300 border border-red-700/50 rounded-lg px-3 py-2 transition-colors"

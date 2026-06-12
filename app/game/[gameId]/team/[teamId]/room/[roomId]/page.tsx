@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { usePlayer } from "@/hooks/usePlayer";
 import { submitQuestAnswer, completeQuest, useHint } from "@/lib/game/actions";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Button } from "@/components/ui/Button";
@@ -19,8 +18,6 @@ export default function RoomPage({ params }: Props) {
   const gameId = params.gameId;
   const teamId = params.teamId;
   const roomId = params.roomId;
-
-  const { session } = usePlayer();
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [questProgress, setQuestProgress] = useState<DbQuestProgress[]>([]);
@@ -165,7 +162,7 @@ export default function RoomPage({ params }: Props) {
             offerDefinition={offerDef}
             gameId={gameId}
             teamId={teamId}
-            isReadOnly={session?.teamId != null && session.teamId !== teamId}
+            isReadOnly={false}
             onComplete={(clueId) => {
               if (clueId) setNewClues((prev) => [...prev, clueId]);
               fetchData();
