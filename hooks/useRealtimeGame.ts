@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 
-const POLL_INTERVAL = 3000; // 3 seconds
+const POLL_INTERVAL = 2000; // 2 seconds
 
 type PollCallback = () => void;
 

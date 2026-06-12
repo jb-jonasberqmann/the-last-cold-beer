@@ -81,8 +81,8 @@ export async function joinGame(
   `;
   const aCount = Number((counts as { team_id: string; cnt: string }[]).find((r) => r.team_id === "team-a")?.cnt ?? 0);
   const bCount = Number((counts as { team_id: string; cnt: string }[]).find((r) => r.team_id === "team-b")?.cnt ?? 0);
-  const autoTeam: TeamId | null =
-    game.status === "lobby" ? (aCount <= bCount ? "team-a" : "team-b") : null;
+  // Always auto-assign to the smaller team (works for lobby AND active games so late joiners get a team)
+  const autoTeam: TeamId = aCount <= bCount ? "team-a" : "team-b";
 
   const playerRows = await sql`
     INSERT INTO players (game_id, name, team_id, is_host)
@@ -94,7 +94,7 @@ export async function joinGame(
 
   return {
     success: true,
-    data: { gameId: game.id, playerId: player.id, teamId: player.team_id },
+    data: { gameId: game.id, playerId: player.id, teamId: player.team_id as TeamId },
   };
 }
 
