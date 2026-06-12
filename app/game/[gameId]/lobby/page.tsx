@@ -223,93 +223,101 @@ export default function LobbyPage({ params }: Props) {
           <span className="text-amber-300 font-medium">{game.offer_definition}</span>
         </div>
 
-        {/* Teams */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {(["team-a", "team-b"] as TeamId[]).map((teamId) => {
-            const name = teamId === "team-a" ? game.team_a_name : game.team_b_name;
-            const members = teamId === "team-a" ? teamA : teamB;
-            const editValue = teamId === "team-a" ? teamAEdit : teamBEdit;
-            const setEdit = teamId === "team-a" ? setTeamAEdit : setTeamBEdit;
+        {/* Player waiting list */}
+        <div className="rounded-xl bg-stone-800/50 border border-stone-600 p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-white text-sm">
+              Players waiting ({players.filter((p) => !p.is_host).length})
+            </h3>
+            {isHost && players.filter((p) => !p.is_host).length === 0 && (
+              <span className="text-xs text-stone-500">Share the room code above</span>
+            )}
+          </div>
 
-            return (
-              <div key={teamId} className="rounded-xl bg-stone-800/50 border border-stone-600 p-3">
-                {editingTeam === teamId && isHost ? (
-                  <div className="flex gap-1 mb-2">
-                    <input
-                      className="flex-1 bg-stone-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
-                      value={editValue}
-                      onChange={(e) => setEdit(e.target.value)}
-                      placeholder={name}
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleRenameTeam(teamId)}
-                      className="text-xs bg-amber-600 hover:bg-amber-500 text-black px-2 rounded"
-                    >✓</button>
+          {players.filter((p) => !p.is_host).length === 0 ? (
+            <p className="text-sm text-stone-600 italic text-center py-2">
+              No players yet — waiting for people to join…
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {players.filter((p) => !p.is_host).map((p, i) => (
+                <div key={p.id} className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-stone-700/40">
+                  <div className="w-6 h-6 rounded-full bg-amber-800/60 border border-amber-700/50 flex items-center justify-center text-xs font-bold text-amber-400">
+                    {i + 1}
                   </div>
-                ) : (
-                  <div className="flex items-center gap-1 mb-2">
-                    <h3 className="font-bold text-white text-sm flex-1">{name}</h3>
-                    {isHost && (
-                      <button
-                        onClick={() => { setEditingTeam(teamId); setEdit(name); }}
-                        className="text-xs text-stone-500 hover:text-stone-300"
-                      >✏️</button>
-                    )}
-                  </div>
-                )}
-                <div className="space-y-1">
-                  {members.length === 0 ? (
-                    <p className="text-xs text-stone-600 italic">No players yet</p>
-                  ) : (
-                    members.map((p) => (
-                      <div key={p.id} className="flex items-center gap-2">
-                        <span className="text-sm text-stone-300">
-                          {p.name}
-                          {p.is_host && <span className="text-xs text-amber-500 ml-1">(host)</span>}
-                          {p.id === session?.playerId && <span className="text-xs text-blue-400 ml-1">(you)</span>}
-                        </span>
-                        {isHost && (
-                          <button
-                            onClick={() => handleMovePlayer(p.id, teamId === "team-a" ? "team-b" : "team-a")}
-                            className="text-xs text-stone-500 hover:text-white ml-auto"
-                            title="Move to other team"
-                          >⇄</button>
-                        )}
-                      </div>
-                    ))
+                  <span className="flex-1 text-sm text-stone-200 font-medium">
+                    {p.name}
+                    {p.id === session?.playerId && <span className="text-xs text-amber-400 ml-1.5">(you)</span>}
+                  </span>
+                  {/* Host can pre-assign teams manually if desired */}
+                  {isHost && p.team_id && (
+                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${p.team_id === "team-a" ? "bg-orange-900/60 text-orange-300" : "bg-cyan-900/60 text-cyan-300"}`}>
+                      {p.team_id === "team-a" ? game.team_a_name : game.team_b_name}
+                    </span>
                   )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Unassigned */}
-        {unassigned.length > 0 && (
-          <div className="rounded-xl bg-stone-800/30 border border-stone-700 p-3 mb-4">
-            <h3 className="text-xs text-stone-500 mb-2 font-medium uppercase tracking-wide">Unassigned</h3>
-            <div className="space-y-1">
-              {unassigned.map((p) => (
-                <div key={p.id} className="flex items-center gap-2">
-                  <span className="text-sm text-stone-400">{p.name}</span>
                   {isHost && (
-                    <div className="ml-auto flex gap-1">
+                    <div className="flex gap-1">
                       <button
                         onClick={() => handleMovePlayer(p.id, "team-a")}
-                        className="text-xs bg-stone-700 hover:bg-stone-600 px-2 py-0.5 rounded text-stone-300"
-                      >→ A</button>
+                        className="text-xs bg-orange-900/40 hover:bg-orange-800/60 text-orange-300 px-1.5 py-0.5 rounded border border-orange-800/40"
+                        title={`Pre-assign to ${game.team_a_name}`}
+                      >A</button>
                       <button
                         onClick={() => handleMovePlayer(p.id, "team-b")}
-                        className="text-xs bg-stone-700 hover:bg-stone-600 px-2 py-0.5 rounded text-stone-300"
-                      >→ B</button>
+                        className="text-xs bg-cyan-900/40 hover:bg-cyan-800/60 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-800/40"
+                        title={`Pre-assign to ${game.team_b_name}`}
+                      >B</button>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Team name editing — host only */}
+          {isHost && (
+            <div className="mt-4 pt-3 border-t border-stone-700 grid grid-cols-2 gap-2">
+              {(["team-a", "team-b"] as TeamId[]).map((tid) => {
+                const name = tid === "team-a" ? game.team_a_name : game.team_b_name;
+                const editVal = tid === "team-a" ? teamAEdit : teamBEdit;
+                const setEdit = tid === "team-a" ? setTeamAEdit : setTeamBEdit;
+                return (
+                  <div key={tid}>
+                    {editingTeam === tid ? (
+                      <div className="flex gap-1">
+                        <input
+                          className="flex-1 bg-stone-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          value={editVal}
+                          onChange={(e) => setEdit(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleRenameTeam(tid)}
+                          placeholder={name}
+                          autoFocus
+                        />
+                        <button onClick={() => handleRenameTeam(tid)} className="text-xs bg-amber-600 hover:bg-amber-500 text-black px-2 rounded">✓</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setEditingTeam(tid); setEdit(name); }}
+                        className={`w-full text-left text-xs px-2 py-1.5 rounded border ${tid === "team-a" ? "border-orange-800/40 text-orange-300 bg-orange-900/20" : "border-cyan-800/40 text-cyan-300 bg-cyan-900/20"}`}
+                      >
+                        ✏️ {name}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Teams-assigned-at-start notice */}
+        <div className="rounded-lg bg-stone-900/60 border border-stone-700 px-3 py-2 mb-4 text-center">
+          <p className="text-xs text-stone-500">
+            {isHost
+              ? "Teams are auto-assigned when you start the game. You can pre-assign above if you prefer."
+              : "Teams will be assigned when the host starts the game."}
+          </p>
+        </div>
 
         {/* Start game (host only) */}
         {isHost && (

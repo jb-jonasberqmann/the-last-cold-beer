@@ -165,7 +165,7 @@ export default function RoomPage({ params }: Props) {
             offerDefinition={offerDef}
             gameId={gameId}
             teamId={teamId}
-            isReadOnly={session?.teamId !== teamId}
+            isReadOnly={session?.teamId != null && session.teamId !== teamId}
             onComplete={(clueId) => {
               if (clueId) setNewClues((prev) => [...prev, clueId]);
               fetchData();
@@ -399,7 +399,14 @@ function QuestBlock({
             <div className="flex flex-wrap gap-2 pt-1">
               {quest.hints.map((hint) => {
                 const alreadyShown = shownHints.find((h) => h.order === hint.order);
-                if (alreadyShown || hint.order <= hintsUsed) return null;
+                // Hide if already shown in this session
+                if (alreadyShown) return null;
+                // Hide if already purchased (from DB)
+                if (hint.order <= hintsUsed) return null;
+                // Only show the NEXT hint (order = max already used + 1).
+                // This enforces sequential hint use: can't skip to hint 2 before hint 1.
+                const maxUsed = Math.max(hintsUsed, shownHints.length > 0 ? Math.max(...shownHints.map(h => h.order)) : 0);
+                if (hint.order > maxUsed + 1) return null;
                 return (
                   <button
                     key={hint.order}

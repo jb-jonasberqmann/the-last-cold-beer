@@ -40,9 +40,12 @@ export function canUnlockRoom(
  */
 export function isRoomComplete(
   roomId: string,
-  questProgress: DbQuestProgress[]
+  questProgress: DbQuestProgress[],
+  teamId?: TeamId
 ): boolean {
-  const required = getRequiredQuestsByRoom(roomId);
+  // Must pass teamId when quests are team-specific; otherwise cross-team quests
+  // prevent rooms from ever completing.
+  const required = getRequiredQuestsByRoom(roomId, teamId);
   if (required.length === 0) return false;
 
   const completedQuestIds = new Set(

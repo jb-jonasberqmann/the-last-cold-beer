@@ -50,6 +50,7 @@ export default function DashboardPage({ params }: Props) {
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [events, setEvents] = useState<DbGameEvent[]>([]);
+  const [teamProgress, setTeamProgress] = useState<import("@/types/database").DbTeamProgress[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!gameId) return;
@@ -58,6 +59,7 @@ export default function DashboardPage({ params }: Props) {
     const data = await res.json();
     setGame(data.game);
     setEvents(data.events ?? []);
+    setTeamProgress(data.teamProgress ?? []);
   }, [gameId]);
 
   useEffect(() => {
@@ -98,6 +100,24 @@ export default function DashboardPage({ params }: Props) {
       teamId={session.teamId ?? undefined}
       title="Dashboard"
     >
+      {/* Host GM banner — always visible at the top so host can find their way back */}
+      {session.isHost && (
+        <Link
+          href={`/game/${gameId}/host`}
+          className="flex items-center gap-3 rounded-xl bg-amber-900/40 border border-amber-700/60 px-4 py-3 mb-4 hover:bg-amber-900/60 transition-colors"
+        >
+          <span className="text-xl">🎮</span>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-amber-500 font-bold uppercase tracking-widest">Game Master</div>
+            <div className="text-sm font-bold text-amber-300">Host Controls →</div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-stone-500">Code</div>
+            <div className="font-mono font-bold text-amber-400 text-sm tracking-widest">{game.code}</div>
+          </div>
+        </Link>
+      )}
+
       {/* Chapter banner */}
       <div className="rounded-xl bg-gradient-to-r from-amber-950 to-stone-900 border border-amber-700/50 p-4 mb-4 text-center">
         <div className="text-2xl mb-1">🏡</div>
@@ -162,73 +182,187 @@ export default function DashboardPage({ params }: Props) {
       </div>
 
       {/* Activity feed */}
-      <div>
-        <h3 className="text-xs text-stone-500 uppercase tracking-widest mb-2 font-medium">
-          Activity Feed
-        </h3>
-        {events.length === 0 ? (
-          <div className="rounded-xl bg-stone-900 border border-stone-700 p-4 text-center text-sm text-stone-500 italic">
-            The ritual has not yet begun.
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {[...events].reverse().map((event) => {
-              const isTeamA = event.team_id === "team-a";
-              const isTeamB = event.team_id === "team-b";
-              const isMyTeam = event.team_id === session.teamId;
-              const teamName = isTeamA ? game.team_a_name : isTeamB ? game.team_b_name : null;
-              const { icon, text, detail } = eventLabel(event, game.offer_definition);
+      <ActivityFeed
+        events={events}
+        game={game}
+        teamProgress={teamProgress}
+        myTeamId={session.teamId}
+        isHost={session.isHost}
+      />
 
-              return (
-                <div
-                  key={event.id}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm flex items-center justify-between gap-2 border",
-                    event.event_type === "game_started"
-                      ? "bg-amber-950/60 border-amber-600/60 text-amber-200"
-                      : isTeamA
-                        ? "bg-orange-950/40 border-orange-700/50 text-orange-200"
-                        : isTeamB
-                          ? "bg-cyan-950/40 border-cyan-700/50 text-cyan-200"
-                          : "bg-stone-900/50 border-stone-700/50 text-stone-300"
-                  )}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-base leading-none flex-shrink-0">{icon}</span>
-                    <div className="min-w-0">
-                      <span className="font-medium">{text}</span>
-                      {detail && <span className="text-xs opacity-60 ml-1.5">{detail}</span>}
-                      {teamName && (
-                        <span className={cn(
-                          "text-xs ml-1.5 font-semibold",
-                          isTeamA ? "text-orange-400" : "text-cyan-400"
-                        )}>
-                          — {teamName}{isMyTeam ? " (you)" : ""}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-xs text-stone-600 flex-shrink-0 ml-2">
-                    {relativeTime(event.created_at)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+    </GameLayout>
+  );
+}
+
+// ==========================================
+// ACTIVITY FEED COMPONENT
+// ==========================================
+
+function EventRow({ event, teamAName, teamBName, myTeamId, offerDef }: {
+  event: DbGameEvent;
+  teamAName: string;
+  teamBName: string;
+  myTeamId: string | null;
+  offerDef: string;
+}) {
+  const isTeamA = event.team_id === "team-a";
+  const isTeamB = event.team_id === "team-b";
+  const isMyTeam = event.team_id === myTeamId;
+  const teamLabel = isTeamA ? teamAName : isTeamB ? teamBName : null;
+  const { icon, text, detail } = eventLabel(event, offerDef);
+
+  return (
+    <div className={cn(
+      "rounded-lg px-3 py-2 text-sm flex items-center justify-between gap-2 border",
+      event.event_type === "game_started"
+        ? "bg-amber-950/60 border-amber-600/60 text-amber-200"
+        : isTeamA
+          ? "bg-orange-950/40 border-orange-700/50 text-orange-200"
+          : isTeamB
+            ? "bg-cyan-950/40 border-cyan-700/50 text-cyan-200"
+            : "bg-stone-900/50 border-stone-700/50 text-stone-300"
+    )}>
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-base leading-none flex-shrink-0">{icon}</span>
+        <div className="min-w-0">
+          <span className="font-medium">{text}</span>
+          {detail && <span className="text-xs opacity-60 ml-1.5">{detail}</span>}
+          {teamLabel && (
+            <span className={cn("text-xs ml-1.5 font-semibold", isTeamA ? "text-orange-400" : "text-cyan-400")}>
+              — {teamLabel}{isMyTeam ? " (you)" : ""}
+            </span>
+          )}
+        </div>
+      </div>
+      <span className="text-xs text-stone-600 flex-shrink-0 ml-2">{relativeTime(event.created_at)}</span>
+    </div>
+  );
+}
+
+function TeamScoreBar({ label, color, offerSpent, offerDef, rooms, isMe }: {
+  label: string;
+  color: "orange" | "cyan";
+  offerSpent: number;
+  offerDef: string;
+  rooms: number;
+  isMe: boolean;
+}) {
+  const border = color === "orange" ? "border-orange-700/60" : "border-cyan-700/60";
+  const bg = color === "orange" ? "bg-orange-950/40" : "bg-cyan-950/40";
+  const accent = color === "orange" ? "text-orange-300" : "text-cyan-300";
+  const dimAccent = color === "orange" ? "text-orange-500" : "text-cyan-500";
+  const barFill = color === "orange" ? "bg-orange-500" : "bg-cyan-500";
+
+  return (
+    <div className={cn("rounded-xl p-3 border flex-1", bg, border, isMe && "ring-1 ring-offset-1 ring-offset-stone-950", isMe && (color === "orange" ? "ring-orange-600" : "ring-cyan-600"))}>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <div className="font-bold text-white text-sm">{label}</div>
+          {isMe && <div className={cn("text-xs font-medium", accent)}>You</div>}
+        </div>
+        <div className="text-right">
+          <div className={cn("text-xl font-bold leading-none", accent)}>🍺 {offerSpent}</div>
+          <div className={cn("text-xs", dimAccent)}>sips taken</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 text-xs text-stone-400">
+        <span>✅ {rooms} rooms</span>
+      </div>
+      <div className="mt-2 h-1.5 bg-stone-700 rounded-full overflow-hidden">
+        <div className={cn("h-full rounded-full transition-all duration-700", barFill)} style={{ width: `${Math.min(100, offerSpent * 10)}%` }} />
+      </div>
+      <div className={cn("text-xs mt-1 italic truncate", dimAccent)}>{offerSpent > 0 ? `${offerSpent}× ${offerDef}` : "No sips yet"}</div>
+    </div>
+  );
+}
+
+function ActivityFeed({ events, game, teamProgress, myTeamId, isHost }: {
+  events: DbGameEvent[];
+  game: DbGame;
+  teamProgress: import("@/types/database").DbTeamProgress[];
+  myTeamId: string | null;
+  isHost: boolean;
+}) {
+  const tpA = teamProgress.find((t) => t.team_id === "team-a");
+  const tpB = teamProgress.find((t) => t.team_id === "team-b");
+  const reversed = [...events].reverse();
+  const general = reversed.filter((e) => !e.team_id || e.event_type === "game_started");
+  const teamAEvents = reversed.filter((e) => e.team_id === "team-a");
+  const teamBEvents = reversed.filter((e) => e.team_id === "team-b");
+
+  return (
+    <div className="space-y-4">
+      {/* Team score cards */}
+      <div className="flex gap-3">
+        <TeamScoreBar
+          label={game.team_a_name}
+          color="orange"
+          offerSpent={tpA?.offer_spent ?? 0}
+          offerDef={game.offer_definition}
+          rooms={tpA?.rooms_completed ?? 0}
+          isMe={myTeamId === "team-a"}
+        />
+        <TeamScoreBar
+          label={game.team_b_name}
+          color="cyan"
+          offerSpent={tpB?.offer_spent ?? 0}
+          offerDef={game.offer_definition}
+          rooms={tpB?.rooms_completed ?? 0}
+          isMe={myTeamId === "team-b"}
+        />
       </div>
 
-      {/* Host link */}
-      {session.isHost && (
-        <div className="mt-4 pt-4 border-t border-stone-800">
-          <Link
-            href={`/game/${gameId}/host`}
-            className="text-sm text-stone-500 hover:text-stone-300 transition-colors"
-          >
-            🎮 Host Controls →
-          </Link>
+      {/* For host: split feed by team. For players: show own team + general. */}
+      {isHost ? (
+        <div className="space-y-3">
+          {/* General events */}
+          {general.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="text-xs text-stone-500 uppercase tracking-widest font-medium">General</div>
+              {general.map((e) => (
+                <EventRow key={e.id} event={e} teamAName={game.team_a_name} teamBName={game.team_b_name} myTeamId={myTeamId} offerDef={game.offer_definition} />
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Team A */}
+            <div className="space-y-1.5">
+              <div className="text-xs text-orange-500 uppercase tracking-widest font-medium">{game.team_a_name}</div>
+              {teamAEvents.length === 0 ? (
+                <div className="text-xs text-stone-600 italic p-2">No activity yet</div>
+              ) : (
+                teamAEvents.map((e) => (
+                  <EventRow key={e.id} event={e} teamAName={game.team_a_name} teamBName={game.team_b_name} myTeamId={myTeamId} offerDef={game.offer_definition} />
+                ))
+              )}
+            </div>
+            {/* Team B */}
+            <div className="space-y-1.5">
+              <div className="text-xs text-cyan-500 uppercase tracking-widest font-medium">{game.team_b_name}</div>
+              {teamBEvents.length === 0 ? (
+                <div className="text-xs text-stone-600 italic p-2">No activity yet</div>
+              ) : (
+                teamBEvents.map((e) => (
+                  <EventRow key={e.id} event={e} teamAName={game.team_a_name} teamBName={game.team_b_name} myTeamId={myTeamId} offerDef={game.offer_definition} />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <div className="text-xs text-stone-500 uppercase tracking-widest font-medium">Activity</div>
+          {reversed.length === 0 ? (
+            <div className="rounded-xl bg-stone-900 border border-stone-700 p-4 text-center text-sm text-stone-500 italic">
+              The ritual has not yet begun.
+            </div>
+          ) : (
+            reversed.map((e) => (
+              <EventRow key={e.id} event={e} teamAName={game.team_a_name} teamBName={game.team_b_name} myTeamId={myTeamId} offerDef={game.offer_definition} />
+            ))
+          )}
         </div>
       )}
-    </GameLayout>
+    </div>
   );
 }

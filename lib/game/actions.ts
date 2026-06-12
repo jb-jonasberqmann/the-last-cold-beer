@@ -670,7 +670,7 @@ async function _checkAndCompleteRoom(gameId: string, teamId: TeamId, roomId: str
     answer_submitted: null, hints_used: 0, offer_spent: 0, completed_at: null,
   }));
 
-  if (!isRoomComplete(roomId, asDbRows)) return;
+  if (!isRoomComplete(roomId, asDbRows, teamId)) return;
 
   const now = new Date().toISOString();
   await sql`
