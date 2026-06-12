@@ -72,21 +72,21 @@ export async function joinGame(
   if (!game) return { success: false, error: "Game not found. Check the room code." };
   if (game.status === "complete") return { success: false, error: "This game is already complete." };
 
-  // Auto-balance teams in lobby
-  const counts = await sql`
-    SELECT team_id, COUNT(*) as cnt
-    FROM players
-    WHERE game_id = ${game.id} AND team_id IS NOT NULL
-    GROUP BY team_id
-  `;
-  const aCount = Number((counts as { team_id: string; cnt: string }[]).find((r) => r.team_id === "team-a")?.cnt ?? 0);
-  const bCount = Number((counts as { team_id: string; cnt: string }[]).find((r) => r.team_id === "team-b")?.cnt ?? 0);
-  // Always auto-assign to the smaller team (works for lobby AND active games so late joiners get a team)
-  const autoTeam: TeamId = aCount <= bCount ? "team-a" : "team-b";
-
+  // Atomic team assignment: the CASE subqueries run inside the INSERT statement,
+  // giving a much narrower race window than a separate SELECT + INSERT. Two players
+  // joining within the same millisecond can still race, but normal manual joins are safe.
   const playerRows = await sql`
     INSERT INTO players (game_id, name, team_id, is_host)
-    VALUES (${game.id}, ${playerName}, ${autoTeam}, FALSE)
+    SELECT
+      ${game.id},
+      ${playerName},
+      CASE
+        WHEN (SELECT COUNT(*) FROM players p2 WHERE p2.game_id = ${game.id} AND p2.team_id = 'team-a')
+          <= (SELECT COUNT(*) FROM players p3 WHERE p3.game_id = ${game.id} AND p3.team_id = 'team-b')
+        THEN 'team-a'
+        ELSE 'team-b'
+      END,
+      FALSE
     RETURNING *
   `;
   const player = playerRows[0];
@@ -498,6 +498,21 @@ export async function assignRandomRole(
 
 export async function assignPlayerToTeam(playerId: string, teamId: TeamId): Promise<ActionResult> {
   await sql`UPDATE players SET team_id = ${teamId} WHERE id = ${playerId}`;
+  return { success: true, data: undefined };
+}
+
+// Rebalance all non-host players across teams by join order: 0→A, 1→B, 2→A, ...
+// Host calls this from the lobby to fix any race-condition imbalances.
+export async function rebalanceTeams(gameId: string): Promise<ActionResult> {
+  const players = await sql`
+    SELECT id FROM players
+    WHERE game_id = ${gameId} AND is_host = FALSE
+    ORDER BY created_at ASC
+  `;
+  for (let i = 0; i < players.length; i++) {
+    const teamId = i % 2 === 0 ? "team-a" : "team-b";
+    await sql`UPDATE players SET team_id = ${teamId} WHERE id = ${players[i].id}`;
+  }
   return { success: true, data: undefined };
 }
 

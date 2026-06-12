@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { usePlayer } from "@/hooks/usePlayer";
-import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole } from "@/lib/game/actions";
+import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole, rebalanceTeams } from "@/lib/game/actions";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Button } from "@/components/ui/Button";
 import type { DbGame, DbPlayer, DbTeamProgress, DbBossProgress } from "@/types/database";
@@ -108,8 +108,18 @@ export default function HostPage({ params }: Props) {
         <div className="rounded-xl bg-stone-800 border border-stone-600 p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-white">Players ({players.length})</h2>
-            <span className="text-xs text-stone-500">🎲 Strawman = random role assigned to that player</span>
+            <button
+              onClick={async () => {
+                await rebalanceTeams(gameId);
+                showMessage("Teams rebalanced — players split evenly by join order.");
+                fetchAll();
+              }}
+              className="text-xs bg-amber-800/60 hover:bg-amber-700/80 border border-amber-700/50 text-amber-300 px-2 py-1 rounded font-medium"
+            >
+              ⚖️ Rebalance
+            </button>
           </div>
+          <p className="text-xs text-stone-500 mb-3">🎲 Strawman = random role • ⚖️ Rebalance = auto-split teams evenly</p>
           <div className="space-y-2">
             {players.map((p) => (
               <div key={p.id} className="flex items-center gap-2 text-sm">

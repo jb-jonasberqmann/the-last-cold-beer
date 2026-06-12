@@ -76,7 +76,11 @@ export default function DashboardPage({ params }: Props) {
 
   if (!game || !gameId) return null;
 
-  const teamName = session.teamId === "team-a" ? game.team_a_name : game.team_b_name;
+  const teamName = session.teamId === "team-a"
+    ? game.team_a_name
+    : session.teamId === "team-b"
+      ? game.team_b_name
+      : null; // host (GM) — not on a team
 
   // Find the most recent role assigned to this player
   const myRole = [...events]
@@ -121,7 +125,7 @@ export default function DashboardPage({ params }: Props) {
         </h3>
         <LiveProgress
           gameId={gameId}
-          myTeamId={session.teamId ?? "team-a"}
+          myTeamId={session.teamId ?? null}
           teamAName={game.team_a_name}
           teamBName={game.team_b_name}
         />

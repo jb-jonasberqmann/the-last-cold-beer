@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface LiveProgressProps {
   gameId: string;
-  myTeamId: TeamId;
+  myTeamId: TeamId | null;
   teamAName: string;
   teamBName: string;
   className?: string;
@@ -44,7 +44,7 @@ function TeamCard({
   name: string;
   teamId: TeamId;
   snapshot: TeamSnapshot;
-  isMe: boolean;
+  isMe: boolean | null;
 }) {
   const { progress, boss } = snapshot;
   const hpPercent =
