@@ -115,7 +115,8 @@ export type GameEventType =
   | "chapter_complete"
   | "offer_paid"
   | "game_started"
-  | "chapter_advanced";
+  | "chapter_advanced"
+  | "role_assigned"; // strawman / special roles
 
 export interface DbGameEvent {
   id: string;

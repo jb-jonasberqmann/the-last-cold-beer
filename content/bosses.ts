@@ -231,27 +231,117 @@ export const BOSSES: Boss[] = [
   },
 
   // ==========================================
-  // CHAPTER 3 / FINAL BOSS — The Last Cold Beer (stub)
+  // CHAPTER 3 / FINAL BOSS — The Opposing Team
+  // Each team fights the OTHER team in a head-to-head showdown.
+  // Questions are about the opposing team's players — answered live.
   // ==========================================
   {
     id: "last-cold-beer",
     chapterId: "chapter-3",
-    title: "The Last Cold Beer",
-    subtitle: "Only the worthy may open it.",
-    description: "TODO: Chapter 3 / final boss content.",
-    icon: "🍺",
+    title: "The Opposing Team",
+    subtitle: "Your final boss has a name. Several, actually.",
+    description:
+      "The ritual reaches its end. The last cold beer stands in the center of the table. But it cannot be opened by solving a puzzle — it can only be opened by defeating the opposing team in a direct showdown. Questions about them. Challenges against them. One team opens the beer. One team watches.",
+    icon: "⚔️",
     look: {
-      icon: "🍺",
+      icon: "⚔️",
       atmosphere:
-        "Condensation on the can. The note still attached. Everyone in the room knows what this means. It has always meant this.",
-      colorFrom: "from-amber-950",
-      colorTo: "to-yellow-900",
-      backgroundStyle: "golden-glow",
+        "The two teams face each other. The beer is in the center. Someone is going to open it — but only after the other team has been tested, questioned, and humbled. The ritual demands a verdict.",
+      colorFrom: "from-red-950",
+      colorTo: "to-amber-900",
+      backgroundStyle: "battle-ground",
     },
     maxHp: 150,
-    phases: [],
-    defeatText: "TODO: Final boss defeat / mystery reveal text.",
-    victoryAdvantage: "The worthy team opens the Last Cold Beer. The ritual is complete.",
+    phases: [
+      {
+        phase: 1,
+        title: "The Interrogation",
+        description:
+          "Phase 1: Your team asks the opposing team three questions about themselves. Each correct answer by the opposing team counts as resistance. Each wrong answer deals damage to their boss HP.",
+        hpThreshold: 100,
+        actions: [
+          {
+            id: "final-p1-trivia",
+            label: "Ask the Trivia Round",
+            description:
+              "Your team asks the opposing team: what was the most embarrassing thing that happened on a previous cabin trip? The opposing team must answer. If the full group agrees the answer is genuine and specific, the boss takes full damage. If it's vague or dodged, pay the toll.",
+            type: "social",
+            damage: 30,
+            rewardText: "The opposing team answered. The ritual registers it. 30 damage dealt.",
+            failureText: "The opposing team dodged the question. The boss is unmoved.",
+          },
+          {
+            id: "final-p1-offer-boost",
+            label: "Press the Attack",
+            description: "Your team pays the ritual cost to press harder. No mercy.",
+            type: "offer_boost",
+            damage: 20,
+            offerCost: 3,
+            rewardText: "The pressure works. 20 damage dealt.",
+          },
+        ],
+      },
+      {
+        phase: 2,
+        title: "The Challenge Round",
+        description:
+          "Phase 2: Direct challenges. Your team issues physical or social challenges to the opposing team. The host judges.",
+        hpThreshold: 66,
+        actions: [
+          {
+            id: "final-p2-challenge",
+            label: "Issue a Cabin Challenge",
+            description:
+              "Your team issues a challenge to the opposing team — a physical feat, a performance, or a truth. The opposing team must attempt it. The host and full group vote on success. Success = full damage. Fail = half damage.",
+            type: "social",
+            damage: 35,
+            rewardText: "Challenge accepted and executed. The beer shifts toward your team. 35 damage.",
+            failureText: "They attempted it. Not quite. Half credit.",
+          },
+          {
+            id: "final-p2-offer-boost",
+            label: "Double Down",
+            description: "Pay the cost to deal bonus damage regardless of the outcome.",
+            type: "offer_boost",
+            damage: 15,
+            offerCost: 4,
+            rewardText: "You paid to press harder. 15 extra damage.",
+          },
+        ],
+      },
+      {
+        phase: 3,
+        title: "The Final Verdict",
+        description:
+          "Phase 3: The ritual demands a final verdict. One person from the opposing team must be named as the one who was most responsible for this weekend — for good or ill. The group votes.",
+        hpThreshold: 33,
+        actions: [
+          {
+            id: "final-p3-verdict",
+            label: "Deliver the Verdict",
+            description:
+              "Name one person from the opposing team as the MVP of this ritual weekend. Give a reason. The group applauds or boos. Majority rules. Deliver the verdict and the boss falls.",
+            type: "social",
+            damage: 50,
+            rewardText:
+              "The verdict is delivered. The opposing team has been named, judged, and honored. The last cold beer can now be opened. The ritual is complete.",
+            failureText: "The group is divided. Try again — someone must be named.",
+          },
+          {
+            id: "final-p3-grand-offering",
+            label: "The Grand Offering",
+            description: "Skip the verdict. End it with maximum ritual power.",
+            type: "offer_boost",
+            damage: 60,
+            offerCost: 8,
+            rewardText: "Eight Offers. The ritual acknowledges your sacrifice. The boss falls. The beer is yours.",
+          },
+        ],
+      },
+    ],
+    defeatText:
+      "The opposing team has been defeated — questioned, challenged, and judged. The last cold beer belongs to your team. Open it together. The ritual is complete.",
+    victoryAdvantage: "The winning team opens the Last Cold Beer. One can. One team. The ritual ends here.",
   },
 ];
 

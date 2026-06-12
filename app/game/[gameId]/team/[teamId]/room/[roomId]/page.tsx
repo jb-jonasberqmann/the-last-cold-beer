@@ -44,7 +44,24 @@ export default function RoomPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const room = roomId ? getRoom(roomId) : null;
-  const quests = room ? getQuestsByRoom(room.id) : [];
+  const allQuests = room ? getQuestsByRoom(room.id, teamId) : [];
+
+  // Sequential logic: show only the active quest (first incomplete required quest).
+  // Bonus (non-required) quests become visible after all required quests are done.
+  const requiredQuests = allQuests.filter((q) => q.isRequired);
+  const bonusQuests = allQuests.filter((q) => !q.isRequired);
+
+  const firstIncompleteRequiredIndex = requiredQuests.findIndex(
+    (q) => questProgress.find((qp) => qp.quest_id === q.id)?.status !== "completed"
+  );
+  const allRequiredDone = firstIncompleteRequiredIndex === -1;
+
+  // Quests visible to the player right now
+  const visibleRequiredQuests = allRequiredDone
+    ? requiredQuests
+    : requiredQuests.slice(0, firstIncompleteRequiredIndex + 1);
+  const visibleBonusQuests = allRequiredDone ? bonusQuests : [];
+  const quests = [...visibleRequiredQuests, ...visibleBonusQuests];
 
   if (!room || !game || !gameId || !teamId) {
     return (
@@ -108,6 +125,34 @@ export default function RoomPage({ params }: Props) {
           </div>
         );
       })}
+
+      {/* Quest progress indicator */}
+      <div className="flex items-center gap-2 mb-4">
+        {requiredQuests.map((q, i) => {
+          const done = questProgress.find((qp) => qp.quest_id === q.id)?.status === "completed";
+          const isActive = !allRequiredDone && i === firstIncompleteRequiredIndex;
+          return (
+            <div key={q.id} className="flex items-center gap-2">
+              <div className={cn(
+                "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border",
+                done ? "bg-green-700 border-green-500 text-white" :
+                isActive ? "bg-amber-600 border-amber-400 text-white" :
+                "bg-stone-800 border-stone-600 text-stone-500"
+              )}>
+                {done ? "✓" : i + 1}
+              </div>
+              {i < requiredQuests.length - 1 && (
+                <div className={cn("h-px w-6", done ? "bg-green-700" : "bg-stone-700")} />
+              )}
+            </div>
+          );
+        })}
+        {bonusQuests.length > 0 && (
+          <span className="text-xs text-stone-500 ml-1">
+            {allRequiredDone ? "+ bonus unlocked" : `+ ${bonusQuests.length} bonus after`}
+          </span>
+        )}
+      </div>
 
       {/* Quests */}
       <div className="space-y-4">

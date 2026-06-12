@@ -468,6 +468,34 @@ export async function dealBossDamage(
 // TEAM MANAGEMENT
 // ==========================================
 
+// ==========================================
+// ROLE ASSIGNMENT (strawman, etc.)
+// ==========================================
+
+const ROLES = [
+  { id: "strawman", label: "🥤 Strawman", effect: "Must drink double for the next round" },
+  { id: "bartender", label: "🍹 Bartender", effect: "Must serve everyone's next drink" },
+  { id: "silent-one", label: "🤫 The Silent One", effect: "Cannot speak for 3 minutes — communicate by gestures only" },
+  { id: "truth-teller", label: "🪞 Truth Teller", effect: "Must answer the next question from the game with complete honesty, out loud" },
+  { id: "challenger", label: "⚔️ The Challenger", effect: "Must challenge someone to a mini-duel of the group's choosing" },
+] as const;
+
+export async function assignRandomRole(
+  gameId: string,
+  playerId: string,
+  playerName: string
+): Promise<ActionResult<{ role: string; effect: string }>> {
+  const role = ROLES[Math.floor(Math.random() * ROLES.length)];
+
+  await sql`
+    INSERT INTO game_events (game_id, event_type, event_data)
+    VALUES (${gameId}, 'role_assigned',
+            ${JSON.stringify({ player_id: playerId, player_name: playerName, role: role.id, label: role.label, effect: role.effect })}::jsonb)
+  `;
+
+  return { success: true, data: { role: role.label, effect: role.effect } };
+}
+
 export async function assignPlayerToTeam(playerId: string, teamId: TeamId): Promise<ActionResult> {
   await sql`UPDATE players SET team_id = ${teamId} WHERE id = ${playerId}`;
   return { success: true, data: undefined };

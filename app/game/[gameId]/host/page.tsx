@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { usePlayer } from "@/hooks/usePlayer";
-import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss } from "@/lib/game/actions";
+import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole } from "@/lib/game/actions";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { Button } from "@/components/ui/Button";
 import type { DbGame, DbPlayer, DbTeamProgress, DbBossProgress } from "@/types/database";
@@ -104,9 +104,12 @@ export default function HostPage({ params }: Props) {
           </div>
         )}
 
-        {/* Players */}
+        {/* Players + Strawman */}
         <div className="rounded-xl bg-stone-800 border border-stone-600 p-4">
-          <h2 className="font-bold text-white mb-3">Players ({players.length})</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-white">Players ({players.length})</h2>
+            <span className="text-xs text-stone-500">🎲 Strawman = random role assigned to that player</span>
+          </div>
           <div className="space-y-2">
             {players.map((p) => (
               <div key={p.id} className="flex items-center gap-2 text-sm">
@@ -118,15 +121,20 @@ export default function HostPage({ params }: Props) {
                 <button
                   onClick={() => assignPlayerToTeam(p.id, "team-a").then(fetchAll)}
                   className="text-xs bg-stone-700 hover:bg-stone-600 px-2 py-0.5 rounded text-stone-300"
-                >
-                  → A
-                </button>
+                >→ A</button>
                 <button
                   onClick={() => assignPlayerToTeam(p.id, "team-b").then(fetchAll)}
                   className="text-xs bg-stone-700 hover:bg-stone-600 px-2 py-0.5 rounded text-stone-300"
-                >
-                  → B
-                </button>
+                >→ B</button>
+                {!p.is_host && (
+                  <button
+                    onClick={async () => {
+                      const r = await assignRandomRole(gameId, p.id, p.name);
+                      if (r.success) showMessage(`🎲 ${p.name} is now: ${r.data.role} — ${r.data.effect}`);
+                    }}
+                    className="text-xs bg-purple-800/60 hover:bg-purple-700/80 border border-purple-700/50 text-purple-300 px-2 py-0.5 rounded"
+                  >🎲 Strawman</button>
+                )}
               </div>
             ))}
           </div>

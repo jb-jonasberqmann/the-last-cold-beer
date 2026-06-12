@@ -52,7 +52,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
   };
 
   const getQuestsStats = (roomId: string) => {
-    const required = getRequiredQuestsByRoom(roomId);
+    const required = getRequiredQuestsByRoom(roomId, teamId);
     const completed = questProgress.filter(
       (qp) => qp.room_id === roomId && qp.status === "completed"
     ).length;

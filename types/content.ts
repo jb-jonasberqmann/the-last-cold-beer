@@ -69,6 +69,7 @@ export type QuestType =
 export interface Quest {
   id: string;
   roomId: string;
+  forTeam?: TeamId; // if set, only this team sees this quest
   type: QuestType;
   title: string;
   description: string; // the scenario / flavor text
