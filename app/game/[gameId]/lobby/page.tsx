@@ -40,6 +40,16 @@ export default function LobbyPage({ params }: Props) {
     setGame(data.game);
     setPlayers(data.players ?? []);
     if (data.game?.status === "active" && session?.gameId === gameId) {
+      // Game just started — the server assigned teams. Update the local session
+      // so the player knows their team before navigating to the dashboard.
+      const myPlayer = (data.players as DbPlayer[] ?? []).find(
+        (p) => p.id === session.playerId
+      );
+      if (myPlayer?.team_id && myPlayer.team_id !== session.teamId) {
+        const updated = { ...session, teamId: myPlayer.team_id as TeamId };
+        storeSession(updated);
+        setSession(updated);
+      }
       router.push(`/game/${gameId}/dashboard`);
     }
   }, [gameId, router, session]);

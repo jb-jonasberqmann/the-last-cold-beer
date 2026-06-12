@@ -93,7 +93,7 @@ export default function JoinPage({ params }: Props) {
         </form>
 
         <p className="text-center text-xs text-stone-600 mt-6">
-          You&apos;ll be assigned to a team automatically.
+          Teams are assigned when the host starts the game.
         </p>
       </div>
     </div>

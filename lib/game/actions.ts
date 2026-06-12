@@ -72,29 +72,34 @@ export async function joinGame(
   if (!game) return { success: false, error: "Game not found. Check the room code." };
   if (game.status === "complete") return { success: false, error: "This game is already complete." };
 
-  // Atomic team assignment: the CASE subqueries run inside the INSERT statement,
-  // giving a much narrower race window than a separate SELECT + INSERT. Two players
-  // joining within the same millisecond can still race, but normal manual joins are safe.
-  const playerRows = await sql`
-    INSERT INTO players (game_id, name, team_id, is_host)
-    SELECT
-      ${game.id},
-      ${playerName},
-      CASE
-        WHEN (SELECT COUNT(*) FROM players p2 WHERE p2.game_id = ${game.id} AND p2.team_id = 'team-a')
-          <= (SELECT COUNT(*) FROM players p3 WHERE p3.game_id = ${game.id} AND p3.team_id = 'team-b')
-        THEN 'team-a'
-        ELSE 'team-b'
-      END,
-      FALSE
-    RETURNING *
-  `;
+  // Lobby join: no team yet — startGame assigns teams in order when host kicks off.
+  // Active game join (late joiner): assign immediately via atomic subquery (one-at-a-time, no race risk).
+  const isActive = game.status === "active";
+  const playerRows = isActive
+    ? await sql`
+        INSERT INTO players (game_id, name, team_id, is_host)
+        SELECT
+          ${game.id}, ${playerName},
+          CASE
+            WHEN (SELECT COUNT(*) FROM players p2 WHERE p2.game_id = ${game.id} AND p2.team_id = 'team-a')
+              <= (SELECT COUNT(*) FROM players p3 WHERE p3.game_id = ${game.id} AND p3.team_id = 'team-b')
+            THEN 'team-a'
+            ELSE 'team-b'
+          END,
+          FALSE
+        RETURNING *
+      `
+    : await sql`
+        INSERT INTO players (game_id, name, team_id, is_host)
+        VALUES (${game.id}, ${playerName}, NULL, FALSE)
+        RETURNING *
+      `;
   const player = playerRows[0];
   if (!player) return { success: false, error: "Failed to join game." };
 
   return {
     success: true,
-    data: { gameId: game.id, playerId: player.id, teamId: player.team_id as TeamId },
+    data: { gameId: game.id, playerId: player.id, teamId: player.team_id as TeamId | null },
   };
 }
 
@@ -107,6 +112,18 @@ export async function startGame(gameId: string): Promise<ActionResult> {
   const game = gameRows[0];
   if (!game) return { success: false, error: "Game not found." };
   if (game.status !== "lobby") return { success: false, error: "Game already started." };
+
+  // Assign teams to all unassigned non-host players by join order: 0→A, 1→B, 2→A, …
+  // This runs once, atomically, at start time — no race condition possible.
+  const unassigned = await sql`
+    SELECT id FROM players
+    WHERE game_id = ${gameId} AND is_host = FALSE AND team_id IS NULL
+    ORDER BY created_at ASC
+  `;
+  for (let i = 0; i < unassigned.length; i++) {
+    const teamId = i % 2 === 0 ? "team-a" : "team-b";
+    await sql`UPDATE players SET team_id = ${teamId} WHERE id = ${unassigned[i].id}`;
+  }
 
   const chapter = getChapter("chapter-1");
   if (!chapter) return { success: false, error: "Chapter 1 not found." };
