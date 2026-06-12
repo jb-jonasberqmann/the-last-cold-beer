@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { usePlayer } from "@/hooks/usePlayer";
+import { usePlayer, storeSession } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { LiveProgress } from "@/components/game/LiveProgress";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -46,21 +46,44 @@ function eventLabel(event: DbGameEvent, offerDef: string): { icon: string; text:
 export default function DashboardPage({ params }: Props) {
   const gameId = params.gameId;
 
-  const { session, isLoaded } = usePlayer();
+  const { session, setSession, isLoaded } = usePlayer();
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [events, setEvents] = useState<DbGameEvent[]>([]);
   const [teamProgress, setTeamProgress] = useState<import("@/types/database").DbTeamProgress[]>([]);
+  // Server-verified team — resolves even when localStorage is stale (shared incognito session)
+  const [serverTeamId, setServerTeamId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!gameId) return;
-    const res = await fetch(`/api/game/${gameId}/progress`);
-    if (!res.ok) return;
-    const data = await res.json();
+    const [progressRes, gameRes] = await Promise.all([
+      fetch(`/api/game/${gameId}/progress`),
+      fetch(`/api/game/${gameId}`),
+    ]);
+    if (!progressRes.ok) return;
+    const data = await progressRes.json();
     setGame(data.game);
     setEvents(data.events ?? []);
     setTeamProgress(data.teamProgress ?? []);
-  }, [gameId]);
+
+    // Resolve the actual team from the player list — session.teamId can be stale
+    // when two players share the same browser (incognito testing).
+    if (gameRes.ok && session?.playerId) {
+      const gameData = await gameRes.json();
+      const me = (gameData.players ?? []).find(
+        (p: { id: string; team_id: string | null }) => p.id === session.playerId
+      );
+      if (me?.team_id) {
+        setServerTeamId(me.team_id);
+        // Heal the localStorage session if it drifted
+        if (me.team_id !== session.teamId) {
+          const healed = { ...session, teamId: me.team_id as import("@/types/content").TeamId };
+          setSession(healed);
+          storeSession(healed);
+        }
+      }
+    }
+  }, [gameId, session, setSession]);
 
   useEffect(() => {
     if (isLoaded && gameId) fetchData();
@@ -78,11 +101,13 @@ export default function DashboardPage({ params }: Props) {
 
   if (!game || !gameId) return null;
 
-  const teamName = session.teamId === "team-a"
+  // Use server-verified team for navigation; fall back to session only for host
+  const myTeamId = session.isHost ? null : (serverTeamId ?? session.teamId ?? null);
+  const teamName = myTeamId === "team-a"
     ? game.team_a_name
-    : session.teamId === "team-b"
+    : myTeamId === "team-b"
       ? game.team_b_name
-      : null; // host (GM) — not on a team
+      : null;
 
   // Find the most recent role assigned to this player
   const myRole = [...events]
@@ -94,13 +119,25 @@ export default function DashboardPage({ params }: Props) {
     });
   const myRoleData = myRole?.event_data as { label: string; effect: string } | null ?? null;
 
+  // Most recent game_started event for the top banner
+  const gameStartedEvent = events.find((e) => e.event_type === "game_started");
+
   return (
     <GameLayout
       gameId={gameId}
-      teamId={session.teamId ?? undefined}
+      teamId={myTeamId ?? undefined}
       title="Dashboard"
     >
-      {/* Host GM banner — always visible at the top so host can find their way back */}
+      {/* Game started banner — pinned at top */}
+      {gameStartedEvent && (
+        <div className="flex items-center gap-2 rounded-xl bg-amber-950/60 border border-amber-700/50 px-4 py-2 mb-4 text-sm text-amber-300">
+          <span>🏁</span>
+          <span className="font-medium">The Ritual has begun</span>
+          <span className="text-amber-600 text-xs ml-auto">{relativeTime(gameStartedEvent.created_at)}</span>
+        </div>
+      )}
+
+      {/* Host GM banner */}
       {session.isHost && (
         <Link
           href={`/game/${gameId}/host`}
@@ -118,17 +155,7 @@ export default function DashboardPage({ params }: Props) {
         </Link>
       )}
 
-      {/* Chapter banner */}
-      <div className="rounded-xl bg-gradient-to-r from-amber-950 to-stone-900 border border-amber-700/50 p-4 mb-4 text-center">
-        <div className="text-2xl mb-1">🏡</div>
-        <div className="text-xs text-stone-400 uppercase tracking-widest mb-0.5">Chapter 1</div>
-        <h2 className="text-lg font-bold text-amber-400 font-game">Arrival</h2>
-        <p className="text-xs text-stone-400 mt-1">
-          Something is wrong with the fridge.
-        </p>
-      </div>
-
-      {/* Role banner — shown when host assigns a strawman or other role */}
+      {/* Role banner */}
       {myRoleData && (
         <div className="rounded-xl bg-purple-950/70 border-2 border-purple-500 p-4 mb-4 animate-pulse">
           <div className="text-xs text-purple-400 font-bold uppercase tracking-widest mb-1">🎲 You have been assigned a role!</div>
@@ -138,47 +165,49 @@ export default function DashboardPage({ params }: Props) {
         </div>
       )}
 
-      {/* Live progress comparison */}
-      <div className="mb-4">
-        <h3 className="text-xs text-stone-500 uppercase tracking-widest mb-2 font-medium">
-          Live Progress
-        </h3>
-        <LiveProgress
-          gameId={gameId}
-          myTeamId={session.teamId ?? null}
-          teamAName={game.team_a_name}
-          teamBName={game.team_b_name}
-        />
-      </div>
-
-      {/* Team action button */}
-      {session.teamId && (
+      {/* Team action button — uses server-verified team */}
+      {myTeamId && (
         <Link
-          href={`/game/${gameId}/team/${session.teamId}`}
+          href={`/game/${gameId}/team/${myTeamId}`}
           className="block w-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-center py-4 rounded-xl transition-colors border border-amber-400 mb-4"
         >
           🗺️ Go to {teamName}&apos;s Quest Board →
         </Link>
       )}
 
-      {/* Quick links */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <Link
-          href={`/game/${gameId}/case-file?team=${session.teamId}`}
-          className="rounded-xl bg-stone-800 border border-stone-600 p-3 text-center hover:bg-stone-700 transition-colors"
-        >
-          <div className="text-2xl mb-1">📁</div>
-          <div className="text-sm font-medium text-stone-200">Case File</div>
-          <div className="text-xs text-stone-500">Your clues</div>
-        </Link>
-        <Link
-          href={`/game/${gameId}/boss/locked-cooler?team=${session.teamId}`}
-          className="rounded-xl bg-stone-800 border border-stone-600 p-3 text-center hover:bg-stone-700 transition-colors"
-        >
-          <div className="text-2xl mb-1">🔒</div>
-          <div className="text-sm font-medium text-stone-200">Boss Fight</div>
-          <div className="text-xs text-stone-500">The Locked Cooler</div>
-        </Link>
+      {/* Quick links — Case File + Boss Fight */}
+      {myTeamId && (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <Link
+            href={`/game/${gameId}/case-file?team=${myTeamId}`}
+            className="rounded-xl bg-stone-800 border border-stone-600 p-3 text-center hover:bg-stone-700 transition-colors"
+          >
+            <div className="text-2xl mb-1">📁</div>
+            <div className="text-sm font-medium text-stone-200">Case File</div>
+            <div className="text-xs text-stone-500">Your clues</div>
+          </Link>
+          <Link
+            href={`/game/${gameId}/boss/locked-cooler?team=${myTeamId}`}
+            className="rounded-xl bg-stone-800 border border-stone-600 p-3 text-center hover:bg-stone-700 transition-colors"
+          >
+            <div className="text-2xl mb-1">🔒</div>
+            <div className="text-sm font-medium text-stone-200">Boss Fight</div>
+            <div className="text-xs text-stone-500">The Locked Cooler</div>
+          </Link>
+        </div>
+      )}
+
+      {/* Live progress */}
+      <div className="mb-4">
+        <h3 className="text-xs text-stone-500 uppercase tracking-widest mb-2 font-medium">
+          Live Progress
+        </h3>
+        <LiveProgress
+          gameId={gameId}
+          myTeamId={myTeamId as import("@/types/content").TeamId | null}
+          teamAName={game.team_a_name}
+          teamBName={game.team_b_name}
+        />
       </div>
 
       {/* Activity feed */}
@@ -186,7 +215,7 @@ export default function DashboardPage({ params }: Props) {
         events={events}
         game={game}
         teamProgress={teamProgress}
-        myTeamId={session.teamId}
+        myTeamId={myTeamId}
         isHost={session.isHost}
       />
 

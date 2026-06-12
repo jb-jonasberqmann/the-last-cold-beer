@@ -171,6 +171,21 @@ export default function RoomPage({ params }: Props) {
         ))}
       </div>
 
+      {/* All required quests done — CTA to return */}
+      {allRequiredDone && (
+        <div className="mt-5 rounded-xl bg-green-950/50 border-2 border-green-700/60 p-4 text-center">
+          <div className="text-2xl mb-1">🎉</div>
+          <div className="font-bold text-green-300 mb-1">All challenges complete!</div>
+          <p className="text-xs text-green-500 mb-3">Head back to the Quest Board to see if new rooms have unlocked.</p>
+          <a
+            href={`/game/${gameId}/team/${teamId}`}
+            className="inline-block bg-green-700 hover:bg-green-600 text-white font-bold px-6 py-2.5 rounded-xl transition-colors text-sm"
+          >
+            ← Back to Quest Board
+          </a>
+        </div>
+      )}
+
       {/* Discovered clues from this room */}
       {room.rewardClueIds.length > 0 && (
         <div className="mt-6">
@@ -227,6 +242,7 @@ function QuestBlock({
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [shownHints, setShownHints] = useState<{ order: number; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [skipped, setSkipped] = useState(false);
 
   const hintsUsed = questState?.hints_used ?? 0;
 
@@ -283,6 +299,18 @@ function QuestBlock({
       setShownHints((prev) => [...prev, { order: hintOrder, text: result.data.hintText }]);
     }
   };
+
+  // Social challenges are optional bonus quests — can be dismissed
+  if (!isComplete && quest.type === "social_challenge" && skipped) {
+    return (
+      <div className="rounded-xl border border-stone-700/50 px-4 py-2 flex items-center justify-between bg-stone-900/40">
+        <span className="text-xs text-stone-500 italic">{quest.title} — skipped</span>
+        <button onClick={() => setSkipped(false)} className="text-xs text-stone-600 hover:text-stone-400 transition-colors">
+          Show
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -387,9 +415,17 @@ function QuestBlock({
           )}
 
           {quest.type === "social_challenge" && (
-            <Button variant="secondary" className="w-full" onClick={handleUseSocial} loading={loading}>
-              ✓ Challenge Complete (Group Approved)
-            </Button>
+            <div className="space-y-2">
+              <Button variant="secondary" className="w-full" onClick={handleUseSocial} loading={loading}>
+                ✓ Challenge Complete (Group Approved)
+              </Button>
+              <button
+                onClick={() => setSkipped(true)}
+                className="w-full text-xs text-stone-500 hover:text-stone-400 transition-colors py-1.5"
+              >
+                Move on without completing →
+              </button>
+            </div>
           )}
 
           {quest.hints.length > 0 && (
