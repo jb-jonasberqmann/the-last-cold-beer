@@ -89,7 +89,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const getNodeState = (roomId: string): NodeState => {
     const status = getRoomStatus(roomId);
     if (status === "complete") return "done";
-    if (status === "active") return "active";
+    if (status === "active" || status === "unlocked") return "active";
     const room = getRoom(roomId);
     const prereqsMet = room?.unlockRequires.every(
       (req) => getRoomStatus(req) === "complete"
