@@ -48,6 +48,23 @@ export const BOSSES: Boss[] = [
               "You need the terrace inscription clue first. Go back and complete the Terrace room.",
           },
           {
+            id: "cooler-p1-puzzle",
+            label: "Decode the First Two Digits",
+            description:
+              "The terrace had a carved countdown: 5-4-3-2-1-0. The first two digits of the combination come directly from the first two numbers in that sequence.",
+            type: "puzzle",
+            damage: 20,
+            puzzle: {
+              prompt: "The terrace countdown starts at 5 and goes down. What are the first two numbers in the sequence, written together as a two-digit number?",
+              answer: ["54", "5 4", "five four"],
+            },
+            hint: "5-4-3-2-1-0. First number: 5. Second number: 4.",
+            rewardText:
+              "54. That's it. You dial in 5 and 4. The first tumbler yields with a satisfying click. 20 damage.",
+            failureText:
+              "Look at the countdown sequence again. It starts at the highest number.",
+          },
+          {
             id: "cooler-p1-offer-boost",
             label: "Force it with Ritual Strength",
             description:
