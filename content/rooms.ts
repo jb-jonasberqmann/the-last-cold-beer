@@ -33,6 +33,12 @@ export const ROOMS: Room[] = [
     rewardClueIds: ["clue-kitchen-calendar"],
     isOptional: false,
     order: 1,
+    da: {
+      title: "Køkkenet",
+      description: "Køkkenet er det første rum du rigtigt træder ind i. Alt ser normalt ud — bortset fra at køleskabet summer højere end normalt, og der er en klæbrig lap på disken der siger \"Tæl magneterne. Træk dem fra, der ikke hører til.\"",
+      lockedDescription: "Køkkenet. Du har ikke kigget ordenligt endnu.",
+      atmosphere: "Mel på disken. En svag lugt af gammel kaffe. Elleve magneter på køleskabet, to af dem er ananas. Ingen ved hvor ananasserne kom fra.",
+    },
   },
   {
     id: "fridge",
@@ -58,6 +64,12 @@ export const ROOMS: Room[] = [
     rewardClueIds: ["clue-fridge-note", "clue-cold-timestamp", "clue-fridge-temperature"],
     isOptional: false,
     order: 2,
+    da: {
+      title: "Køleskabet",
+      description: "Inde i køleskabet: én enkelt øl, isoleret på midterhylden. En seddel er klistret til den. Køleskabet er indstillet på maksimum kulde — langt mere end du nogensinde ville behøve til en normal hyttetur. Det var med vilje.",
+      lockedDescription: "Køleskabet summer. Du har ikke åbnet det endnu. Lås køkkenet op først.",
+      atmosphere: "Kold luft siver ud. Én øl står alene i midten, dækket af kondens. En håndskrevet seddel er klistret til den. Temperaturknappen er på maksimum.",
+    },
   },
   {
     id: "coffee-table",
@@ -83,6 +95,12 @@ export const ROOMS: Room[] = [
     rewardClueIds: ["clue-coffee-table-ring", "clue-coffee-table-coaster"],
     isOptional: false,
     order: 3,
+    da: {
+      title: "Sofabordet",
+      description: "Sofabordet har set ting. Årtiers hytteture. Ølringe. Kortspil taget for seriøst. Et sted under en af brikkerne gemmer der sig noget. Og den ringplet — hvor har du set den diameter før?",
+      lockedDescription: "Et sofabord. Intet usædvanligt på afstand. Betal for at undersøge.",
+      atmosphere: "Ridset træ. Adskillige ringpletter fra hundredevis af hytteture. Under den tredje brik: noget der ikke var der før. Eller var det altid der?",
+    },
   },
   {
     id: "terrace",
@@ -108,6 +126,12 @@ export const ROOMS: Room[] = [
     rewardClueIds: ["clue-terrace-inscription"],
     isOptional: false,
     order: 4,
+    da: {
+      title: "Terrassen",
+      description: "Terrassen vender mod skoven. Det er koldt herude. Tjek gelænderet — specifikt undersiden. Ting ristes ind i gelændere når folk vil have dem fundet senere, men ikke med det samme.",
+      lockedDescription: "Terrassen. Træer. Kulde. Du har ikke undersøgt endnu. Fuldfør køleskabet først.",
+      atmosphere: "Terrassen vender mod træerne. Kold luft. Et ridset gelænder. Nogen efterlod en stol rettet præcist mod skovkanten — ikke tilfældigt. Nogen overvågede noget.",
+    },
   },
   {
     id: "shed",
@@ -133,6 +157,12 @@ export const ROOMS: Room[] = [
     rewardClueIds: ["clue-shed-inventory"],
     isOptional: false,
     order: 5,
+    da: {
+      title: "Skuret",
+      description: "Skuret er ikke ordenligt rengjort siden hytten blev bygget. Et sted herinde er hyttens officielle inventarliste — ja, nogen lavede faktisk en — og den indeholder en post der forklarer hvorfor køleren er låst.",
+      lockedDescription: "Skuret. Stiv dør. Du skal have undersøgt terrassen og sofabordet først.",
+      atmosphere: "Fugtigt træ. Rustlugt. En gammel ødelagt stol i hjørnet. Og der, på væggen, lamineret og fastgjort med rigtige tegnestifter: et officielt udseende inventarark.",
+    },
   },
 
   // ==========================================

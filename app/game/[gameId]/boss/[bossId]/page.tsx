@@ -10,7 +10,8 @@ import { BossHpBar } from "@/components/game/BossHpBar";
 import { Button } from "@/components/ui/Button";
 import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
-import type { DbGame, DbBossProgress, DbTeamClue } from "@/types/database";
+import { localizeBoss } from "@/lib/content/localize";
+import type { DbGame, DbBossProgress, DbTeamClue, DbRoomProgress } from "@/types/database";
 import type { TeamId, BossAction } from "@/types/content";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -22,18 +23,20 @@ interface Props {
 export default function BossFightPage({ params }: Props) {
   const gameId = params.gameId;
   const bossId = params.bossId;
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const searchParams = useSearchParams();
   const { session } = usePlayer();
   const teamId = (searchParams.get("team") ?? session?.teamId ?? "team-a") as TeamId;
 
-  const boss = bossId ? getBoss(bossId) : null;
+  const rawBoss = bossId ? getBoss(bossId) : null;
+  const boss = rawBoss ? localizeBoss(rawBoss, lang) : null;
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [bossProgressA, setBossProgressA] = useState<DbBossProgress | null>(null);
   const [bossProgressB, setBossProgressB] = useState<DbBossProgress | null>(null);
   const [teamClues, setTeamClues] = useState<DbTeamClue[]>([]);
+  const [roomProgress, setRoomProgress] = useState<DbRoomProgress[]>([]);
   const [feedback, setFeedback] = useState<{ actionId: string; text: string; success: boolean } | null>(null);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [puzzleAnswer, setPuzzleAnswer] = useState("");
@@ -58,6 +61,7 @@ export default function BossFightPage({ params }: Props) {
     const data = await res.json();
     setGame(data.game);
     setTeamClues(data.clues ?? []);
+    setRoomProgress(data.roomProgress ?? []);
 
     const bossRows: DbBossProgress[] = data.bossProgress ?? [];
     setBossProgressA(bossRows.find((b) => b.team_id === "team-a") ?? null);
@@ -109,6 +113,40 @@ export default function BossFightPage({ params }: Props) {
   }, [teamClues, bossProgressA, bossProgressB]);
 
   if (!boss || !game || !gameId || !bossId) return null;
+
+  // Boss gate: check if required rooms are complete
+  const prerequisitesMet = !rawBoss?.requiredRoomIds?.length ||
+    rawBoss.requiredRoomIds.every((rid) =>
+      roomProgress.some((rp) => rp.room_id === rid && rp.status === "complete")
+    );
+
+  if (!prerequisitesMet) {
+    const missingRooms = rawBoss!.requiredRoomIds!.filter(
+      (rid) => !roomProgress.some((rp) => rp.room_id === rid && rp.status === "complete")
+    );
+    return (
+      <GameLayout
+        gameId={gameId}
+        teamId={teamId}
+        backHref={`/game/${gameId}/team/${teamId}`}
+        backLabel="Quest Board"
+        title={boss.title}
+      >
+        <div
+          className="rounded-xl bg-stone-950 border border-red-900/50 p-6 text-center mt-6"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
+          <div className="text-4xl mb-3">🔒</div>
+          <h2 className="text-xl font-bold text-red-300 mb-2">{t("boss.locked_title")}</h2>
+          <p className="text-sm text-stone-400 mb-4">{t("boss.locked_message")}</p>
+          <div className="text-xs text-amber-800">
+            <span className="font-bold">{t("boss.locked_requires")}</span>{" "}
+            {missingRooms.join(", ")}
+          </div>
+        </div>
+      </GameLayout>
+    );
+  }
 
   const myBossProgress = teamId === "team-a" ? bossProgressA : bossProgressB;
   const otherBossProgress = teamId === "team-a" ? bossProgressB : bossProgressA;

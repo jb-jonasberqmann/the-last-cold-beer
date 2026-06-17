@@ -44,6 +44,15 @@ export interface Room {
   rewardClueIds: string[]; // clues earned for completing this room
   isOptional: boolean;
   order: number; // display order in quest board
+  da?: RoomDa; // Danish locale overrides
+}
+
+// Danish locale override — only fields that differ from English
+export interface RoomDa {
+  title?: string;
+  description?: string;
+  lockedDescription?: string;
+  atmosphere?: string;
 }
 
 export interface RoomLook {
@@ -83,6 +92,18 @@ export interface Quest {
   rewardClueId?: string; // clue granted on completion
   rewardText?: string; // flavor text shown on success
   failureText?: string; // shown on wrong answer (before hint)
+  da?: QuestDa; // Danish locale overrides
+}
+
+// Danish locale override — only fields that differ from English
+export interface QuestDa {
+  title?: string;
+  description?: string;
+  prompt?: string;
+  hints?: string[]; // 0-indexed, replaces hints[i].text
+  choices?: Record<string, { label?: string; description?: string; consequence?: string }>;
+  rewardText?: string;
+  failureText?: string;
 }
 
 export interface QuestAnswer {
@@ -117,6 +138,14 @@ export interface Clue {
   flavor: string; // atmospheric one-liner shown when discovered
   isKeyClue: boolean; // required for boss or final reveal
   revealedTo?: TeamId; // if set, only this team can see contents initially
+  da?: ClueDa; // Danish locale overrides
+}
+
+// Danish locale override
+export interface ClueDa {
+  title?: string;
+  description?: string;
+  flavor?: string;
 }
 
 // ==========================================
@@ -134,6 +163,32 @@ export interface Boss {
   phases: BossPhase[];
   defeatText: string; // shown when boss is defeated
   victoryAdvantage: string; // advantage granted to the winning team in next chapter
+  requiredRoomIds?: string[]; // rooms that must be complete before boss is accessible
+  da?: BossDa; // Danish locale overrides
+}
+
+// Danish locale override — nested by phase number and action id
+export interface BossDa {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  atmosphere?: string;
+  defeatText?: string;
+  victoryAdvantage?: string;
+  phases?: Array<{
+    phase: number;
+    title?: string;
+    description?: string;
+    actions?: Array<{
+      id: string;
+      label?: string;
+      description?: string;
+      puzzlePrompt?: string;
+      hint?: string;
+      rewardText?: string;
+      failureText?: string;
+    }>;
+  }>;
 }
 
 export interface BossLook {

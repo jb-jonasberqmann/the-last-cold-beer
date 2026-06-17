@@ -63,6 +63,12 @@ const translations: Record<string, Record<Lang, string>> = {
   "boss.submit": { en: "Submit", da: "Indsend" },
   "boss.group_decision": { en: "✓ Group Decision Made", da: "✓ Gruppeafgørelse truffet" },
   "boss.vs": { en: "vs", da: "vs" },
+  "boss.locked_title": { en: "Boss Locked", da: "Bossen er Låst" },
+  "boss.locked_message": {
+    en: "Complete all required chapter rooms before confronting this boss.",
+    da: "Fuldfør alle krævede rum i kapitlet inden du konfronterer denne boss.",
+  },
+  "boss.locked_requires": { en: "Required:", da: "Kræver:" },
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);

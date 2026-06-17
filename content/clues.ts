@@ -14,6 +14,11 @@ export const CLUES: Clue[] = [
     icon: "📝",
     flavor: "Someone brought a pen. Someone made a plan.",
     isKeyClue: true,
+    da: {
+      title: "Sedlen",
+      description: "En håndskrevet seddel på øl'en. Den siger: \"RITUALET EJES AF KOMITEEN. MÅ IKKE ÅBNES FØR KENDELSEN. — Komiteen.\" Håndskriften er mærkværdigt pæn. Nogen planlagde dette.",
+      flavor: "Nogen medbragte en pen. Nogen lavede en plan.",
+    },
   },
   {
     id: "clue-cold-timestamp",
@@ -24,6 +29,11 @@ export const CLUES: Clue[] = [
     icon: "🧊",
     flavor: "This beer has been waiting longer than anyone admits.",
     isKeyClue: false,
+    da: {
+      title: "Isformationen",
+      description: "Kondensationsmønsteret og iskrystalformationen på dåsen tyder på, at den har stået i køleskabet i mindst 18 timer — det betyder, at den blev placeret der inden nogen ankom. Nogen kom tidligt. Eller gik aldrig.",
+      flavor: "Denne øl har ventet længere end nogen tilstår.",
+    },
   },
   {
     id: "clue-kitchen-calendar",
@@ -34,6 +44,11 @@ export const CLUES: Clue[] = [
     icon: "📅",
     flavor: "A debt not forgotten. A score not settled.",
     isKeyClue: true,
+    da: {
+      title: "Hyttekalenderen",
+      description: "En papirkalender på køkkenvæggen. Én dato er ringet ind med rødt: det forrige hyttetures weekend. Ved siden af har nogen skrevet ét ord med bittesmå bogstaver: \"UBETALT.\"",
+      flavor: "En gæld ikke glemt. En konto ikke gjort op.",
+    },
   },
   {
     id: "clue-coffee-table-ring",
@@ -44,6 +59,11 @@ export const CLUES: Clue[] = [
     icon: "⭕",
     flavor: "Something was placed here deliberately. Someone marked the spot.",
     isKeyClue: false,
+    da: {
+      title: "Ringpletten",
+      description: "En perfekt ringplet på sofabordet. Diameteren passer præcist til én type flaske. Ved siden af: en svag kritridning som nogen forsøgte at gnide væk men ikke helt formåede.",
+      flavor: "Noget blev bevidst placeret her. Nogen markerede stedet.",
+    },
   },
   {
     id: "clue-terrace-inscription",
@@ -54,16 +74,26 @@ export const CLUES: Clue[] = [
     icon: "🪵",
     flavor: "Someone carved this with intent. Someone knew they'd be back.",
     isKeyClue: true,
+    da: {
+      title: "Terrasse-Ristningen",
+      description: "Ridset ind i undersiden af terrassegelænderet: \"5-4-3-2-1-0. Ritualet fuldendes ved nul.\" Nedenfor: fire sæt initialer. Du genkender mindst to af dem.",
+      flavor: "Nogen ristede dette med hensigt. Nogen vidste de ville vende tilbage.",
+    },
   },
   {
     id: "clue-shed-inventory",
     chapterId: "chapter-1",
     title: "The Shed Inventory",
     description:
-      "A laminated sheet pinned to the shed wall: \"OFFICIAL CABIN INVENTORY — Last checked: last year's trip.\" At the bottom, in different handwriting: \"ITEM 7: THE COOLER. STATUS: Locked. COMBINATION: ??? — Ask the one who broke the pact.\"",
+      "A laminated sheet on the shed wall: \"OFFICIAL CABIN INVENTORY — Last checked: last year's trip.\" Listing: Item 5: Garden Furniture. Item 6: Spare Key. Item 7: THE COOLER — STATUS: Locked. COMBINATION: ??? — Ask the one who broke the pact. Item 8: Mooring Rope. Item 9: Old Paint Box.",
     icon: "📋",
     flavor: "Whoever made this knew there would be a mystery. They were ready.",
     isKeyClue: true,
+    da: {
+      title: "Skurets Inventar",
+      description: "Et lamineret ark fastgjort på skurets væg: \"OFFICIEL HYTTE-INVENTAR — Sidst tjekket: hyttetur i fjor.\" Listen: Genstand 5: Havemøbler. Genstand 6: Reservenøgle. Genstand 7: KØLEREN — STATUS: Låst. KOMBINATION: ??? — Spørg den der brød pagten. Genstand 8: Fortøjningsreb. Genstand 9: Gammel Maleboks.",
+      flavor: "Den der lavede dette vidste der ville komme et mysterium. De var klar.",
+    },
   },
   {
     id: "clue-fridge-temperature",
@@ -74,6 +104,11 @@ export const CLUES: Clue[] = [
     icon: "🌡️",
     flavor: "Someone wanted this beer to be impossibly cold. They succeeded.",
     isKeyClue: false,
+    da: {
+      title: "Temperaturindstillingen",
+      description: "Køleskabets knap er drejet til maksimum — langt koldere end du nogensinde ville bruge til normale madvarer. Nogen indstillede den specifikt til bevaring. Øl'en var tiltænkt at forblive perfekt til det rette øjeblik.",
+      flavor: "Nogen ønskede denne øl umuligt kold. De lykkedes.",
+    },
   },
   {
     id: "clue-coffee-table-coaster",
@@ -84,6 +119,11 @@ export const CLUES: Clue[] = [
     icon: "🃏",
     flavor: "This was made by someone who has been here before. Many times.",
     isKeyClue: true,
+    da: {
+      title: "Brikkekoden",
+      description: "Gemt under en brik: et lille kort med fem symboler tegnet med kuglepen. Hvert symbol svarer til et bogstav — hvis du kender Hyttealfabetet, den hjemmelavede kode jeres gruppe opfandt for tre ture siden.",
+      flavor: "Dette er lavet af nogen der har været her før. Mange gange.",
+    },
   },
 
   // --- Chapter 2 (stubs — content TBD) ---

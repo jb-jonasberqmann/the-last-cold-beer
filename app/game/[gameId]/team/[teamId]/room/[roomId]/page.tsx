@@ -6,6 +6,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { Button } from "@/components/ui/Button";
 import { ClueCard } from "@/components/game/ClueCard";
 import { getRoom, getQuestsByRoom, getClue } from "@/content/index";
+import { localizeRoom, localizeQuests } from "@/lib/content/localize";
 import type { DbGame, DbQuestProgress, DbTeamClue } from "@/types/database";
 import type { TeamId, Quest } from "@/types/content";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ export default function RoomPage({ params }: Props) {
   const gameId = params.gameId;
   const teamId = params.teamId;
   const roomId = params.roomId;
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [questProgress, setQuestProgress] = useState<DbQuestProgress[]>([]);
@@ -42,8 +43,9 @@ export default function RoomPage({ params }: Props) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const room = roomId ? getRoom(roomId) : null;
-  const allQuests = room ? getQuestsByRoom(room.id, teamId) : [];
+  const rawRoom = roomId ? getRoom(roomId) : null;
+  const room = rawRoom ? localizeRoom(rawRoom, lang) : null;
+  const allQuests = rawRoom ? localizeQuests(getQuestsByRoom(rawRoom.id, teamId), lang) : [];
 
   // Sequential logic: show only the active quest (first incomplete required quest).
   // Bonus (non-required) quests become visible after all required quests are done.
