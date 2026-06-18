@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { unlockRoom } from "@/lib/game/actions";
-import { GameLayout } from "@/components/layout/GameLayout";
 import type { DbGame, DbRoomProgress } from "@/types/database";
 import type { TeamId } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
@@ -177,13 +176,43 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const bossUnlockable = completedRooms >= totalMainRooms;
 
   return (
-    <GameLayout
-      gameId={gameId}
-      teamId={teamId}
-      backHref={`/game/${gameId}/dashboard`}
-      backLabel="Dashboard"
-      title=""
+    <div
+      className="min-h-screen"
+      style={{ background: "linear-gradient(180deg, #0c0a09 0%, #080706 100%)" }}
     >
+      {/* ── Minimal sticky nav ── */}
+      <div
+        className="sticky top-0 z-10 flex items-center gap-3 px-4"
+        style={{
+          paddingTop: "max(12px, env(safe-area-inset-top, 12px))",
+          paddingBottom: "12px",
+          background: "rgba(10,8,6,0.88)",
+          backdropFilter: "blur(10px)",
+          borderBottom: "1px solid rgba(180,130,50,0.1)",
+        }}
+      >
+        <a
+          href={`/game/${gameId}/dashboard`}
+          className="flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1.5 transition-colors"
+          style={{
+            background: "rgba(0,0,0,0.35)",
+            border: "1px solid rgba(180,130,50,0.18)",
+            color: "rgba(180,130,50,0.75)",
+            fontFamily: "Georgia,serif",
+          }}
+        >
+          ← Dashboard
+        </a>
+        <span
+          className="flex-1 text-center text-xs uppercase tracking-[0.2em]"
+          style={{ color: "rgba(180,130,50,0.35)", fontFamily: "Georgia,serif" }}
+        >
+          Quest Board
+        </span>
+        <div style={{ width: "84px" }} />
+      </div>
+
+      <div className="max-w-xl mx-auto px-4 py-4">
       {/* ── Team identity header ── */}
       <div
         className="relative rounded-xl mb-4 overflow-hidden animate-dashboard-enter"
@@ -699,7 +728,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
           <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(120,30,30,0.3), transparent)" }} />
         </div>
       )}
-    </GameLayout>
+      </div>{/* end max-w-xl */}
+    </div>
   );
 }
 

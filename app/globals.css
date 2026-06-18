@@ -145,6 +145,55 @@ body {
   animation: quest-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* ── FULL-SCREEN ROOM / GAME UI ───────────────────────── */
+
+/* Quest bottom-sheet slides up */
+@keyframes sheet-up {
+  0%   { transform: translateY(100%); opacity: 0.6; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+.animate-sheet-up {
+  animation: sheet-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Clue pop notification (top-right) */
+@keyframes clue-pop {
+  0%   { opacity: 0; transform: translateX(60px) scale(0.8); }
+  60%  { opacity: 1; transform: translateX(-4px) scale(1.05); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.animate-clue-pop {
+  animation: clue-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* New quest fades in inside sheet */
+@keyframes quest-fade {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-quest-fade {
+  animation: quest-fade 0.3s ease-out both;
+}
+
+/* Victory burst — room cleared */
+@keyframes victory-in {
+  0%   { opacity: 0; transform: scale(0.85); }
+  60%  { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-victory-in {
+  animation: victory-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Slow ambient breathe — background elements */
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 0.9; }
+}
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
 /* ── COMBAT ANIMATIONS ────────────────────────────────── */
 
 /* Scene flash on correct answer — green crack */
