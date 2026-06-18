@@ -176,106 +176,20 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const bossUnlockable = completedRooms >= totalMainRooms;
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "linear-gradient(180deg, #0c0a09 0%, #080706 100%)" }}
-    >
-      {/* ── Minimal sticky nav ── */}
-      <div
-        className="sticky top-0 z-10 flex items-center gap-3 px-4"
-        style={{
-          paddingTop: "max(12px, env(safe-area-inset-top, 12px))",
-          paddingBottom: "12px",
-          background: "rgba(10,8,6,0.88)",
-          backdropFilter: "blur(10px)",
-          borderBottom: "1px solid rgba(180,130,50,0.1)",
-        }}
+    <div className="fixed inset-0 overflow-hidden" style={{ background: "#0c1a2c" }}>
+
+      {/* ── Full-screen map SVG ── */}
+      <svg
+        viewBox="0 0 340 520"
+        className="absolute inset-0"
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid slice"
+        role="img"
+        aria-label="Quest map — tap a room to enter or unlock it"
+        style={{ touchAction: "none" }}
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <a
-          href={`/game/${gameId}/dashboard`}
-          className="flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1.5 transition-colors"
-          style={{
-            background: "rgba(0,0,0,0.35)",
-            border: "1px solid rgba(180,130,50,0.18)",
-            color: "rgba(180,130,50,0.75)",
-            fontFamily: "Georgia,serif",
-          }}
-        >
-          ← Dashboard
-        </a>
-        <span
-          className="flex-1 text-center text-xs uppercase tracking-[0.2em]"
-          style={{ color: "rgba(180,130,50,0.35)", fontFamily: "Georgia,serif" }}
-        >
-          Quest Board
-        </span>
-        <div style={{ width: "84px" }} />
-      </div>
-
-      <div className="max-w-xl mx-auto px-4 py-4">
-      {/* ── Team identity header ── */}
-      <div
-        className="relative rounded-xl mb-4 overflow-hidden animate-dashboard-enter"
-        style={{
-          background: "linear-gradient(160deg, #1a1208 0%, #0e0b05 60%, #0c0a08 100%)",
-          border: "1px solid rgba(180,130,50,0.2)",
-        }}
-      >
-        {/* Ambient glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-16 rounded-full bg-amber-800/8 blur-2xl" />
-        </div>
-
-        {/* Top accent line */}
-        <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(180,130,50,0.5), transparent)" }} />
-
-        <div className="px-4 py-4 relative">
-          {/* Chapter badge */}
-          <div
-            className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] mb-2"
-            style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
-          >
-            <span>⚔</span>
-            <span>Kapitel I · The Last Cold Beer</span>
-          </div>
-
-          {/* Team name */}
-          <h1
-            className="text-2xl font-bold text-amber-100 leading-tight mb-3"
-            style={{ fontFamily: "Georgia,serif", textShadow: "0 2px 12px rgba(180,130,50,0.2)" }}
-          >
-            {teamName}
-          </h1>
-
-          {/* Stats row */}
-          <div className="flex items-center gap-4">
-            <StatChip
-              icon="🗺"
-              value={`${completedRooms}/${totalMainRooms}`}
-              label="Rum ryddet"
-            />
-            {secretRoomDone && (
-              <StatChip icon="⭐" value="Aktiv" label="Boss-fordel" highlight />
-            )}
-            {bossUnlockable && (
-              <StatChip icon="⚔️" value="Klar" label="Boss tilgængelig" danger />
-            )}
-          </div>
-        </div>
-
-        {/* Bottom accent */}
-        <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(180,130,50,0.2), transparent)" }} />
-      </div>
-
-      {/* ── Map + modal container ── */}
-      <div className="w-full mb-4 select-none relative">
-        <svg
-          viewBox="0 0 340 520"
-          width="100%"
-          role="img"
-          aria-label="Quest map — tap a room to enter or unlock it"
-          xmlns="http://www.w3.org/2000/svg"
-        >
           {/* Navy background */}
           <rect width="340" height="520" fill="#0c1a2c" />
 
@@ -516,15 +430,169 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </g>
             );
           })}
-        </svg>
+      </svg>
 
-        {/* ── Unlock modal overlay ── */}
-        {pendingUnlock && pendingRoom && (
-          <div
-            className="absolute inset-0 flex items-center justify-center p-6 z-20"
-            style={{ background: "rgba(12,26,44,0.82)", backdropFilter: "blur(4px)", borderRadius: "inherit" }}
-            onClick={(e) => { if (e.target === e.currentTarget) setPendingUnlock(null); }}
+      {/* ── TOP HUD overlay ── */}
+      <div
+        className="absolute top-0 left-0 right-0 z-20 pointer-events-none"
+        style={{
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          background: "linear-gradient(180deg, rgba(12,26,44,0.88) 0%, rgba(12,26,44,0.55) 65%, transparent 100%)",
+        }}
+      >
+        <div className="flex items-center gap-3 px-4 py-3 pointer-events-auto">
+          <a
+            href={`/game/${gameId}/dashboard`}
+            className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs active:scale-95 transition-transform"
+            style={{
+              background: "rgba(0,0,0,0.4)",
+              border: "1px solid rgba(180,130,50,0.2)",
+              color: "rgba(180,130,50,0.75)",
+              fontFamily: "Georgia,serif",
+            }}
           >
+            ←
+          </a>
+          <div className="flex-1 flex flex-col items-center leading-tight">
+            <span
+              className="text-[9px] uppercase tracking-[0.25em]"
+              style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}
+            >
+              Kapitel I · The Last Cold Beer
+            </span>
+            <span
+              className="font-bold text-sm"
+              style={{ color: "rgba(245,225,170,0.95)", fontFamily: "Georgia,serif", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}
+            >
+              {teamName}
+            </span>
+          </div>
+          <div
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs"
+            style={{
+              background: "rgba(0,0,0,0.4)",
+              border: "1px solid rgba(180,130,50,0.18)",
+              color: bossUnlockable ? "rgb(252,165,165)" : "rgb(251,191,36)",
+              fontFamily: "Georgia,serif",
+            }}
+          >
+            {bossUnlockable ? "⚔️" : "🗺"} {completedRooms}/{totalMainRooms}
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM boss strip ── */}
+      {chapter && (
+        <div
+          className="absolute bottom-0 left-0 right-0 z-20"
+          style={{
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            background: "linear-gradient(180deg, transparent 0%, rgba(8,3,3,0.82) 35%, rgba(6,2,2,0.96) 100%)",
+          }}
+        >
+          <div className="px-4 pt-3 pb-3">
+            <div className="flex items-center gap-3">
+              {/* Boss icon */}
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
+                style={{
+                  background: "radial-gradient(circle, #3f0808 0%, #1a0303 100%)",
+                  border: `1px solid rgba(180,40,40,${bossUnlockable ? 0.6 : 0.3})`,
+                  boxShadow: bossUnlockable ? "0 0 12px rgba(180,40,40,0.3)" : "none",
+                }}
+              >
+                {bossUnlockable ? "☠️" : "🔒"}
+              </div>
+
+              {/* Name + progress */}
+              <div className="flex-1 min-w-0">
+                <div
+                  className="text-xs font-bold truncate"
+                  style={{ color: "rgb(254,202,202)", fontFamily: "Georgia,serif" }}
+                >
+                  Den Låste Køler
+                </div>
+                <div
+                  className="mt-1 h-1.5 rounded-full overflow-hidden"
+                  style={{ background: "rgba(40,10,10,0.9)", border: "1px solid rgba(100,30,30,0.3)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${(completedRooms / totalMainRooms) * 100}%`,
+                      background: bossUnlockable
+                        ? "linear-gradient(90deg, #dc2626, #ef4444)"
+                        : "linear-gradient(90deg, #7f1d1d, #b91c1c)",
+                      boxShadow: completedRooms > 0 ? "0 0 6px rgba(185,28,28,0.5)" : "none",
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span
+                    className="text-[10px]"
+                    style={{ color: "rgba(180,80,80,0.6)", fontFamily: "Georgia,serif" }}
+                  >
+                    {completedRooms}/{totalMainRooms} rum ryddet
+                  </span>
+                  {secretRoomDone && (
+                    <span className="text-[10px]" style={{ color: "rgba(103,232,249,0.7)", fontFamily: "Georgia,serif" }}>
+                      · ⭐ buff aktiv
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Fight button */}
+              {canInteract && (
+                <a
+                  href={`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`}
+                  className="flex-shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-95"
+                  style={bossUnlockable ? {
+                    background: "linear-gradient(160deg, #7f1d1d, #450a0a)",
+                    border: "1px solid rgba(220,50,50,0.5)",
+                    color: "rgb(254,202,202)",
+                    boxShadow: "0 2px 10px rgba(185,28,28,0.3)",
+                    fontFamily: "Georgia,serif",
+                  } : {
+                    background: "rgba(30,10,10,0.6)",
+                    border: "1px solid rgba(100,30,30,0.25)",
+                    color: "rgba(180,80,80,0.35)",
+                    cursor: "not-allowed",
+                    fontFamily: "Georgia,serif",
+                  }}
+                  onClick={!bossUnlockable ? (e) => e.preventDefault() : undefined}
+                >
+                  {bossUnlockable ? "⚔️ Kæmp" : "🔒"}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast ── */}
+      {message && (
+        <div
+          className="absolute left-4 right-4 z-30 rounded-lg px-4 py-2 text-sm animate-quest-in"
+          style={{
+            top: "calc(env(safe-area-inset-top, 0px) + 72px)",
+            background: "rgba(20,14,6,0.95)",
+            border: "1px solid rgba(180,130,50,0.35)",
+            color: "rgb(251,191,36)",
+            fontFamily: "Georgia,serif",
+          }}
+        >
+          ✦ {message}
+        </div>
+      )}
+
+      {/* ── Unlock modal ── */}
+      {pendingUnlock && pendingRoom && (
+        <div
+          className="absolute inset-0 flex items-center justify-center p-6 z-40"
+          style={{ background: "rgba(12,26,44,0.85)", backdropFilter: "blur(5px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingUnlock(null); }}
+        >
             <div
               className="w-full max-w-xs rounded-xl border p-5 shadow-2xl"
               style={{
@@ -586,149 +654,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </div>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* ── Toast ── */}
-      {message && (
-        <div
-          className="rounded-lg px-4 py-2 mb-4 text-sm animate-quest-in"
-          style={{
-            background: "rgba(30,20,8,0.9)",
-            border: "1px solid rgba(180,130,50,0.3)",
-            color: "rgb(251,191,36)",
-            fontFamily: "Georgia,serif",
-          }}
-        >
-          ✦ {message}
-        </div>
       )}
-
-      {/* ── Boss encounter card ── */}
-      {chapter && (
-        <div
-          className="rounded-xl overflow-hidden animate-boss-pulse"
-          style={{
-            background: "linear-gradient(160deg, #1a0505 0%, #120808 50%, #0e0606 100%)",
-            border: bossUnlockable
-              ? "1px solid rgba(220,50,50,0.5)"
-              : "1px solid rgba(120,30,30,0.35)",
-          }}
-        >
-          {/* Top accent */}
-          <div className="h-px w-full" style={{ background: bossUnlockable ? "linear-gradient(90deg, transparent, rgba(220,50,50,0.6), transparent)" : "linear-gradient(90deg, transparent, rgba(120,30,30,0.3), transparent)" }} />
-
-          <div className="p-4">
-            {/* Label */}
-            <div
-              className="text-[10px] uppercase tracking-[0.25em] mb-3"
-              style={{ color: "rgba(220,80,80,0.55)", fontFamily: "Georgia,serif" }}
-            >
-              ⚠ Boss Encounter · Kapitel I
-            </div>
-
-            {/* Boss identity */}
-            <div className="flex items-start gap-3 mb-4">
-              <div
-                className="w-14 h-14 rounded-lg flex items-center justify-center text-3xl flex-shrink-0"
-                style={{
-                  background: "radial-gradient(circle, #3f0808 0%, #1a0303 100%)",
-                  border: "1px solid rgba(180,40,40,0.4)",
-                  boxShadow: "0 0 16px rgba(180,40,40,0.15)",
-                }}
-              >
-                {bossUnlockable ? "☠️" : "🔒"}
-              </div>
-              <div>
-                <div className="font-bold text-red-200 text-lg leading-tight mb-0.5" style={{ fontFamily: "Georgia,serif" }}>
-                  Den Låste Køler
-                </div>
-                <div className="text-xs text-red-400/60 italic" style={{ fontFamily: "Georgia,serif" }}>
-                  {bossUnlockable
-                    ? "Alle spor er samlet. Bossen venter."
-                    : "Undersøg rummene for at samle nok spor."}
-                </div>
-              </div>
-            </div>
-
-            {/* Progress toward boss */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] uppercase tracking-[0.2em] text-stone-600" style={{ fontFamily: "Georgia,serif" }}>
-                  Undersøgelse
-                </span>
-                <span className="text-[10px] text-red-800/70" style={{ fontFamily: "Georgia,serif" }}>
-                  {completedRooms}/{totalMainRooms} rum ryddet
-                </span>
-              </div>
-              <div
-                className="relative h-2 rounded-full overflow-hidden"
-                style={{ background: "rgba(40,10,10,0.9)", border: "1px solid rgba(100,30,30,0.3)" }}
-              >
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${(completedRooms / totalMainRooms) * 100}%`,
-                    background: bossUnlockable
-                      ? "linear-gradient(90deg, #dc2626, #ef4444)"
-                      : "linear-gradient(90deg, #7f1d1d, #b91c1c)",
-                    boxShadow: completedRooms > 0 ? "0 0 8px rgba(185,28,28,0.5)" : "none",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Secret advantage chip */}
-            {secretRoomDone && (
-              <div
-                className="flex items-center gap-2 rounded-sm px-3 py-2 mb-3"
-                style={{
-                  background: "rgba(8,30,40,0.8)",
-                  border: "1px solid rgba(56,189,200,0.25)",
-                }}
-              >
-                <span className="text-sm">⭐</span>
-                <div style={{ fontFamily: "Georgia,serif" }}>
-                  <span className="text-[10px] uppercase tracking-widest text-cyan-600">Buff aktiv · </span>
-                  <span className="text-xs text-cyan-400/80">Sofabordet: gratis bosshandling optjent</span>
-                </div>
-              </div>
-            )}
-
-            {/* Fight button */}
-            {canInteract && (
-              <a
-                href={`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`}
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-lg font-bold text-sm transition-all"
-                style={
-                  bossUnlockable
-                    ? {
-                        background: "linear-gradient(160deg, #7f1d1d 0%, #450a0a 100%)",
-                        border: "1px solid rgba(220,50,50,0.5)",
-                        color: "rgb(254,202,202)",
-                        boxShadow: "0 4px 16px rgba(185,28,28,0.25)",
-                        fontFamily: "Georgia,serif",
-                      }
-                    : {
-                        background: "rgba(30,10,10,0.6)",
-                        border: "1px solid rgba(100,30,30,0.3)",
-                        color: "rgba(180,80,80,0.5)",
-                        cursor: "not-allowed",
-                        fontFamily: "Georgia,serif",
-                      }
-                }
-                onClick={!bossUnlockable ? (e) => e.preventDefault() : undefined}
-              >
-                {bossUnlockable ? "⚔️ Gå til Boss-kamp →" : "🔒 Fuldfør rummene først"}
-              </a>
-            )}
-          </div>
-
-          {/* Bottom accent */}
-          <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(120,30,30,0.3), transparent)" }} />
-        </div>
-      )}
-      </div>{/* end max-w-xl */}
     </div>
   );
 }

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePlayer, storeSession } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { LiveProgress } from "@/components/game/LiveProgress";
-import { GameLayout } from "@/components/layout/GameLayout";
 import type { DbGame, DbGameEvent } from "@/types/database";
 import { relativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -130,103 +129,262 @@ export default function DashboardPage({ params }: Props) {
   const gameStartedEvent = events.find((e) => e.event_type === "game_started");
 
   return (
-    <GameLayout
-      gameId={gameId}
-      teamId={myTeamId ?? undefined}
-      title="Dashboard"
+    <div
+      className="min-h-screen"
+      style={{ background: "linear-gradient(160deg, #0c0a09 0%, #080806 60%, #060808 100%)" }}
     >
-      {/* Game started banner — pinned at top */}
-      {gameStartedEvent && (
-        <div className="flex items-center gap-2 rounded-xl bg-amber-950/60 border border-amber-700/50 px-4 py-2 mb-4 text-sm text-amber-300">
-          <span>🏁</span>
-          <span className="font-medium">The Ritual has begun</span>
-          <span className="text-amber-600 text-xs ml-auto">{relativeTime(gameStartedEvent.created_at)}</span>
-        </div>
-      )}
-
-      {/* Host GM banner */}
-      {session.isHost && (
-        <Link
-          href={`/game/${gameId}/host`}
-          className="flex items-center gap-3 rounded-xl bg-amber-900/40 border border-amber-700/60 px-4 py-3 mb-4 hover:bg-amber-900/60 transition-colors"
+      {/* ── Slim nav ── */}
+      <div
+        className="sticky top-0 z-10 flex items-center justify-between px-4"
+        style={{
+          paddingTop: "max(12px, env(safe-area-inset-top, 12px))",
+          paddingBottom: "10px",
+          background: "rgba(10,8,6,0.9)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(180,130,50,0.08)",
+        }}
+      >
+        <div
+          className="text-xs uppercase tracking-[0.25em]"
+          style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}
         >
-          <span className="text-xl">🎮</span>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-amber-500 font-bold uppercase tracking-widest">Game Master</div>
-            <div className="text-sm font-bold text-amber-300">Host Controls →</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-stone-500">Code</div>
-            <div className="font-mono font-bold text-amber-400 text-sm tracking-widest">{game.code}</div>
-          </div>
-        </Link>
-      )}
-
-      {/* Role banner */}
-      {myRoleData && (
-        <div className="rounded-xl bg-purple-950/70 border-2 border-purple-500 p-4 mb-4 animate-pulse">
-          <div className="text-xs text-purple-400 font-bold uppercase tracking-widest mb-1">🎲 You have been assigned a role!</div>
-          <div className="text-lg font-bold text-purple-200">{myRoleData.label}</div>
-          <div className="text-sm text-purple-300 mt-1">{myRoleData.effect}</div>
-          <div className="text-xs text-purple-500 mt-2">This role was assigned by the host. Everyone can see it in the activity feed.</div>
+          ⚔ The Last Cold Beer
         </div>
-      )}
+        {session.isHost && (
+          <Link
+            href={`/game/${gameId}/host`}
+            className="text-xs px-2.5 py-1 rounded-md"
+            style={{
+              background: "rgba(180,130,50,0.12)",
+              border: "1px solid rgba(180,130,50,0.25)",
+              color: "rgba(180,130,50,0.7)",
+              fontFamily: "Georgia,serif",
+            }}
+          >
+            GM →
+          </Link>
+        )}
+        {!session.isHost && (
+          <div
+            className="font-mono text-xs tracking-widest"
+            style={{ color: "rgba(180,130,50,0.35)", fontFamily: "Georgia,serif" }}
+          >
+            #{game.code}
+          </div>
+        )}
+      </div>
 
-      {/* Team action button — uses server-verified team */}
-      {myTeamId && (
-        <Link
-          href={`/game/${gameId}/team/${myTeamId}`}
-          className="block w-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-center py-4 rounded-xl transition-colors border border-amber-400 mb-4"
+      <div className="max-w-xl mx-auto px-4 py-4 space-y-4 animate-dashboard-enter">
+
+        {/* ── Chapter title block ── */}
+        <div className="text-center py-2">
+          <div
+            className="text-[10px] uppercase tracking-[0.3em] mb-1"
+            style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}
+          >
+            Kapitel I
+          </div>
+          <div
+            className="text-2xl font-bold"
+            style={{
+              fontFamily: "Georgia,serif",
+              color: "rgba(245,225,170,0.95)",
+              textShadow: "0 2px 16px rgba(180,130,50,0.2)",
+            }}
+          >
+            The Last Cold Beer
+          </div>
+          {gameStartedEvent && (
+            <div
+              className="text-xs mt-1.5 flex items-center justify-center gap-1.5"
+              style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
+            >
+              <span>🏁</span>
+              <span>The Ritual has begun · {relativeTime(gameStartedEvent.created_at)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── Divider ── */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.15)" }} />
+          <span className="text-amber-800/40 text-xs">✦</span>
+          <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.15)" }} />
+        </div>
+
+        {/* ── Role banner ── */}
+        {myRoleData && (
+          <div
+            className="rounded-xl p-4"
+            style={{
+              background: "linear-gradient(160deg, #1a0830 0%, #120520 100%)",
+              border: "1.5px solid rgba(168,85,247,0.4)",
+              boxShadow: "0 0 20px rgba(168,85,247,0.08)",
+            }}
+          >
+            <div
+              className="text-[10px] uppercase tracking-[0.2em] mb-1"
+              style={{ color: "rgba(168,85,247,0.6)", fontFamily: "Georgia,serif" }}
+            >
+              🎲 Din rolle
+            </div>
+            <div
+              className="text-base font-bold mb-1"
+              style={{ color: "rgb(233,213,255)", fontFamily: "Georgia,serif" }}
+            >
+              {myRoleData.label}
+            </div>
+            <div
+              className="text-xs"
+              style={{ color: "rgba(196,181,253,0.75)", fontFamily: "Georgia,serif" }}
+            >
+              {myRoleData.effect}
+            </div>
+          </div>
+        )}
+
+        {/* ── Team Quest Board CTA ── */}
+        {myTeamId && (
+          <Link
+            href={`/game/${gameId}/team/${myTeamId}`}
+            className="block w-full rounded-xl overflow-hidden active:scale-[0.99] transition-transform"
+            style={{
+              background: "linear-gradient(160deg, #2a1c08 0%, #1c1208 60%, #140e06 100%)",
+              border: "1px solid rgba(180,130,50,0.35)",
+              boxShadow: "0 4px 20px rgba(180,130,50,0.08)",
+            }}
+          >
+            <div
+              className="h-px w-full"
+              style={{ background: "linear-gradient(90deg, transparent, rgba(180,130,50,0.45), transparent)" }}
+            />
+            <div className="px-5 py-4 flex items-center gap-4">
+              <div
+                className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0"
+                style={{
+                  background: "radial-gradient(circle, #2a1c08, #140e04)",
+                  border: "1px solid rgba(180,130,50,0.3)",
+                }}
+              >
+                🗺️
+              </div>
+              <div className="flex-1">
+                <div
+                  className="text-[10px] uppercase tracking-[0.2em] mb-0.5"
+                  style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
+                >
+                  Dit hold
+                </div>
+                <div
+                  className="text-base font-bold"
+                  style={{ color: "rgb(251,191,36)", fontFamily: "Georgia,serif" }}
+                >
+                  {teamName}
+                </div>
+                <div
+                  className="text-xs"
+                  style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
+                >
+                  Se quest board →
+                </div>
+              </div>
+              <div
+                className="text-xl"
+                style={{ color: "rgba(180,130,50,0.3)" }}
+              >
+                ›
+              </div>
+            </div>
+            <div
+              className="h-px w-full"
+              style={{ background: "linear-gradient(90deg, transparent, rgba(180,130,50,0.15), transparent)" }}
+            />
+          </Link>
+        )}
+
+        {/* ── Quick links: Case File + Boss ── */}
+        {myTeamId && (
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href={`/game/${gameId}/case-file?team=${myTeamId}`}
+              className="rounded-xl p-4 flex flex-col items-center gap-2 active:scale-[0.98] transition-transform"
+              style={{
+                background: "linear-gradient(160deg, #181410 0%, #100c08 100%)",
+                border: "1px solid rgba(180,130,50,0.18)",
+              }}
+            >
+              <span className="text-2xl">📁</span>
+              <div className="text-center">
+                <div className="text-xs font-bold" style={{ color: "rgba(245,225,170,0.8)", fontFamily: "Georgia,serif" }}>
+                  Case File
+                </div>
+                <div className="text-[10px]" style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}>
+                  Dine spor
+                </div>
+              </div>
+            </Link>
+            <Link
+              href={`/game/${gameId}/boss/locked-cooler?team=${myTeamId}`}
+              className="rounded-xl p-4 flex flex-col items-center gap-2 active:scale-[0.98] transition-transform"
+              style={{
+                background: "linear-gradient(160deg, #1a0505 0%, #0e0303 100%)",
+                border: "1px solid rgba(180,40,40,0.22)",
+              }}
+            >
+              <span className="text-2xl">🔒</span>
+              <div className="text-center">
+                <div className="text-xs font-bold" style={{ color: "rgba(254,202,202,0.8)", fontFamily: "Georgia,serif" }}>
+                  Boss Fight
+                </div>
+                <div className="text-[10px]" style={{ color: "rgba(180,80,80,0.4)", fontFamily: "Georgia,serif" }}>
+                  Den Låste Køler
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* ── Section divider ── */}
+        <div
+          className="text-[9px] uppercase tracking-[0.3em] flex items-center gap-2"
+          style={{ color: "rgba(180,130,50,0.3)", fontFamily: "Georgia,serif" }}
         >
-          🗺️ Go to {teamName}&apos;s Quest Board →
-        </Link>
-      )}
-
-      {/* Quick links — Case File + Boss Fight */}
-      {myTeamId && (
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <Link
-            href={`/game/${gameId}/case-file?team=${myTeamId}`}
-            className="rounded-xl bg-stone-800 border border-stone-600 p-3 text-center hover:bg-stone-700 transition-colors"
-          >
-            <div className="text-2xl mb-1">📁</div>
-            <div className="text-sm font-medium text-stone-200">Case File</div>
-            <div className="text-xs text-stone-500">Your clues</div>
-          </Link>
-          <Link
-            href={`/game/${gameId}/boss/locked-cooler?team=${myTeamId}`}
-            className="rounded-xl bg-stone-800 border border-stone-600 p-3 text-center hover:bg-stone-700 transition-colors"
-          >
-            <div className="text-2xl mb-1">🔒</div>
-            <div className="text-sm font-medium text-stone-200">Boss Fight</div>
-            <div className="text-xs text-stone-500">The Locked Cooler</div>
-          </Link>
+          <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.08)" }} />
+          Live status
+          <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.08)" }} />
         </div>
-      )}
 
-      {/* Live progress */}
-      <div className="mb-4">
-        <h3 className="text-xs text-stone-500 uppercase tracking-widest mb-2 font-medium">
-          Live Progress
-        </h3>
+        {/* ── Live progress ── */}
         <LiveProgress
           gameId={gameId}
           myTeamId={myTeamId as import("@/types/content").TeamId | null}
           teamAName={game.team_a_name}
           teamBName={game.team_b_name}
         />
+
+        {/* ── Section divider ── */}
+        <div
+          className="text-[9px] uppercase tracking-[0.3em] flex items-center gap-2"
+          style={{ color: "rgba(180,130,50,0.3)", fontFamily: "Georgia,serif" }}
+        >
+          <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.08)" }} />
+          Feltrapporter
+          <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.08)" }} />
+        </div>
+
+        {/* ── Activity feed ── */}
+        <ActivityFeed
+          events={events}
+          game={game}
+          teamProgress={teamProgress}
+          myTeamId={myTeamId}
+          isHost={session.isHost}
+        />
+
+        {/* Bottom padding for safe area */}
+        <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
       </div>
-
-      {/* Activity feed */}
-      <ActivityFeed
-        events={events}
-        game={game}
-        teamProgress={teamProgress}
-        myTeamId={myTeamId}
-        isHost={session.isHost}
-      />
-
-    </GameLayout>
+    </div>
   );
 }
 
@@ -283,31 +441,68 @@ function TeamScoreBar({ label, color, offerSpent, offerDef, rooms, isMe }: {
   rooms: number;
   isMe: boolean;
 }) {
-  const border = color === "orange" ? "border-orange-700/60" : "border-cyan-700/60";
-  const bg = color === "orange" ? "bg-orange-950/40" : "bg-cyan-950/40";
-  const accent = color === "orange" ? "text-orange-300" : "text-cyan-300";
-  const dimAccent = color === "orange" ? "text-orange-500" : "text-cyan-500";
-  const barFill = color === "orange" ? "bg-orange-500" : "bg-cyan-500";
-
+  const isOrange = color === "orange";
   return (
-    <div className={cn("rounded-xl p-3 border flex-1", bg, border, isMe && "ring-1 ring-offset-1 ring-offset-stone-950", isMe && (color === "orange" ? "ring-orange-600" : "ring-cyan-600"))}>
+    <div
+      className="rounded-xl p-3 flex-1"
+      style={{
+        background: isOrange ? "linear-gradient(160deg, #1c0e05 0%, #120a04 100%)" : "linear-gradient(160deg, #05141c 0%, #040e14 100%)",
+        border: isMe
+          ? `1.5px solid ${isOrange ? "rgba(251,146,60,0.5)" : "rgba(34,211,238,0.5)"}`
+          : `1px solid ${isOrange ? "rgba(180,80,20,0.25)" : "rgba(20,120,160,0.25)"}`,
+        boxShadow: isMe ? `0 0 12px ${isOrange ? "rgba(251,146,60,0.08)" : "rgba(34,211,238,0.08)"}` : "none",
+      }}
+    >
       <div className="flex items-center justify-between mb-2">
         <div>
-          <div className="font-bold text-white text-sm">{label}</div>
-          {isMe && <div className={cn("text-xs font-medium", accent)}>You</div>}
+          <div
+            className="font-bold text-xs truncate max-w-[90px]"
+            style={{ color: isOrange ? "rgb(251,191,36)" : "rgb(103,232,249)", fontFamily: "Georgia,serif" }}
+          >
+            {label}
+          </div>
+          {isMe && (
+            <div
+              className="text-[9px] uppercase tracking-widest"
+              style={{ color: isOrange ? "rgba(251,146,60,0.6)" : "rgba(34,211,238,0.6)", fontFamily: "Georgia,serif" }}
+            >
+              Dit hold
+            </div>
+          )}
         </div>
         <div className="text-right">
-          <div className={cn("text-xl font-bold leading-none", accent)}>🍺 {offerSpent}</div>
-          <div className={cn("text-xs", dimAccent)}>sips taken</div>
+          <div
+            className="text-base font-bold leading-none"
+            style={{ color: isOrange ? "rgb(251,191,36)" : "rgb(103,232,249)", fontFamily: "Georgia,serif" }}
+          >
+            🍺 {offerSpent}
+          </div>
+          <div
+            className="text-[10px]"
+            style={{ color: isOrange ? "rgba(251,146,60,0.5)" : "rgba(34,211,238,0.5)", fontFamily: "Georgia,serif" }}
+          >
+            ✓ {rooms} rum
+          </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 text-xs text-stone-400">
-        <span>✅ {rooms} rooms</span>
+      <div
+        className="h-1 rounded-full overflow-hidden"
+        style={{ background: isOrange ? "rgba(40,15,5,0.9)" : "rgba(5,20,40,0.9)" }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{
+            width: `${Math.min(100, offerSpent * 10)}%`,
+            background: isOrange ? "linear-gradient(90deg, #c2410c, #fb923c)" : "linear-gradient(90deg, #0e7490, #22d3ee)",
+          }}
+        />
       </div>
-      <div className="mt-2 h-1.5 bg-stone-700 rounded-full overflow-hidden">
-        <div className={cn("h-full rounded-full transition-all duration-700", barFill)} style={{ width: `${Math.min(100, offerSpent * 10)}%` }} />
+      <div
+        className="text-[10px] mt-1 italic truncate"
+        style={{ color: isOrange ? "rgba(251,146,60,0.4)" : "rgba(34,211,238,0.4)", fontFamily: "Georgia,serif" }}
+      >
+        {offerSpent > 0 ? `${offerSpent}× ${offerDef}` : "Ingen sips endnu"}
       </div>
-      <div className={cn("text-xs mt-1 italic truncate", dimAccent)}>{offerSpent > 0 ? `${offerSpent}× ${offerDef}` : "No sips yet"}</div>
     </div>
   );
 }

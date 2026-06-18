@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { submitQuestAnswer, completeQuest, useHint } from "@/lib/game/actions";
 import { Button } from "@/components/ui/Button";
+import { ClueCard } from "@/components/game/ClueCard";
 import { RoomSceneFullscreen } from "@/components/game/RoomSceneFullscreen";
 import { getRoom, getQuestsByRoom, getClue } from "@/content/index";
 import { localizeRoom, localizeQuests } from "@/lib/content/localize";
@@ -26,6 +27,7 @@ export default function RoomPage({ params }: Props) {
   const [teamClues, setTeamClues] = useState<DbTeamClue[]>([]);
   const [newClues, setNewClues] = useState<string[]>([]);
   const [entered, setEntered] = useState(false);
+  const [showCluesPanel, setShowCluesPanel] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => setEntered(true), 50);
@@ -248,19 +250,22 @@ export default function RoomPage({ params }: Props) {
             </span>
           </div>
 
-          {/* Clue badge */}
-          {roomClueCount > 0 ? (
-            <div
-              className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold"
+          {/* Clue badge — always shown if room has clues */}
+          {room.rewardClueIds.length > 0 ? (
+            <button
+              onClick={() => setShowCluesPanel(true)}
+              className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold active:scale-95 transition-transform"
               style={{
-                background: "rgba(0,0,0,0.45)",
-                border: "1px solid rgba(180,130,50,0.35)",
-                color: "rgb(251,191,36)",
+                background: roomClueCount > 0 ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.35)",
+                border: roomClueCount > 0
+                  ? "1px solid rgba(180,130,50,0.45)"
+                  : "1px solid rgba(180,130,50,0.15)",
+                color: roomClueCount > 0 ? "rgb(251,191,36)" : "rgba(180,130,50,0.4)",
                 fontFamily: "Georgia,serif",
               }}
             >
-              🔍 {roomClueCount}
-            </div>
+              🔍 {roomClueCount > 0 ? roomClueCount : "?"}
+            </button>
           ) : (
             <div className="w-14" />
           )}
@@ -308,6 +313,90 @@ export default function RoomPage({ params }: Props) {
           </div>
         );
       })}
+
+      {/* ── Layer 6b: Clue panel overlay ── */}
+      {showCluesPanel && (
+        <div
+          className="absolute inset-0 z-[35]"
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(2px)" }}
+          onClick={() => setShowCluesPanel(false)}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 animate-sheet-up rounded-t-2xl"
+            style={{
+              background: "rgba(12,10,6,0.98)",
+              backdropFilter: "blur(16px)",
+              borderTop: "1px solid rgba(180,130,50,0.25)",
+              maxHeight: "72vh",
+              overflowY: "auto",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-8 h-[3px] rounded-full" style={{ background: "rgba(180,130,50,0.22)" }} />
+            </div>
+            <div className="px-4 pb-8">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div
+                    className="text-[9px] uppercase tracking-[0.25em] mb-0.5"
+                    style={{ color: "rgba(180,130,50,0.45)", fontFamily: "Georgia,serif" }}
+                  >
+                    {room.title}
+                  </div>
+                  <div
+                    className="text-sm font-bold"
+                    style={{ color: "rgba(245,225,170,0.9)", fontFamily: "Georgia,serif" }}
+                  >
+                    Clues
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCluesPanel(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full"
+                  style={{ background: "rgba(180,130,50,0.1)", color: "rgba(180,130,50,0.6)" }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Clues list */}
+              <div className="space-y-3">
+                {room.rewardClueIds.map((clueId) => {
+                  const clue = getClue(clueId);
+                  const discovered = teamClues.find((tc) => tc.clue_id === clueId);
+                  if (!clue) return null;
+                  if (!discovered) {
+                    return (
+                      <div
+                        key={clueId}
+                        className="rounded-xl p-4"
+                        style={{
+                          background: "rgba(255,255,255,0.02)",
+                          border: "1px solid rgba(180,130,50,0.08)",
+                        }}
+                      >
+                        <div
+                          className="text-sm italic"
+                          style={{ color: "rgba(120,80,20,0.5)", fontFamily: "Georgia,serif" }}
+                        >
+                          {t("room.clue_locked")}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <ClueCard key={clueId} clue={clue} discoveredAt={discovered.discovered_at} />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Layer 6: Bottom quest sheet ── */}
       <div
