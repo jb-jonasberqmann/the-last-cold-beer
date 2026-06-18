@@ -29,19 +29,19 @@ function wp(cx: number, cy: number, r: number, shift = 0, n = 12): string {
 // Linear spine: Kitchen → Fridge → Terrace → Shed → Boss
 // Coffee Table: secret branch off Kitchen (right side)
 const CH1_NODES = [
-  { id: "kitchen",      cx: 160, cy: 404, r: 12, shift: 2, isSecret: false },
-  { id: "fridge",       cx: 160, cy: 314, r: 12, shift: 4, isSecret: false },
-  { id: "terrace",      cx: 160, cy: 224, r: 10, shift: 6, isSecret: false },
-  { id: "shed",         cx: 160, cy: 144, r: 10, shift: 3, isSecret: false },
-  { id: "coffee-table", cx: 220, cy: 355, r: 11, shift: 1, isSecret: true  },
+  { id: "kitchen",      cx: 170, cy: 404, r: 11, shift: 2, isSecret: false },
+  { id: "fridge",       cx: 170, cy: 314, r: 11, shift: 4, isSecret: false },
+  { id: "terrace",      cx: 170, cy: 224, r:  9, shift: 6, isSecret: false },
+  { id: "shed",         cx: 170, cy: 144, r:  9, shift: 3, isSecret: false },
+  { id: "coffee-table", cx: 214, cy: 355, r: 10, shift: 1, isSecret: true  },
 ] as const;
 
 const CH1_PATHS = [
-  { from: "kitchen",      to: "fridge",        d: "M160,390 L160,326",                         secret: false },
-  { from: "fridge",       to: "terrace",        d: "M160,300 L160,236",                         secret: false },
-  { from: "terrace",      to: "shed",           d: "M160,212 L160,156",                         secret: false },
-  { from: "shed",         to: "boss",           d: "M160,132 L160,82",                          secret: false },
-  { from: "kitchen",      to: "coffee-table",   d: "M172,398 C185,385 205,372 209,362",         secret: true  },
+  { from: "kitchen",      to: "fridge",        d: "M170,391 L170,326",                         secret: false },
+  { from: "fridge",       to: "terrace",        d: "M170,301 L170,234",                         secret: false },
+  { from: "terrace",      to: "shed",           d: "M170,213 L170,154",                         secret: false },
+  { from: "shed",         to: "boss",           d: "M170,133 L170,103",                         secret: false },
+  { from: "kitchen",      to: "coffee-table",   d: "M181,398 C194,385 206,373 204,365",         secret: true  },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -111,13 +111,14 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Start scrolled to bottom — shows kitchen/fridge first; scroll up to reveal boss
+  // Start at top (show chapter title), then smooth-scroll to bottom after a beat
   useEffect(() => {
-    requestAnimationFrame(() => {
+    const id = setTimeout(() => {
       if (mapScrollRef.current) {
-        mapScrollRef.current.scrollTop = mapScrollRef.current.scrollHeight;
+        mapScrollRef.current.scrollTo({ top: mapScrollRef.current.scrollHeight, behavior: "smooth" });
       }
-    });
+    }, 900);
+    return () => clearTimeout(id);
   }, []);
 
   const canInteract = !session?.isHost;
@@ -312,15 +313,6 @@ export default function TeamQuestBoardPage({ params }: Props) {
           </text>
           <line x1="102" y1="68" x2="238" y2="68" stroke="#5a3010" strokeWidth={0.7} opacity={0.5} />
 
-          {/* Compass rose — centered to stay within the 2.2× crop window */}
-          <g transform="translate(225,460)">
-            <circle cx="0" cy="0" r="12" stroke="#5a3010" strokeWidth={0.8} fill="#c8a040" opacity={0.9} />
-            <line x1="0" y1="-9" x2="0" y2="9" stroke="#5a3010" strokeWidth={1} />
-            <line x1="-9" y1="0" x2="9" y2="0" stroke="#5a3010" strokeWidth={1} />
-            <polygon points="0,-9 -2,-4 0,-6 2,-4" fill="#5a3010" />
-            <text x="0" y="-11" textAnchor="middle" fontFamily="Georgia,serif" fontSize={6} fill="#3a2208">N</text>
-          </g>
-
           {/* Paths */}
           {CH1_PATHS.map(({ from, to, d, secret }) => (
             <path
@@ -336,7 +328,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
           {/* Secret branch label */}
           <text
-            x="210" y="382"
+            x="205" y="382"
             textAnchor="middle"
             fontFamily="Georgia,serif"
             fontSize={5.5}
@@ -356,15 +348,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
             }}
             style={{ cursor: canInteract ? "pointer" : "default" }}
           >
-            <circle cx="160" cy="92" r="22" fill="transparent" />
+            <circle cx="170" cy="92" r="22" fill="transparent" />
             <polygon
-              points={wp(160, 92, 11, 0)}
+              points={wp(170, 92, 11, 0)}
               fill="#5a1010"
               stroke="#c0392b"
               strokeWidth={1.8}
             />
             <text
-              x="160" y="89"
+              x="170" y="89"
               textAnchor="middle"
               fontFamily="Georgia,serif"
               fontSize={9}
@@ -373,7 +365,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               ◉  ◉
             </text>
             <text
-              x="160" y="116"
+              x="170" y="116"
               textAnchor="middle"
               fontFamily="Georgia,serif"
               fontSize={6}
@@ -415,6 +407,17 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 {/* Secret glow ring */}
                 {isSecret && state !== "locked" && (
                   <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#3ab8c8" strokeWidth={0.8} opacity={0.4} strokeDasharray="2,3" />
+                )}
+
+                {/* Pulse ring — active or can_unlock rooms */}
+                {(state === "active" || state === "can_unlock") && (
+                  <circle cx={cx} cy={cy} r={r + 3} fill="none"
+                    stroke={isSecret ? "#3ab8c8" : state === "active" ? "#c0392b" : "#2a9a4a"}
+                    strokeWidth={1.8} opacity={0}
+                  >
+                    <animate attributeName="r" values={`${r + 2};${r + 18};${r + 2}`} dur="2.4s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.75;0;0.75" dur="2.4s" repeatCount="indefinite" />
+                  </circle>
                 )}
 
                 {/* Node shape */}

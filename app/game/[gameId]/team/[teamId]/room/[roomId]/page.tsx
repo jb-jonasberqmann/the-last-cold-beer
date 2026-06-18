@@ -398,8 +398,72 @@ export default function RoomPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Layer 6: Bottom quest sheet ── */}
-      <div
+      {/* ── Layer 7: Room cleared — full-screen overlay ── */}
+      {allRequiredDone && (
+        <div
+          className="absolute inset-0 z-[45] flex flex-col items-center justify-end animate-sheet-up"
+          style={{
+            background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(5,3,1,0.82) 45%, rgba(5,3,1,0.97) 100%)",
+            backdropFilter: "blur(4px)",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
+        >
+          <div className="px-6 pb-10 w-full max-w-sm text-center">
+            {/* Decorative line */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.25)" }} />
+              <span className="text-amber-600 text-lg animate-flame inline-block">✦</span>
+              <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.25)" }} />
+            </div>
+
+            {/* Eyebrow */}
+            <div
+              className="text-[10px] uppercase tracking-[0.3em] mb-2"
+              style={{ color: "rgba(180,130,50,0.55)", fontFamily: "Georgia,serif" }}
+            >
+              Rum Ryddet
+            </div>
+
+            {/* Room title */}
+            <div
+              className="font-bold text-2xl mb-2 leading-tight"
+              style={{
+                fontFamily: "Georgia,serif",
+                color: "rgb(251,191,36)",
+                textShadow: "0 2px 16px rgba(180,120,0,0.4)",
+              }}
+            >
+              {room.title}
+            </div>
+
+            {/* Sub */}
+            <p
+              className="text-sm italic mb-8"
+              style={{ color: "rgba(180,150,80,0.55)", fontFamily: "Georgia,serif" }}
+            >
+              {t("room.all_done_sub")}
+            </p>
+
+            {/* CTA */}
+            <a
+              href={`/game/${gameId}/team/${teamId}`}
+              className="flex items-center justify-center gap-2 w-full font-bold px-6 py-4 rounded-xl text-base transition-all active:scale-95"
+              style={{
+                background: "linear-gradient(160deg, rgba(140,90,15,0.6), rgba(80,50,5,0.55))",
+                border: "1px solid rgba(180,130,50,0.5)",
+                color: "rgb(251,191,36)",
+                fontFamily: "Georgia,serif",
+                boxShadow: "0 4px 24px rgba(120,80,0,0.25), inset 0 1px 0 rgba(255,220,80,0.1)",
+              }}
+            >
+              ← {t("room.back_to_board")}
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* ── Layer 6: Bottom quest sheet (hidden when room cleared) ── */}
+      {!allRequiredDone && <div
         className={cn(
           "absolute bottom-0 left-3 right-3 z-[20]",
           entered ? "animate-sheet-up" : "translate-y-full opacity-60"
@@ -539,60 +603,9 @@ export default function RoomPage({ params }: Props) {
               </div>
             )}
 
-            {/* ── Room cleared — victory ── */}
-            {allRequiredDone && (
-              <div
-                className="mt-1 rounded-xl border p-4 text-center animate-victory-in"
-                style={{
-                  background: "linear-gradient(160deg, #1c1208 0%, #0c0a05 100%)",
-                  borderColor: "rgba(180,130,50,0.3)",
-                  boxShadow: "0 0 24px rgba(180,130,40,0.1)",
-                  fontFamily: "Georgia,serif",
-                }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.2)" }} />
-                  <span
-                    className="text-amber-600 text-base animate-flame inline-block"
-                  >
-                    ✦
-                  </span>
-                  <div className="flex-1 h-px" style={{ background: "rgba(180,130,50,0.2)" }} />
-                </div>
-                <div
-                  className="text-[10px] uppercase tracking-[0.22em] mb-0.5"
-                  style={{ color: "rgba(180,130,50,0.5)" }}
-                >
-                  Room Cleared
-                </div>
-                <div
-                  className="font-bold text-amber-200 text-base mb-0.5"
-                >
-                  {t("room.all_done")}
-                </div>
-                <p
-                  className="text-xs italic mb-4"
-                  style={{ color: "rgba(180,130,50,0.4)" }}
-                >
-                  {t("room.all_done_sub")}
-                </p>
-                <a
-                  href={`/game/${gameId}/team/${teamId}`}
-                  className="inline-flex items-center gap-2 font-bold px-5 py-2.5 rounded-lg text-sm border transition-colors"
-                  style={{
-                    background: "rgba(120,80,20,0.3)",
-                    borderColor: "rgba(180,130,50,0.35)",
-                    color: "rgb(251,191,36)",
-                    fontFamily: "Georgia,serif",
-                  }}
-                >
-                  ← {t("room.back_to_board")}
-                </a>
-              </div>
-            )}
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
