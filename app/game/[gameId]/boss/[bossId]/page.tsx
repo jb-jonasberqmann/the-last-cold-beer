@@ -161,6 +161,31 @@ export default function BossFightPage({ params }: Props) {
 
   const hasClue = (clueId: string) => teamClues.some((tc) => tc.clue_id === clueId);
 
+  // Secret room advantages
+  const hasBossFreeAction = roomProgress.some(
+    (rp) => rp.room_id === "coffee-table" && rp.status === "complete"
+  );
+  const freeActionUsedKey = `boss_free_action_used_${gameId}_${teamId}_${bossId}`;
+  const [freeActionUsed, setFreeActionUsed] = useState(() => {
+    try { return !!localStorage.getItem(freeActionUsedKey); } catch { return false; }
+  });
+  const handleFreeAction = async () => {
+    // Apply a free 20-damage offer_boost action without Offer cost
+    setLoading("free-action");
+    const result = await dealBossDamage(gameId, teamId, bossId, "cooler-p1-offer-boost", "", true);
+    setLoading(null);
+    try { localStorage.setItem(freeActionUsedKey, "1"); } catch {}
+    setFreeActionUsed(true);
+    if (result.success) {
+      setFeedback({
+        actionId: "free-action",
+        text: `🎯 Sofabord-fordel anvendt! ${result.data.damage > 0 ? `${result.data.damage} skade.` : ""} ${result.data.rewardText ?? ""}`,
+        success: true,
+      });
+      fetchData();
+    }
+  };
+
   const handleAction = async (action: BossAction, answerOverride?: string) => {
     setLoading(action.id);
     const result = await dealBossDamage(
@@ -282,6 +307,33 @@ export default function BossFightPage({ params }: Props) {
                   <span className="text-red-500" style={{ fontFamily: "Georgia, serif" }}>
                     {otherBossProgress.current_hp}/{boss.maxHp} HP
                   </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Secret room advantage */}
+          {hasBossFreeAction && canInteract && !isDefeated && (
+            <div className="rounded-xl bg-cyan-950/40 border border-cyan-800/50 p-4 mb-4">
+              <div style={{ fontFamily: "Georgia, serif" }}>
+                <div className="text-xs text-cyan-500 uppercase tracking-widest font-bold mb-1">
+                  🎯 Sofabord-fordel
+                </div>
+                {freeActionUsed ? (
+                  <div className="text-xs text-cyan-900">Gratis handling allerede brugt.</div>
+                ) : (
+                  <>
+                    <div className="text-sm text-cyan-300 mb-2">
+                      I fandt sofabordets hemmelighed. Brug én gratis handling mod bossen uden Offer-omkostning.
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleFreeAction}
+                      loading={loading === "free-action"}
+                    >
+                      ★ Brug gratis handling
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

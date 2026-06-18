@@ -93,7 +93,9 @@ export const ROOMS: Room[] = [
     unlockRequires: ["kitchen"],
     questIds: ["coffee-table-ring", "coffee-table-coaster", "coffee-table-social"],
     rewardClueIds: ["clue-coffee-table-ring", "clue-coffee-table-coaster"],
-    isOptional: false,
+    isOptional: true,
+    isSecret: true,
+    secretAdvantage: "boss_free_action",
     order: 3,
     da: {
       title: "Sofabordet",
@@ -150,9 +152,9 @@ export const ROOMS: Room[] = [
     description:
       "The shed hasn't been properly cleaned since the cabin was built. Somewhere in here is the cabin's official inventory — yes, someone actually made one — and it includes an entry that explains why the cooler is locked.",
     lockedDescription:
-      "The shed. Stuck door. You need to have investigated the terrace first.",
+      "The shed. Stuck door. Complete the terrace first.",
     unlockCost: 1,
-    unlockRequires: ["terrace", "coffee-table"],
+    unlockRequires: ["terrace"],
     questIds: ["shed-unlock", "shed-inventory", "shed-dedication"],
     rewardClueIds: ["clue-shed-inventory"],
     isOptional: false,
@@ -160,7 +162,7 @@ export const ROOMS: Room[] = [
     da: {
       title: "Skuret",
       description: "Skuret er ikke ordenligt rengjort siden hytten blev bygget. Et sted herinde er hyttens officielle inventarliste — ja, nogen lavede faktisk en — og den indeholder en post der forklarer hvorfor køleren er låst.",
-      lockedDescription: "Skuret. Stiv dør. Du skal have undersøgt terrassen og sofabordet først.",
+      lockedDescription: "Skuret. Stiv dør. Fuldfør terrassen først.",
       atmosphere: "Fugtigt træ. Rustlugt. En gammel ødelagt stol i hjørnet. Og der, på væggen, lamineret og fastgjort med rigtige tegnestifter: et officielt udseende inventarark.",
     },
   },

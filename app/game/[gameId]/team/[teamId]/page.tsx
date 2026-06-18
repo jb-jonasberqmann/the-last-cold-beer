@@ -9,6 +9,8 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import type { DbGame, DbRoomProgress } from "@/types/database";
 import type { TeamId } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
+import { localizeRoom } from "@/lib/content/localize";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -25,22 +27,22 @@ function wp(cx: number, cy: number, r: number, shift = 0, n = 12): string {
   }).join(" ");
 }
 
-// Chapter 1 node layout — portrait orientation, boss at top, kitchen at bottom
+// Linear spine: Kitchen → Fridge → Terrace → Shed → Boss
+// Coffee Table: secret branch off Kitchen (right side)
 const CH1_NODES = [
-  { id: "kitchen",      cx: 150, cy: 314, r: 12, shift: 2, label: "KØKKEN" },
-  { id: "coffee-table", cx: 78,  cy: 222, r: 12, shift: 1, label: "SOFABORD" },
-  { id: "fridge",       cx: 224, cy: 222, r: 12, shift: 4, label: "KØLESKAB" },
-  { id: "shed",         cx: 78,  cy: 132, r: 10, shift: 3, label: "SKUR" },
-  { id: "terrace",      cx: 224, cy: 132, r: 10, shift: 6, label: "TERRASSE" },
+  { id: "kitchen",      cx: 160, cy: 404, r: 12, shift: 2, isSecret: false },
+  { id: "fridge",       cx: 160, cy: 314, r: 12, shift: 4, isSecret: false },
+  { id: "terrace",      cx: 160, cy: 224, r: 10, shift: 6, isSecret: false },
+  { id: "shed",         cx: 160, cy: 144, r: 10, shift: 3, isSecret: false },
+  { id: "coffee-table", cx: 274, cy: 360, r: 11, shift: 1, isSecret: true  },
 ] as const;
 
 const CH1_PATHS = [
-  { from: "kitchen",      to: "coffee-table", d: "M145,305 C124,284 90,260 80,244" },
-  { from: "kitchen",      to: "fridge",       d: "M155,305 C176,284 216,260 224,244" },
-  { from: "coffee-table", to: "shed",         d: "M77,212 L76,146" },
-  { from: "fridge",       to: "terrace",      d: "M222,212 L224,146" },
-  { from: "shed",         to: "boss",         d: "M77,120 C102,98 130,78 140,70" },
-  { from: "terrace",      to: "boss",         d: "M220,120 C196,98 170,78 160,70" },
+  { from: "kitchen",      to: "fridge",        d: "M160,390 L160,326",                         secret: false },
+  { from: "fridge",       to: "terrace",        d: "M160,300 L160,236",                         secret: false },
+  { from: "terrace",      to: "shed",           d: "M160,212 L160,156",                         secret: false },
+  { from: "shed",         to: "boss",           d: "M160,132 L160,82",                          secret: false },
+  { from: "kitchen",      to: "coffee-table",   d: "M172,398 C210,386 248,374 262,369",         secret: true  },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -55,11 +57,21 @@ const NODE_STYLES: Record<NodeState, {
   locked:     { fill: "#c4a840", stroke: "#8a6020", strokeWidth: 1.2, opacity: 0.42, textColor: "#5a3808" },
 };
 
+const SECRET_NODE_STYLES: Record<NodeState, {
+  fill: string; stroke: string; strokeWidth: number; opacity: number; textColor: string;
+}> = {
+  done:       { fill: "#1a4a5a", stroke: "#3ab8c8", strokeWidth: 1.6, opacity: 1,    textColor: "#a0e8f8" },
+  active:     { fill: "#1e5a6e", stroke: "#3ab8c8", strokeWidth: 2.2, opacity: 1,    textColor: "#a0f0ff" },
+  can_unlock: { fill: "#163848", stroke: "#3ab8c8", strokeWidth: 1.8, opacity: 1,    textColor: "#70d8e8" },
+  locked:     { fill: "#0e2030", stroke: "#3a6878", strokeWidth: 1.2, opacity: 0.55, textColor: "#4a8898" },
+};
+
 // ─── Component ──────────────────────────────────────────────────────────────
 export default function TeamQuestBoardPage({ params }: Props) {
   const { gameId, teamId } = params;
   const router = useRouter();
   const { session } = usePlayer();
+  const { lang } = useLanguage();
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [roomProgress, setRoomProgress] = useState<DbRoomProgress[]>([]);
@@ -79,7 +91,6 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Host observes only — does not interact
   const canInteract = !session?.isHost;
 
   const getRoomStatus = (roomId: string): DbRoomProgress["status"] => {
@@ -97,15 +108,20 @@ export default function TeamQuestBoardPage({ params }: Props) {
     return prereqsMet ? "can_unlock" : "locked";
   };
 
-  const nodeSymbol = (state: NodeState, cost: number): string => {
+  const nodeSymbol = (state: NodeState, cost: number, isSecret: boolean): string => {
     if (state === "done") return "✓";
     if (state === "active") return "✕";
-    if (state === "can_unlock") return cost > 0 ? String(cost) : "○";
-    return "?";
+    if (state === "can_unlock") return cost > 0 ? String(cost) : isSecret ? "★" : "○";
+    return isSecret ? "★" : "?";
   };
 
-  const pathOpacity = (fromId: string, toId: string): number => {
-    const from = getNodeState(fromId as string);
+  const pathOpacity = (fromId: string, toId: string, secret: boolean): number => {
+    if (secret) {
+      const from = getNodeState(fromId);
+      if (from === "done" || from === "active") return 0.65;
+      return 0.25;
+    }
+    const from = getNodeState(fromId);
     if (fromId === "boss" || toId === "boss") {
       const other = fromId === "boss" ? getNodeState(toId) : getNodeState(fromId);
       return other === "done" ? 0.25 : 0.13;
@@ -149,7 +165,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
   const chapter = getChapter(game.current_chapter_id);
   const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
-  const pendingRoom = pendingUnlock ? getRoom(pendingUnlock) : null;
+  const rawPendingRoom = pendingUnlock ? getRoom(pendingUnlock) : null;
+  const pendingRoom = rawPendingRoom ? localizeRoom(rawPendingRoom, lang) : null;
+
+  // Check if coffee-table (secret) is complete — for boss advantage display
+  const secretRoomDone = getRoomStatus("coffee-table") === "complete";
 
   return (
     <GameLayout
@@ -159,8 +179,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
       backLabel="Dashboard"
       title={teamName}
     >
-      {/* ── Blæk-cirkel / Nat-Atlas map ── */}
-      <div className="w-full mb-4 select-none">
+      {/* ── Map + modal container ── */}
+      <div className="w-full mb-4 select-none relative">
         <svg
           viewBox="0 0 340 520"
           width="100%"
@@ -261,20 +281,33 @@ export default function TeamQuestBoardPage({ params }: Props) {
             <text x="0" y="14" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3a2208">FASE I</text>
           </g>
 
-          {/* Amber dashed paths */}
-          {CH1_PATHS.map(({ from, to, d }) => (
+          {/* Paths */}
+          {CH1_PATHS.map(({ from, to, d, secret }) => (
             <path
               key={`${from}-${to}`}
               d={d}
-              stroke="#c88020"
-              strokeWidth={1.3}
+              stroke={secret ? "#3ab8c8" : "#c88020"}
+              strokeWidth={secret ? 1.1 : 1.3}
               fill="none"
-              strokeDasharray="4,4"
-              opacity={pathOpacity(from, to)}
+              strokeDasharray={secret ? "3,5" : "4,4"}
+              opacity={pathOpacity(from, to, secret)}
             />
           ))}
 
-          {/* Boss node — always visible, dark red */}
+          {/* Secret branch label */}
+          <text
+            x="232" y="370"
+            textAnchor="middle"
+            fontFamily="Georgia,serif"
+            fontSize={5.5}
+            fill="#3ab8c8"
+            opacity={0.6}
+            letterSpacing={1}
+          >
+            hemmeligt
+          </text>
+
+          {/* Boss node */}
           <g
             onClick={() => {
               if (canInteract && chapter) {
@@ -283,16 +316,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
             }}
             style={{ cursor: canInteract ? "pointer" : "default" }}
           >
-            {/* Larger invisible touch target */}
-            <circle cx="150" cy="92" r="22" fill="transparent" />
+            <circle cx="160" cy="92" r="22" fill="transparent" />
             <polygon
-              points={wp(150, 92, 11, 0)}
+              points={wp(160, 92, 11, 0)}
               fill="#5a1010"
               stroke="#c0392b"
               strokeWidth={1.8}
             />
             <text
-              x="150" y="89"
+              x="160" y="89"
               textAnchor="middle"
               fontFamily="Georgia,serif"
               fontSize={9}
@@ -301,7 +333,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               ◉  ◉
             </text>
             <text
-              x="150" y="116"
+              x="160" y="116"
               textAnchor="middle"
               fontFamily="Georgia,serif"
               fontSize={6}
@@ -312,14 +344,23 @@ export default function TeamQuestBoardPage({ params }: Props) {
           </g>
 
           {/* Room nodes */}
-          {CH1_NODES.map(({ id, cx, cy, r, shift, label }) => {
+          {CH1_NODES.map(({ id, cx, cy, r, shift, isSecret }) => {
             const state = getNodeState(id);
             const room = getRoom(id);
-            const s = NODE_STYLES[state];
-            const symbol = nodeSymbol(state, room?.unlockCost ?? 0);
+            const s = isSecret ? SECRET_NODE_STYLES[state] : NODE_STYLES[state];
+            const symbol = nodeSymbol(state, room?.unlockCost ?? 0, isSecret);
             const clickable = canInteract && state !== "locked";
             const labelY = cy + r + 14;
             const subY   = cy + r + 23;
+
+            // Danish labels
+            const LABELS: Record<string, string> = {
+              kitchen:       "KØKKEN",
+              fridge:        "KØLESKAB",
+              terrace:       "TERRASSE",
+              shed:          "SKUR",
+              "coffee-table": "SOFABORD",
+            };
 
             return (
               <g
@@ -328,10 +369,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 style={{ cursor: clickable ? "pointer" : "default" }}
                 opacity={s.opacity}
               >
-                {/* Invisible touch target (mobile-friendly) */}
+                {/* Touch target */}
                 <circle cx={cx} cy={cy} r={r + 12} fill="transparent" />
 
-                {/* Wobbly ink circle */}
+                {/* Secret glow ring */}
+                {isSecret && state !== "locked" && (
+                  <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#3ab8c8" strokeWidth={0.8} opacity={0.4} strokeDasharray="2,3" />
+                )}
+
+                {/* Node shape */}
                 <polygon
                   points={wp(cx, cy, r, shift)}
                   fill={s.fill}
@@ -339,7 +385,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   strokeWidth={s.strokeWidth}
                 />
 
-                {/* Symbol inside node */}
+                {/* Symbol */}
                 <text
                   x={cx} y={cy + 4}
                   textAnchor="middle"
@@ -351,20 +397,21 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   {symbol}
                 </text>
 
-                {/* Room label below node */}
+                {/* Room label */}
                 <text
                   x={cx} y={labelY}
                   textAnchor="middle"
                   fontFamily="Georgia,serif"
                   fontSize={6}
-                  fill="#3a2208"
+                  fill={isSecret ? "#3ab8c8" : "#3a2208"}
+                  opacity={isSecret ? 0.85 : 1}
                 >
-                  {label}
+                  {LABELS[id] ?? id.toUpperCase()}
                 </text>
 
                 {/* State sub-label */}
                 {state === "done" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill="#5a8820">
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#5a8820"}>
                     Gennemført
                   </text>
                 )}
@@ -374,48 +421,101 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   </text>
                 )}
                 {state === "can_unlock" && room && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill="#2a7a3a">
-                    {room.unlockCost > 0 ? `${room.unlockCost} Offer` : "Gratis"}
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#2a7a3a"}>
+                    {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Gratis"}
                   </text>
                 )}
               </g>
             );
           })}
         </svg>
-      </div>
 
-      {/* ── Unlock confirmation ── */}
-      {pendingUnlock && pendingRoom && (
-        <div className="rounded-xl bg-amber-950 border border-amber-700 p-4 mb-4">
-          <div className="text-xs text-amber-400 uppercase tracking-widest mb-1">Lås op</div>
-          <div className="font-bold text-white mb-1">{pendingRoom.title}</div>
-          <p className="text-xs text-stone-400 mb-3">{pendingRoom.lockedDescription}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleUnlock}
-              disabled={unlocking}
-              className="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
+        {/* ── Unlock modal overlay ── */}
+        {pendingUnlock && pendingRoom && (
+          <div
+            className="absolute inset-0 flex items-center justify-center p-6 z-20"
+            style={{ background: "rgba(12,26,44,0.82)", backdropFilter: "blur(4px)", borderRadius: "inherit" }}
+            onClick={(e) => { if (e.target === e.currentTarget) setPendingUnlock(null); }}
+          >
+            <div
+              className="w-full max-w-xs rounded-xl border p-5 shadow-2xl"
+              style={{
+                background: pendingRoom.isSecret ? "#0e2030" : "#1c1208",
+                borderColor: pendingRoom.isSecret ? "#3ab8c8" : "#b8860b",
+              }}
             >
-              {unlocking
-                ? "Låser op…"
-                : pendingRoom.unlockCost > 0
-                ? `🍺 Lås op (${pendingRoom.unlockCost} Offer)`
-                : "🔓 Lås op (gratis)"}
-            </button>
-            <button
-              onClick={() => setPendingUnlock(null)}
-              className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-sm transition-colors"
-            >
-              Annuller
-            </button>
+              {/* Header */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">{pendingRoom.look.icon}</span>
+                <div>
+                  <div
+                    className="text-xs uppercase tracking-widest font-bold mb-0.5"
+                    style={{ color: pendingRoom.isSecret ? "#3ab8c8" : "#c8a040", fontFamily: "Georgia,serif" }}
+                  >
+                    {pendingRoom.isSecret ? "★ Hemmeligt sted" : "Lås op"}
+                  </div>
+                  <div className="font-bold text-white" style={{ fontFamily: "Georgia,serif" }}>
+                    {pendingRoom.title}
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <p className="text-xs text-stone-400 mb-3 leading-relaxed" style={{ fontFamily: "Georgia,serif" }}>
+                {pendingRoom.lockedDescription}
+              </p>
+
+              {/* Secret advantage callout */}
+              {pendingRoom.isSecret && pendingRoom.secretAdvantage && (
+                <div className="rounded-lg bg-cyan-950/50 border border-cyan-800/50 px-3 py-2 mb-3 text-xs text-cyan-300" style={{ fontFamily: "Georgia,serif" }}>
+                  🎯 Fuldfør dette sted for at optjene en <strong>gratis handling</strong> mod bossen.
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleUnlock}
+                  disabled={unlocking}
+                  className="flex-1 font-bold py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50"
+                  style={{
+                    background: pendingRoom.isSecret ? "#1a5a6a" : "#92610a",
+                    color: pendingRoom.isSecret ? "#a0f0ff" : "#fff8e8",
+                  }}
+                >
+                  {unlocking
+                    ? "Låser op…"
+                    : pendingRoom.unlockCost > 0
+                    ? `🍺 Lås op (${pendingRoom.unlockCost} Offer)`
+                    : "🔓 Lås op (gratis)"}
+                </button>
+                <button
+                  onClick={() => setPendingUnlock(null)}
+                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-sm transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Toast ── */}
       {message && (
         <div className="rounded-lg bg-stone-800 border border-stone-600 px-4 py-2 mb-4 text-sm text-stone-200">
           {message}
+        </div>
+      )}
+
+      {/* ── Secret advantage badge ── */}
+      {secretRoomDone && (
+        <div className="rounded-xl bg-cyan-950/40 border border-cyan-800/50 px-4 py-3 mb-4 flex items-center gap-3">
+          <span className="text-lg">🎯</span>
+          <div style={{ fontFamily: "Georgia,serif" }}>
+            <div className="text-xs text-cyan-500 uppercase tracking-widest font-bold">Boss-fordel aktiv</div>
+            <div className="text-sm text-cyan-300">Sofabordet: gratis bosshandling optjent</div>
+          </div>
         </div>
       )}
 

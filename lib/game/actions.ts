@@ -363,7 +363,8 @@ export async function dealBossDamage(
   teamId: TeamId,
   bossId: string,
   actionId: string,
-  answer?: string
+  answer?: string,
+  bypassOfferCost?: boolean
 ): Promise<ActionResult<{ damage: number; newHp: number; defeated: boolean; rewardText?: string; failureText?: string }>> {
   const boss = getBoss(bossId);
   if (!boss) return { success: false, error: "Boss not found." };
@@ -423,7 +424,7 @@ export async function dealBossDamage(
   }
 
   // Offer boost
-  if (foundAction.type === "offer_boost" && foundAction.offerCost) {
+  if (foundAction.type === "offer_boost" && foundAction.offerCost && !bypassOfferCost) {
     await _logOffer(gameId, teamId, foundAction.offerCost, `Boss boost: ${foundAction.label}`, bossId);
   }
 

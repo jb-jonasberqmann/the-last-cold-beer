@@ -43,6 +43,8 @@ export interface Room {
   questIds: string[];
   rewardClueIds: string[]; // clues earned for completing this room
   isOptional: boolean;
+  isSecret?: boolean; // secret branch — optional detour off main spine
+  secretAdvantage?: string; // key describing boss advantage granted on completion
   order: number; // display order in quest board
   da?: RoomDa; // Danish locale overrides
 }
