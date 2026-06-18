@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePlayer, storeSession } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
@@ -47,11 +47,16 @@ export default function DashboardPage({ params }: Props) {
   const gameId = params.gameId;
 
   const { session, setSession, isLoaded } = usePlayer();
+  // Keep a ref so fetchData always reads the latest session without needing it
+  // in the dependency array (avoids stale-closure churn and infinite re-creates).
+  const sessionRef = useRef(session);
+  useEffect(() => { sessionRef.current = session; }, [session]);
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [events, setEvents] = useState<DbGameEvent[]>([]);
   const [teamProgress, setTeamProgress] = useState<import("@/types/database").DbTeamProgress[]>([]);
-  // Server-verified team — resolves even when localStorage is stale (shared incognito session)
+  // Server-verified team — the only source of truth for navigation.
+  // We never fall back to session.teamId; we wait for this to be confirmed.
   const [serverTeamId, setServerTeamId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -66,24 +71,25 @@ export default function DashboardPage({ params }: Props) {
     setEvents(data.events ?? []);
     setTeamProgress(data.teamProgress ?? []);
 
-    // Resolve the actual team from the player list — session.teamId can be stale
-    // when two players share the same browser (incognito testing).
-    if (gameRes.ok && session?.playerId) {
+    // Resolve the actual team from the server player list — session.teamId can be
+    // wrong when multiple players share the same browser (any tab writes localStorage).
+    // With sessionStorage this is much rarer, but we still heal as a safety net.
+    const sess = sessionRef.current;
+    if (gameRes.ok && sess?.playerId) {
       const gameData = await gameRes.json();
       const me = (gameData.players ?? []).find(
-        (p: { id: string; team_id: string | null }) => p.id === session.playerId
+        (p: { id: string; team_id: string | null }) => p.id === sess.playerId
       );
       if (me?.team_id) {
         setServerTeamId(me.team_id);
-        // Heal the localStorage session if it drifted
-        if (me.team_id !== session.teamId) {
-          const healed = { ...session, teamId: me.team_id as import("@/types/content").TeamId };
+        if (me.team_id !== sess.teamId) {
+          const healed = { ...sess, teamId: me.team_id as import("@/types/content").TeamId };
           setSession(healed);
           storeSession(healed);
         }
       }
     }
-  }, [gameId, session, setSession]);
+  }, [gameId, setSession]);
 
   useEffect(() => {
     if (isLoaded && gameId) fetchData();
@@ -101,8 +107,9 @@ export default function DashboardPage({ params }: Props) {
 
   if (!game || !gameId) return null;
 
-  // Use server-verified team for navigation; fall back to session only for host
-  const myTeamId = session.isHost ? null : (serverTeamId ?? session.teamId ?? null);
+  // Always use server-verified team for navigation — never trust session.teamId
+  // directly, because sessionStorage could still be stale on a fresh tab open.
+  const myTeamId = session.isHost ? null : (serverTeamId ?? null);
   const teamName = myTeamId === "team-a"
     ? game.team_a_name
     : myTeamId === "team-b"

@@ -5,6 +5,11 @@ import type { PlayerSession } from "@/types/game";
 
 const STORAGE_KEY = "tlcb_player_session";
 
+// sessionStorage gives each browser tab its own isolated session.
+// This prevents tab-to-tab contamination when testing multiple players on the
+// same device — the last tab to write no longer overwrites everyone else.
+// Sessions survive in-tab refreshes and back/forward navigation just fine.
+
 export function usePlayer(): {
   session: PlayerSession | null;
   setSession: (session: PlayerSession) => void;
@@ -16,7 +21,7 @@ export function usePlayer(): {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = sessionStorage.getItem(STORAGE_KEY);
       if (stored) {
         setSessionState(JSON.parse(stored));
       }
@@ -27,12 +32,12 @@ export function usePlayer(): {
   }, []);
 
   const setSession = (s: PlayerSession) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     setSessionState(s);
   };
 
   const clearSession = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     setSessionState(null);
   };
 
@@ -43,7 +48,7 @@ export function usePlayer(): {
 export function getStoredSession(): PlayerSession | null {
   if (typeof window === "undefined") return null;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
@@ -52,5 +57,6 @@ export function getStoredSession(): PlayerSession | null {
 
 export function storeSession(session: PlayerSession) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
+
