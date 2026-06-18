@@ -119,12 +119,12 @@ export const QUESTS: Quest[] = [
       {
         order: 1,
         offerCost: 2,
-        text: "Ask the oldest person in the group. They remember everything, especially the things you owe.",
+        text: "Think about how beers are typically sold at the shop — not loose, not a crate. The standard carry-home unit. The one with the cardboard handle.",
       },
       {
         order: 2,
         offerCost: 3,
-        text: "For the purposes of this game: the answer is 6. Someone agreed to bring 6 beers and showed up with 4.",
+        text: "The answer is 6. A full standard carrier. Someone promised a complete one and showed up with only 4.",
       },
     ],
     answer: {
@@ -140,8 +140,8 @@ export const QUESTS: Quest[] = [
       description: "Du løfter sedlen fra øl'en. Den er håndskrevet. Noget ved blækket ser bevidst ud — ikke hastigt. Sedlen siger: \"Kun den værdige må åbne mig. Først: bevis at du husker nummeret.\" Nedenfor: en gåde.",
       prompt: "\"Jeg er antallet af øl du skulle have medbragt i fjor. Du bragte to færre. Hvad er jeg?\" — Det rigtige svar er hvad jeres gruppe faktisk aftalte. Kan du ikke huske det, betaler du for sandheden.",
       hints: [
-        "Spørg den ældste i gruppen. De husker alt, særligt det I skylder hinanden.",
-        "Til spillets formål: svaret er 6. Nogen aftalte at medbringe 6 øl og dukkede op med 4.",
+        "Tænk på hvordan øl typisk sælges i butikken — ikke enkeltvis, ikke en hel kasse. Den standard bæreenhed. Den med paphank.",
+        "Svaret er 6. En fuld standardpakke. Nogen lovede en komplet en og dukkede op med kun 4.",
       ],
       rewardText: "Korrekt. Sedlen virker tilfreds. Den afgiver sin hemmelighed.",
       failureText: "Sedlen siger intet. Øl'en forbliver kold. Køleskabet summer, uimponeret.",
@@ -379,44 +379,44 @@ export const QUESTS: Quest[] = [
     forTeam: "team-a",
     roomId: "terrace",
     type: "puzzle",
-    title: "The Underside Carving",
+    title: "Who Started It",
     description:
-      "Someone told you to check the underside of the terrace railing. You lean over and look — and there it is, carved carefully into the wood: \"5-4-3-2-1-0. The ritual completes at zero.\" Below that, four sets of initials.",
+      "Standing on the terrace, looking out at the treeline, it hits someone in the group: this ritual didn't start itself. Someone was first. Someone opened the first beer, looked out at these exact trees, and said \"same time next year.\" Who was it?",
     prompt:
-      "Write down all four sets of initials you find carved into the railing. Submit them exactly as written (comma-separated, uppercase). Note: this requires actually going and looking — or someone in your group must know.",
+      "Almost everyone here knows the answer. Who started this annual cabin ritual? Write their initials — two letters, no dots, no spaces. But think carefully: are you certain it was them, or is that just the story that got told?",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 2,
-        text: "Go outside and actually look at the underside of the railing nearest to the main cabin door. The carving is real — or rather, for the game, one person in the group must go check the spot and report back.",
+        text: "Think about who in the group is most likely to have organised the very first trip. Who sends the first message in the group chat every year? Who would be most devastated if this stopped?",
       },
       {
         order: 2,
         offerCost: 3,
-        text: "If the cabin doesn't have a railing carving (most don't — this is a game, after all), the initials are: J.B., M.K., T.H., S.L. Write them in the case file.",
+        text: "The initials are JB. Whether that makes you certain or just slightly less uncertain — that's the point.",
       },
     ],
     answer: {
-      correct: ["j.b., m.k., t.h., s.l.", "jb mk th sl", "j.b. m.k. t.h. s.l."],
+      correct: ["JB", "J.B.", "jb", "j.b."],
       normalized: true,
     },
     rewardClueId: "clue-terrace-inscription",
     rewardText:
-      "The initials. Four people who were here before. Four people who knew about the ritual.",
+      "JB. The name everyone knew but no one had said out loud yet. Now it's in the case file.",
     failureText:
-      "You stare at the railing. The carving says nothing useful yet. Look harder — or pay.",
+      "The terrace offers no confirmation. Think harder — or pay for the certainty.",
     da: {
-      title: "Ristningen Forneden",
-      description: "Nogen sagde du skulle tjekke undersiden af terrassegelænderet. Du læner dig over og kigger — og der er det, ridset omhyggeligt i træet: \"5-4-3-2-1-0. Ritualet fuldendes ved nul.\" Nedenfor: fire sæt initialer.",
-      prompt: "Skriv alle fire sæt initialer du finder ristet i gelænderet. Indsend dem præcis som skrevet (kommasepareret, med stort). Bemærk: dette kræver faktisk at man går ud og kigger — eller at nogen i gruppen kender dem.",
+      title: "Hvem Startede Det",
+      description: "Stående på terrassen, med blikket ud mod træerne, går det op for nogen i gruppen: dette ritual startede ikke af sig selv. Nogen var først. Nogen åbnede den første øl, kiggede ud på disse præcis disse træer og sagde \"samme tid næste år.\" Hvem var det?",
+      prompt: "Næsten alle her kender svaret. Hvem startede dette årlige hytteritual? Skriv deres initialer — to bogstaver, ingen punkter, ingen mellemrum. Men tænk efter: er du sikker på det var dem, eller er det bare den historie der blev fortalt?",
       hints: [
-        "Gå udenfor og kig faktisk på undersiden af gelænderet nærmest hyttedøren. Til spillets formål: ét holdmedlem skal gå ud og tjekke og rapportere tilbage.",
-        "Hvis hytten ikke har en ristning i gelænderet (de fleste har ikke — det er et spil), er initialerne: J.B., M.K., T.H., S.L. Skriv dem i sagsmappen.",
+        "Tænk på hvem i gruppen der mest sandsynligt organiserede den allerførste tur. Hvem sender den første besked i gruppechatten hvert år? Hvem ville være mest knust hvis dette stoppede?",
+        "Initialerne er JB. Om det gør dig sikker eller bare lidt mindre usikker — det er pointen.",
       ],
-      rewardText: "Initialerne. Fire mennesker der var her før. Fire mennesker der vidste om ritualet.",
-      failureText: "Du stirrer på gelænderet. Ristningen siger endnu intet nyttigt. Kig hårdere — eller betal.",
+      rewardText: "JB. Navnet alle kendte men ingen havde sagt højt endnu. Nu er det i sagsmappen.",
+      failureText: "Terrassen giver ingen bekræftelse. Tænk hårdere — eller betal for sikkerheden.",
     },
   },
   {
@@ -934,33 +934,39 @@ export const QUESTS: Quest[] = [
     roomId: "terrace",
     forTeam: "team-b",
     type: "puzzle",
-    title: "The Counting Ritual",
+    title: "The Name Behind the Ritual",
     description:
-      "On the terrace railing — underside — the countdown is carved. But your team's investigation focuses on something different: four sets of initials. Each set of initials has a dot between them (J.B. style). Count the total number of dots across all four initials.",
+      "Your team's investigation leads to the same question the other team is circling: who started all of this? Standing on the terrace, the answer feels obvious — and yet. Are you sure you know the full name?",
     prompt:
-      "The four initials are J.B., M.K., T.H., S.L. Each person's initials has exactly one dot between the letters. How many dots are there total across all four people's initials?",
+      "Everyone knows who started this annual ritual. Write their last name. Exactly as it's spelled — capitals matter.",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 2,
-        text: "J.B. = 1 dot. M.K. = 1 dot. T.H. = 1 dot. S.L. = 1 dot. Four people.",
+        text: "Think about who in the group has been coming here the longest. Whose idea was the very first trip? Eight letters in the last name.",
+      },
+      {
+        order: 2,
+        offerCost: 3,
+        text: "The last name is Bergmann. With two n's at the end.",
       },
     ],
-    answer: { correct: ["4", "four", "fire"], normalized: true },
+    answer: { correct: ["Bergmann", "bergmann", "BERGMANN"], normalized: true },
     rewardClueId: "clue-terrace-inscription",
-    rewardText: "Four dots. Four people. The inscription becomes part of your case file.",
-    failureText: "Count carefully. How many dots between the initials?",
+    rewardText: "Bergmann. The name at the origin of all of this. Now it's in your case file.",
+    failureText: "The terrace gives nothing away. Think — or pay.",
     da: {
-      title: "Tælleritualet",
-      description: "På terrassegelænderet — undersiden — er nedtællingen ristet. Men jeres holds efterforskning fokuserer på noget andet: fire sæt initialer. Hvert sæt initialer har et punkt imellem dem (J.B.-stil). Tæl det samlede antal punkter på tværs af alle fire initialer.",
-      prompt: "De fire initialer er J.B., M.K., T.H., S.L. Hvert persons initialer har præcis ét punkt mellem bogstaverne. Hvor mange punkter er der i alt på tværs af alle fire personers initialer?",
+      title: "Navnet Bag Ritualet",
+      description: "Jeres holds efterforskning fører til det samme spørgsmål som det andet hold kredser om: hvem startede alt dette? Stående på terrassen virker svaret oplagt — og dog. Er I sikre på I kender hele navnet?",
+      prompt: "Alle ved hvem der startede dette årlige ritual. Skriv deres efternavn. Præcis som det staves — store bogstaver har betydning.",
       hints: [
-        "J.B. = 1 punkt. M.K. = 1 punkt. T.H. = 1 punkt. S.L. = 1 punkt. Fire personer.",
+        "Tænk på hvem i gruppen der har været her længst. Hvis idé var den allerførste tur? Otte bogstaver i efternavnet.",
+        "Efternavnet er Bergmann. Med to n'er til sidst.",
       ],
-      rewardText: "Fire punkter. Fire mennesker. Ristningen bliver en del af jeres sagsmapp.",
-      failureText: "Tæl omhyggeligt. Hvor mange punkter er der mellem initialerne?",
+      rewardText: "Bergmann. Navnet ved oprindelsen af alt dette. Nu er det i jeres sagsmapp.",
+      failureText: "Terrassen røber ingenting. Tænk — eller betal.",
     },
   },
   {
