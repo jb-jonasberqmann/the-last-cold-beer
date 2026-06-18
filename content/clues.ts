@@ -68,16 +68,16 @@ export const CLUES: Clue[] = [
   {
     id: "clue-terrace-inscription",
     chapterId: "chapter-1",
-    title: "The Terrace Carving",
+    title: "The Terrace Note",
     description:
-      "Carved into the underside of the terrace railing: \"5-4-3-2-1-0. The ritual completes at zero.\" Below that, four sets of initials. You recognize at least two of them.",
+      "Taped to the back of the terrace chair, facing the treeline: a laminated slip of paper. \"5-4-3-2-1-0. The ritual completes at zero.\" Signed at the bottom with two initials: J.B.",
     icon: "🪵",
-    flavor: "Someone carved this with intent. Someone knew they'd be back.",
+    flavor: "Someone left this knowing someone would eventually look. Someone knew they'd be back.",
     isKeyClue: true,
     da: {
-      title: "Terrasse-Ristningen",
-      description: "Ridset ind i undersiden af terrassegelænderet: \"5-4-3-2-1-0. Ritualet fuldendes ved nul.\" Nedenfor: fire sæt initialer. Du genkender mindst to af dem.",
-      flavor: "Nogen ristede dette med hensigt. Nogen vidste de ville vende tilbage.",
+      title: "Terrasse-Sedlen",
+      description: "Fastgjort på bagsiden af terrassestolen der vender mod træerne: en lamineret seddel. \"5-4-3-2-1-0. Ritualet fuldendes ved nul.\" Underskrevet i bunden med to initialer: J.B.",
+      flavor: "Nogen efterlod dette vel vidende at nogen til sidst ville kigge. Nogen vidste de ville vende tilbage.",
     },
   },
   {
