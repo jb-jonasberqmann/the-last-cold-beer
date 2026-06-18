@@ -134,7 +134,7 @@ export default function RoomPage({ params }: Props) {
         className="absolute inset-0 pointer-events-none z-[1]"
         style={{
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 22%, transparent 45%, rgba(0,0,0,0.5) 68%, rgba(0,0,0,0.85) 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 25%, transparent 42%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.88) 100%)",
         }}
       />
 

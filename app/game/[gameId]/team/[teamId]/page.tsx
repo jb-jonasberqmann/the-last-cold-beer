@@ -80,26 +80,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [showPanel, setShowPanel] = useState(false);
   const [otherRoomsCompleted, setOtherRoomsCompleted] = useState<number | null>(null);
 
-  // Map pan — dynamic viewBox for zoom+scroll feel
-  const VISIBLE_H = 280;   // SVG units shown at once (~2-3 rooms)
-  const MAP_H = 520;
-  const MAX_PAN = MAP_H - VISIBLE_H;  // = 240
-  const [panY, setPanY] = useState(225); // default: show fridge+coffee-table+kitchen
-  const touchPanRef = useRef<{ clientY: number; startPanY: number } | null>(null);
-  const clampedPan = Math.max(0, Math.min(panY, MAX_PAN));
-
-  const handleMapTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
-    touchPanRef.current = { clientY: e.touches[0].clientY, startPanY: clampedPan };
-  };
-  const handleMapTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
-    if (!touchPanRef.current) return;
-    e.preventDefault();
-    const dy = e.touches[0].clientY - touchPanRef.current.clientY;
-    // drag up → reveal bottom of map (kitchen) → panY increases
-    const svgDelta = -(dy / (window.innerHeight / VISIBLE_H));
-    setPanY(Math.max(0, Math.min(MAX_PAN, touchPanRef.current.startPanY + svgDelta)));
-  };
-  const handleMapTouchEnd = () => { touchPanRef.current = null; };
+  // Map scroll — CSS scale makes map larger than screen; native overflow-y scroll
+  // Scale 2.2× means rooms span more than viewport height so you can't see them all at once.
+  const mapScrollRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
@@ -127,6 +110,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
+
+  // Start scrolled to bottom — shows kitchen/fridge first; scroll up to reveal boss
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (mapScrollRef.current) {
+        mapScrollRef.current.scrollTop = mapScrollRef.current.scrollHeight;
+      }
+    });
+  }, []);
 
   const canInteract = !session?.isHost;
 
@@ -216,21 +208,33 @@ export default function TeamQuestBoardPage({ params }: Props) {
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: "#0c1a2c" }}>
 
-      {/* ── Full-screen map SVG ── */}
-      <svg
-        viewBox={`0 ${clampedPan} 340 ${VISIBLE_H}`}
-        className="absolute inset-0"
-        width="100%"
-        height="100%"
-        preserveAspectRatio="xMidYMid slice"
-        role="img"
-        aria-label="Quest map — tap a room to enter or unlock it"
-        style={{ touchAction: "none" }}
-        onTouchStart={handleMapTouchStart}
-        onTouchMove={handleMapTouchMove}
-        onTouchEnd={handleMapTouchEnd}
-        xmlns="http://www.w3.org/2000/svg"
+      {/* ── Scrollable map — scale 2.2× so rooms span beyond viewport height ── */}
+      <div
+        ref={mapScrollRef}
+        className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+        style={{ scrollbarWidth: 'none' as const, msOverflowStyle: 'none' } as React.CSSProperties}
       >
+        {/* Spacer that provides the full scaled height (2.2 × SVG_natural_height) */}
+        {/* SVG natural height at 100vw width = 100vw × 520/340 ≈ 152.94vw          */}
+        {/* Scaled height = 2.2 × 152.94vw ≈ 336.47vw → use 337vw                  */}
+        <div style={{ height: '337vw', width: '100%', position: 'relative', overflow: 'hidden' }}>
+          <svg
+            viewBox="0 0 340 520"
+            style={{
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '152.94vw',
+              transformOrigin: 'top center',
+              transform: 'scale(2.2)',
+            }}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label="Quest map — tap a room to enter or unlock it"
+            xmlns="http://www.w3.org/2000/svg"
+          >
           {/* Navy background */}
           <rect width="340" height="520" fill="#0c1a2c" />
 
@@ -308,20 +312,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
           </text>
           <line x1="102" y1="68" x2="238" y2="68" stroke="#5a3010" strokeWidth={0.7} opacity={0.5} />
 
-          {/* Compass rose */}
-          <g transform="translate(275,450)">
+          {/* Compass rose — centered to stay within the 2.2× crop window */}
+          <g transform="translate(225,460)">
             <circle cx="0" cy="0" r="12" stroke="#5a3010" strokeWidth={0.8} fill="#c8a040" opacity={0.9} />
             <line x1="0" y1="-9" x2="0" y2="9" stroke="#5a3010" strokeWidth={1} />
             <line x1="-9" y1="0" x2="9" y2="0" stroke="#5a3010" strokeWidth={1} />
             <polygon points="0,-9 -2,-4 0,-6 2,-4" fill="#5a3010" />
             <text x="0" y="-11" textAnchor="middle" fontFamily="Georgia,serif" fontSize={6} fill="#3a2208">N</text>
-          </g>
-
-          {/* Moon phase deco */}
-          <g transform="translate(42,450)" opacity={0.55}>
-            <circle cx="0" cy="0" r="9"  fill="#c8a040" stroke="#8a6020" strokeWidth={0.7} />
-            <circle cx="4" cy="-1" r="7" fill="#b09030" />
-            <text x="0" y="14" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3a2208">FASE I</text>
           </g>
 
           {/* Paths */}
@@ -471,28 +468,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </g>
             );
           })}
-      </svg>
-
-      {/* ── Scroll indicator dots (right edge, vertical center) ── */}
-      <div
-        className="absolute right-2.5 z-20 flex flex-col gap-1.5 pointer-events-none"
-        style={{ top: "50%", transform: "translateY(-50%)" }}
-      >
-        {[0, 0.5, 1].map((anchor) => {
-          const active = Math.abs(clampedPan / MAX_PAN - anchor) < 0.28;
-          return (
-            <div
-              key={anchor}
-              style={{
-                width: active ? 6 : 4,
-                height: active ? 6 : 4,
-                borderRadius: "50%",
-                background: active ? "rgba(245,215,140,0.85)" : "rgba(180,140,60,0.35)",
-                transition: "all 0.2s",
-              }}
-            />
-          );
-        })}
+          </svg>
+        </div>
       </div>
 
       {/* ── TOP HUD overlay ── */}
