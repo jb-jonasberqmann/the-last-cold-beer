@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 
-const POLL_INTERVAL = 2000; // 2 seconds
+const POLL_INTERVAL = 5000; // 5 seconds — reduces DB load; fast enough for a party game
 
 type PollCallback = () => void;
 
