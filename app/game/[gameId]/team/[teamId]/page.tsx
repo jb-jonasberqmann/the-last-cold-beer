@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
@@ -33,7 +33,7 @@ const CH1_NODES = [
   { id: "fridge",       cx: 160, cy: 314, r: 12, shift: 4, isSecret: false },
   { id: "terrace",      cx: 160, cy: 224, r: 10, shift: 6, isSecret: false },
   { id: "shed",         cx: 160, cy: 144, r: 10, shift: 3, isSecret: false },
-  { id: "coffee-table", cx: 274, cy: 360, r: 11, shift: 1, isSecret: true  },
+  { id: "coffee-table", cx: 220, cy: 355, r: 11, shift: 1, isSecret: true  },
 ] as const;
 
 const CH1_PATHS = [
@@ -41,7 +41,7 @@ const CH1_PATHS = [
   { from: "fridge",       to: "terrace",        d: "M160,300 L160,236",                         secret: false },
   { from: "terrace",      to: "shed",           d: "M160,212 L160,156",                         secret: false },
   { from: "shed",         to: "boss",           d: "M160,132 L160,82",                          secret: false },
-  { from: "kitchen",      to: "coffee-table",   d: "M172,398 C210,386 248,374 262,369",         secret: true  },
+  { from: "kitchen",      to: "coffee-table",   d: "M172,398 C185,385 205,372 209,362",         secret: true  },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -77,6 +77,29 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [pendingUnlock, setPendingUnlock] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showPanel, setShowPanel] = useState(false);
+  const [otherRoomsCompleted, setOtherRoomsCompleted] = useState<number | null>(null);
+
+  // Map pan — dynamic viewBox for zoom+scroll feel
+  const VISIBLE_H = 280;   // SVG units shown at once (~2-3 rooms)
+  const MAP_H = 520;
+  const MAX_PAN = MAP_H - VISIBLE_H;  // = 240
+  const [panY, setPanY] = useState(225); // default: show fridge+coffee-table+kitchen
+  const touchPanRef = useRef<{ clientY: number; startPanY: number } | null>(null);
+  const clampedPan = Math.max(0, Math.min(panY, MAX_PAN));
+
+  const handleMapTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
+    touchPanRef.current = { clientY: e.touches[0].clientY, startPanY: clampedPan };
+  };
+  const handleMapTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (!touchPanRef.current) return;
+    e.preventDefault();
+    const dy = e.touches[0].clientY - touchPanRef.current.clientY;
+    // drag up → reveal bottom of map (kitchen) → panY increases
+    const svgDelta = -(dy / (window.innerHeight / VISIBLE_H));
+    setPanY(Math.max(0, Math.min(MAX_PAN, touchPanRef.current.startPanY + svgDelta)));
+  };
+  const handleMapTouchEnd = () => { touchPanRef.current = null; };
 
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
@@ -85,6 +108,21 @@ export default function TeamQuestBoardPage({ params }: Props) {
     const data = await res.json();
     setGame(data.game);
     setRoomProgress(data.roomProgress ?? []);
+
+    // Fetch other team's progress count (fire-and-forget, best effort)
+    const otherTeam = teamId === "team-a" ? "team-b" : "team-a";
+    fetch(`/api/game/${gameId}/progress?teamId=${otherTeam}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (!d) return;
+        const mainNodes = ["kitchen", "fridge", "terrace", "shed"];
+        const done = (d.roomProgress ?? []).filter(
+          (rp: { room_id: string; status: string }) =>
+            mainNodes.includes(rp.room_id) && rp.status === "complete"
+        ).length;
+        setOtherRoomsCompleted(done);
+      })
+      .catch(() => {});
   }, [gameId, teamId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -180,7 +218,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
       {/* ── Full-screen map SVG ── */}
       <svg
-        viewBox="0 0 340 520"
+        viewBox={`0 ${clampedPan} 340 ${VISIBLE_H}`}
         className="absolute inset-0"
         width="100%"
         height="100%"
@@ -188,6 +226,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
         role="img"
         aria-label="Quest map — tap a room to enter or unlock it"
         style={{ touchAction: "none" }}
+        onTouchStart={handleMapTouchStart}
+        onTouchMove={handleMapTouchMove}
+        onTouchEnd={handleMapTouchEnd}
         xmlns="http://www.w3.org/2000/svg"
       >
           {/* Navy background */}
@@ -298,7 +339,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
           {/* Secret branch label */}
           <text
-            x="232" y="370"
+            x="210" y="382"
             textAnchor="middle"
             fontFamily="Georgia,serif"
             fontSize={5.5}
@@ -432,6 +473,28 @@ export default function TeamQuestBoardPage({ params }: Props) {
           })}
       </svg>
 
+      {/* ── Scroll indicator dots (right edge, vertical center) ── */}
+      <div
+        className="absolute right-2.5 z-20 flex flex-col gap-1.5 pointer-events-none"
+        style={{ top: "50%", transform: "translateY(-50%)" }}
+      >
+        {[0, 0.5, 1].map((anchor) => {
+          const active = Math.abs(clampedPan / MAX_PAN - anchor) < 0.28;
+          return (
+            <div
+              key={anchor}
+              style={{
+                width: active ? 6 : 4,
+                height: active ? 6 : 4,
+                borderRadius: "50%",
+                background: active ? "rgba(245,215,140,0.85)" : "rgba(180,140,60,0.35)",
+                transition: "all 0.2s",
+              }}
+            />
+          );
+        })}
+      </div>
+
       {/* ── TOP HUD overlay ── */}
       <div
         className="absolute top-0 left-0 right-0 z-20 pointer-events-none"
@@ -440,25 +503,14 @@ export default function TeamQuestBoardPage({ params }: Props) {
           background: "linear-gradient(180deg, rgba(12,26,44,0.88) 0%, rgba(12,26,44,0.55) 65%, transparent 100%)",
         }}
       >
-        <div className="flex items-center gap-3 px-4 py-3 pointer-events-auto">
-          <a
-            href={`/game/${gameId}/dashboard`}
-            className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs active:scale-95 transition-transform"
-            style={{
-              background: "rgba(0,0,0,0.4)",
-              border: "1px solid rgba(180,130,50,0.2)",
-              color: "rgba(180,130,50,0.75)",
-              fontFamily: "Georgia,serif",
-            }}
-          >
-            ←
-          </a>
-          <div className="flex-1 flex flex-col items-center leading-tight">
+        <div className="flex items-center gap-2 px-3 py-3 pointer-events-auto">
+          {/* Team name + chapter */}
+          <div className="flex-1 flex flex-col leading-tight">
             <span
               className="text-[9px] uppercase tracking-[0.25em]"
               style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}
             >
-              Kapitel I · The Last Cold Beer
+              Kapitel I
             </span>
             <span
               className="font-bold text-sm"
@@ -467,17 +519,38 @@ export default function TeamQuestBoardPage({ params }: Props) {
               {teamName}
             </span>
           </div>
+
+          {/* VS status pill — both teams */}
           <div
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs"
+            className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px]"
             style={{
-              background: "rgba(0,0,0,0.4)",
-              border: "1px solid rgba(180,130,50,0.18)",
-              color: bossUnlockable ? "rgb(252,165,165)" : "rgb(251,191,36)",
+              background: "rgba(0,0,0,0.5)",
+              border: "1px solid rgba(180,130,50,0.2)",
               fontFamily: "Georgia,serif",
             }}
           >
-            {bossUnlockable ? "⚔️" : "🗺"} {completedRooms}/{totalMainRooms}
+            <span style={{ color: bossUnlockable ? "rgb(248,113,113)" : "rgb(251,191,36)" }}>
+              {completedRooms}/{totalMainRooms}
+            </span>
+            <span style={{ color: "rgba(120,80,30,0.5)", margin: "0 2px" }}>vs</span>
+            <span style={{ color: "rgba(180,160,100,0.6)" }}>
+              {otherRoomsCompleted ?? "·"}/{totalMainRooms}
+            </span>
           </div>
+
+          {/* Control panel button */}
+          <button
+            onClick={() => setShowPanel(true)}
+            className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+            style={{
+              background: "rgba(0,0,0,0.45)",
+              border: "1px solid rgba(180,130,50,0.2)",
+              color: "rgba(180,130,50,0.7)",
+              fontSize: "14px",
+            }}
+          >
+            ⚙
+          </button>
         </div>
       </div>
 
@@ -490,7 +563,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
             background: "linear-gradient(180deg, transparent 0%, rgba(8,3,3,0.82) 35%, rgba(6,2,2,0.96) 100%)",
           }}
         >
-          <div className="px-4 pt-3 pb-3">
+          <div className="px-4 pt-3 pb-8">
             <div className="flex items-center gap-3">
               {/* Boss icon */}
               <div
@@ -565,6 +638,100 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   {bossUnlockable ? "⚔️ Kæmp" : "🔒"}
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Control panel overlay ── */}
+      {showPanel && (
+        <div
+          className="absolute inset-0 z-40"
+          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(3px)" }}
+          onClick={() => setShowPanel(false)}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 animate-sheet-up rounded-t-2xl"
+            style={{
+              background: "rgba(10,8,6,0.98)",
+              backdropFilter: "blur(16px)",
+              borderTop: "1px solid rgba(180,130,50,0.22)",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-8 h-[3px] rounded-full" style={{ background: "rgba(180,130,50,0.22)" }} />
+            </div>
+            <div className="px-4 pb-6 pt-1">
+              <div
+                className="text-[9px] uppercase tracking-[0.25em] mb-4"
+                style={{ color: "rgba(180,130,50,0.35)", fontFamily: "Georgia,serif" }}
+              >
+                Kontrolpanel
+              </div>
+
+              {/* Team status */}
+              <div className="grid grid-cols-2 gap-2 mb-5">
+                {[
+                  { id: "team-a", name: game.team_a_name, isMe: teamId === "team-a", count: teamId === "team-a" ? completedRooms : (otherRoomsCompleted ?? 0) },
+                  { id: "team-b", name: game.team_b_name, isMe: teamId === "team-b", count: teamId === "team-b" ? completedRooms : (otherRoomsCompleted ?? 0) },
+                ].map((team) => (
+                  <div
+                    key={team.id}
+                    className="rounded-xl p-3"
+                    style={{
+                      background: team.isMe ? "rgba(120,80,10,0.25)" : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${team.isMe ? "rgba(180,130,50,0.35)" : "rgba(255,255,255,0.06)"}`,
+                    }}
+                  >
+                    <div className="text-[9px] uppercase tracking-widest mb-0.5" style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}>
+                      {team.isMe ? "Jeres hold" : "Modstandere"}
+                    </div>
+                    <div className="font-bold text-sm truncate" style={{ color: "rgba(245,225,170,0.9)", fontFamily: "Georgia,serif" }}>
+                      {team.name}
+                    </div>
+                    <div className="text-[11px] mt-1" style={{ color: "rgba(180,130,50,0.6)", fontFamily: "Georgia,serif" }}>
+                      {team.count}/{totalMainRooms} rum
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick links */}
+              <div className="space-y-2">
+                <a
+                  href={`/game/${gameId}/boss/${chapter?.bossId}?team=${teamId}`}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 active:scale-98 transition-transform"
+                  style={{
+                    background: bossUnlockable ? "rgba(100,20,20,0.35)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${bossUnlockable ? "rgba(220,60,60,0.3)" : "rgba(255,255,255,0.06)"}`,
+                  }}
+                >
+                  <span className="text-xl">{bossUnlockable ? "⚔️" : "🔒"}</span>
+                  <div>
+                    <div className="text-sm font-bold" style={{ color: bossUnlockable ? "rgb(252,165,165)" : "rgba(120,80,40,0.6)", fontFamily: "Georgia,serif" }}>
+                      Den Låste Køler
+                    </div>
+                    <div className="text-xs" style={{ color: bossUnlockable ? "rgba(220,100,100,0.6)" : "rgba(100,60,20,0.4)", fontFamily: "Georgia,serif" }}>
+                      {bossUnlockable ? "Klar til kamp" : `${completedRooms}/${totalMainRooms} rum for at låse op`}
+                    </div>
+                  </div>
+                </a>
+
+                {secretRoomDone && (
+                  <div
+                    className="flex items-center gap-3 rounded-xl px-4 py-3"
+                    style={{ background: "rgba(10,40,50,0.4)", border: "1px solid rgba(58,184,200,0.25)" }}
+                  >
+                    <span className="text-xl">⭐</span>
+                    <div className="text-sm" style={{ color: "rgba(103,232,249,0.7)", fontFamily: "Georgia,serif" }}>
+                      Sofabord-fordel aktiv
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

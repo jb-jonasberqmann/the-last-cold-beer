@@ -401,7 +401,7 @@ export default function RoomPage({ params }: Props) {
       {/* ── Layer 6: Bottom quest sheet ── */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 z-[20]",
+          "absolute bottom-0 left-3 right-3 z-[20]",
           entered ? "animate-sheet-up" : "translate-y-full opacity-60"
         )}
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
@@ -409,11 +409,12 @@ export default function RoomPage({ params }: Props) {
         <div
           className="rounded-t-2xl"
           style={{
-            background: "rgba(10,8,5,0.93)",
-            backdropFilter: "blur(14px)",
-            borderTop: "1px solid rgba(180,130,50,0.18)",
-            borderLeft: "1px solid rgba(180,130,50,0.08)",
-            borderRight: "1px solid rgba(180,130,50,0.08)",
+            background: "rgba(10,8,5,0.95)",
+            backdropFilter: "blur(16px)",
+            borderTop: "1px solid rgba(180,130,50,0.22)",
+            borderLeft: "1px solid rgba(180,130,50,0.12)",
+            borderRight: "1px solid rgba(180,130,50,0.12)",
+            boxShadow: "0 -4px 32px rgba(0,0,0,0.5)",
             maxHeight: "62vh",
             overflowY: "auto",
             overscrollBehavior: "contain",
@@ -847,15 +848,18 @@ function StickyNoteArtifact({
         </p>
         {!isComplete && (
           <div
-            className="rounded-sm px-3 py-2.5 mb-3 relative"
-            style={{ background: "rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.08)" }}
+            className="rounded-sm px-3 py-3 mb-3 relative"
+            style={{
+              background: "rgba(255,235,160,0.18)",
+              border: "1px solid rgba(120,80,10,0.3)",
+              borderLeft: "3px solid rgba(180,120,20,0.5)",
+            }}
           >
             <p
               className="text-sm italic leading-relaxed"
               style={{
                 fontFamily: "Georgia,serif",
                 color: "rgba(30,15,0,0.9)",
-                fontWeight: 600,
               }}
             >
               {quest.prompt}
@@ -911,12 +915,13 @@ function StickyNoteArtifact({
             <button
               onClick={onSubmit}
               disabled={loading}
-              className="px-4 py-2 text-sm font-bold rounded-sm transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-bold rounded-sm transition-all active:scale-95 disabled:opacity-50"
               style={{
-                background: "rgba(0,0,0,0.25)",
-                color: "rgba(20,10,0,0.85)",
+                background: loading ? "rgba(0,0,0,0.25)" : "linear-gradient(160deg, #b8860b, #8b6400)",
+                color: loading ? "rgba(20,10,0,0.6)" : "#fff8e8",
                 fontFamily: "Georgia,serif",
-                border: "1px solid rgba(0,0,0,0.2)",
+                border: "1px solid rgba(180,130,0,0.4)",
+                boxShadow: loading ? "none" : "0 2px 8px rgba(120,80,0,0.3)",
               }}
             >
               {loading ? "…" : "⚔️ Strike"}

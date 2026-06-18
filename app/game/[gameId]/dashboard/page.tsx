@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePlayer, storeSession } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { LiveProgress } from "@/components/game/LiveProgress";
@@ -44,6 +45,7 @@ function eventLabel(event: DbGameEvent, offerDef: string): { icon: string; text:
 
 export default function DashboardPage({ params }: Props) {
   const gameId = params.gameId;
+  const router = useRouter();
 
   const { session, setSession, isLoaded } = usePlayer();
   // Keep a ref so fetchData always reads the latest session without needing it
@@ -93,6 +95,13 @@ export default function DashboardPage({ params }: Props) {
   useEffect(() => {
     if (isLoaded && gameId) fetchData();
   }, [isLoaded, gameId, fetchData]);
+
+  // Players go straight to the map — dashboard is host-only
+  useEffect(() => {
+    if (serverTeamId && session && !session.isHost) {
+      router.replace(`/game/${gameId}/team/${serverTeamId}`);
+    }
+  }, [serverTeamId, session, gameId, router]);
 
   useRealtimeGame(gameId ?? undefined, fetchData);
 

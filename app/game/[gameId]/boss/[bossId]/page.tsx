@@ -42,6 +42,12 @@ export default function BossFightPage({ params }: Props) {
   const [puzzleAnswer, setPuzzleAnswer] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
 
+  // Free action state — must be declared here (before any early returns) to satisfy Rules of Hooks
+  const freeActionUsedKey = `boss_free_action_used_${gameId}_${teamId}_${bossId}`;
+  const [freeActionUsed, setFreeActionUsed] = useState(() => {
+    try { return !!localStorage.getItem(freeActionUsedKey); } catch { return false; }
+  });
+
   // Track which clue actions have been auto-applied (per game+team+boss, persisted in localStorage)
   const autoAppliedKey = `boss_auto_applied_${gameId}_${teamId}_${bossId}`;
   const autoApplied = useRef<Set<string>>(new Set());
@@ -165,10 +171,6 @@ export default function BossFightPage({ params }: Props) {
   const hasBossFreeAction = roomProgress.some(
     (rp) => rp.room_id === "coffee-table" && rp.status === "complete"
   );
-  const freeActionUsedKey = `boss_free_action_used_${gameId}_${teamId}_${bossId}`;
-  const [freeActionUsed, setFreeActionUsed] = useState(() => {
-    try { return !!localStorage.getItem(freeActionUsedKey); } catch { return false; }
-  });
   const handleFreeAction = async () => {
     // Apply a free 20-damage offer_boost action without Offer cost
     setLoading("free-action");
