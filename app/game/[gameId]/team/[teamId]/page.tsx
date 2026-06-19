@@ -35,7 +35,7 @@ const CH1_NODES = [
   { id: "fridge",       cx: 170, cy: 352, r: 10, shift: 4, isSecret: false },
   { id: "terrace",      cx: 170, cy: 267, r: 10, shift: 6, isSecret: false },
   { id: "shed",         cx: 170, cy: 185, r: 10, shift: 3, isSecret: false },
-  { id: "coffee-table", cx: 228, cy: 395, r:  9, shift: 1, isSecret: true  },
+  { id: "coffee-table", cx: 215, cy: 395, r:  9, shift: 1, isSecret: true  },
 ] as const;
 
 const CH1_PATHS = [
@@ -43,7 +43,7 @@ const CH1_PATHS = [
   { from: "fridge",       to: "terrace",        d: "M170,339 L170,280",                         secret: false },
   { from: "terrace",      to: "shed",           d: "M170,254 L170,198",                         secret: false },
   { from: "shed",         to: "boss",           d: "M170,172 L170,132",                         secret: false },
-  { from: "kitchen",      to: "coffee-table",   d: "M181,432 C200,420 214,410 217,397",         secret: true  },
+  { from: "kitchen",      to: "coffee-table",   d: "M181,432 C196,422 207,411 204,396",         secret: true  },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -282,12 +282,12 @@ export default function TeamQuestBoardPage({ params }: Props) {
             fill="#d4a832" letterSpacing={3} filter="url(#titleShadow)" opacity={0.96}>
             SOMMERHUSET
           </text>
-          <line x1="90"  y1="50" x2="128" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
+          <line x1="112" y1="50" x2="140" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
           <text x="170" y="56" textAnchor="middle" fontFamily="Georgia,serif" fontSize={6}
             fill="#d4a832" letterSpacing={5} filter="url(#titleShadow)" opacity={0.8}>
             KAPITEL I
           </text>
-          <line x1="212" y1="50" x2="250" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
+          <line x1="200" y1="50" x2="228" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
 
           {/* ── Fog band ── */}
           <text x="170" y="178" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#8a6520" letterSpacing={2} opacity={0.6} fontStyle="italic">
@@ -304,7 +304,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               opacity={pathOpacity(from, to, secret)}
             />
           ))}
-          <text x="244" y="412" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3ab8c8" opacity={0.75} letterSpacing={1}>hemmeligt</text>
+          <text x="215" y="412" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3ab8c8" opacity={0.75} letterSpacing={1}>hemmeligt</text>
 
           {/* ── Boss node ── */}
           <g onClick={() => { if (canInteract && chapter) router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`); }} style={{ cursor: canInteract ? "pointer" : "default" }}>

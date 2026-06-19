@@ -62,6 +62,10 @@ export default function BossFightPage({ params }: Props) {
   // Drunk gamble mechanic
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
+  // Keep drunkSips in range [1, offerSpent] whenever offerSpent loads/changes
+  useEffect(() => {
+    if (offerSpent > 0) setDrunkSips((prev) => Math.min(prev, offerSpent));
+  }, [offerSpent]);
 
   // Free action (secret room advantage)
   const freeActionUsedKey = `boss_free_action_used_${gameId}_${teamId}_${bossId}`;
@@ -814,16 +818,19 @@ export default function BossFightPage({ params }: Props) {
             <div className="flex items-center gap-6 justify-center mb-6">
               <button
                 onClick={() => setDrunkSips(Math.max(1, drunkSips - 1))}
-                className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center"
+                disabled={drunkSips <= 1}
+                className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center disabled:opacity-30"
                 style={{ background: "rgba(20,12,4,0.9)" }}
               >−</button>
               <div className="text-center min-w-[48px]">
                 <div className="text-4xl font-bold text-amber-200">{drunkSips}</div>
                 <div className="text-[10px] text-stone-600 mt-0.5">{drunkSips === 1 ? "slurk" : "slurke"}</div>
+                <div className="text-[9px] text-amber-900 mt-1">max {offerSpent}</div>
               </div>
               <button
-                onClick={() => setDrunkSips(Math.min(10, drunkSips + 1))}
-                className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center"
+                onClick={() => setDrunkSips(Math.min(offerSpent, drunkSips + 1))}
+                disabled={drunkSips >= offerSpent}
+                className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center disabled:opacity-30"
                 style={{ background: "rgba(20,12,4,0.9)" }}
               >+</button>
             </div>
@@ -866,15 +873,18 @@ export default function BossFightPage({ params }: Props) {
 
           {/* Drunk gamble button */}
           <button
-            className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl font-bold text-stone-900"
+            className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl font-bold text-stone-900 disabled:opacity-40"
             style={{
-              background: "linear-gradient(135deg, #b87010, #e0a020)",
+              background: offerSpent > 0 ? "linear-gradient(135deg, #b87010, #e0a020)" : "rgba(60,40,10,0.4)",
               fontFamily: "Georgia, serif",
             }}
-            onClick={() => setDrunkModal(true)}
+            onClick={() => offerSpent > 0 && setDrunkModal(true)}
+            disabled={offerSpent === 0}
           >
             <span className="text-sm tracking-widest">🍺 BERUSE BOSSEN</span>
-            <span className="text-[9px] font-normal opacity-70 tracking-wide">50/50 — bossen eller holdet drikker</span>
+            <span className="text-[9px] font-normal opacity-70 tracking-wide">
+              {offerSpent > 0 ? `50/50 — op til ${offerSpent} slurke` : "Ingen slurke at satse endnu"}
+            </span>
           </button>
 
           {/* Retreat */}
