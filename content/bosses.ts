@@ -3,11 +3,10 @@ import type { Boss } from "@/types/content";
 export const BOSSES: Boss[] = [
   // ==========================================
   // CHAPTER 1 BOSS — The Locked Cooler
-  // 4 phases, 100 HP
-  // Combination: 546815 (three 2-digit pairs)
-  //   Phase 1 → 54 (terrace countdown: first two numbers)
-  //   Phase 2 → 68 (shed inventory: items flanking item 7)
-  //   Phase 3 → 15 (coaster code ASKAE: A=1, E=5)
+  // 1 phase, 100 HP
+  // Team A combination: 67 (countdown start 6, inventory item 7, ordered)
+  // Team B combination: 04:08 (railing carvers 4, valid inventory 8, as time)
+  // Both teams fight the same cooler independently.
   // ==========================================
   {
     id: "locked-cooler",
@@ -28,197 +27,101 @@ export const BOSSES: Boss[] = [
     maxHp: 100,
     requiredRoomIds: ["shed"],
     phases: [
-      // ==========================================
-      // PHASE 1 — 100% to 75% HP
-      // "The First Resistance"
-      // ==========================================
       {
         phase: 1,
-        title: "The First Resistance",
+        title: "The Lock",
         description:
-          "The combination lock doesn't budge. The cooler seems to sense your presence. Phase 1: find the first two digits of the combination. A clue was carved into the terrace railing.",
+          "The combination lock doesn't budge. Your team has gathered clues across the cabin. Now use them. Apply what you found — or pay the tribute.",
         hpThreshold: 100,
         actions: [
+          // ——— Team A: First Tumbler ———
           {
-            id: "cooler-p1-clue-check",
-            label: "Apply the Terrace Inscription",
+            id: "cooler-clue-check-team-a",
+            label: "Apply the Order Rule (Team A)",
             description:
-              "The terrace railing held a carved countdown sequence. Study it carefully — the combination begins somewhere in that sequence.",
+              "The shed warned your team not to add or multiply — to use order instead. You have two numbers from the cabin: the countdown started at 6, and the locked cooler is Item 7. Place them in order.",
             type: "clue_check",
-            damage: 25,
-            requiredClueId: "clue-terrace-inscription",
-            rewardText:
-              "You study the countdown: 5-4-3-2-1-0. The ritual begins at the top. The first tumbler accepts your answer. Something clicks inside the lock.",
-            failureText:
-              "You need the terrace inscription clue first. Go back and complete the Terrace room.",
-          },
-          {
-            id: "cooler-p1-puzzle",
-            label: "Decode the First Digits",
-            description:
-              "On the lid of the cooler, almost too faint to read: \"The ritual opens where the countdown begins.\" The terrace held a carved countdown sequence. Where does it begin?",
-            type: "puzzle",
             damage: 20,
-            puzzle: {
-              prompt: "The terrace countdown is a sequence of numbers from high to low, ending at zero. What are the first two numbers of that sequence, written as a single two-digit number?",
-              answer: ["54", "5 4", "five four"],
-            },
-            hint: "The countdown begins at the highest point and descends. Think about the first two steps down.",
+            requiredClueId: "clue-shed-order-rule",
             rewardText:
-              "The first tumbler yields with a click. One step closer.",
+              "The order rule clicks into place. The clues align: 6 first, then 7. Something shifts inside the lock.",
             failureText:
-              "The lock is unimpressed. Study the countdown again from the beginning.",
+              "You need the Order Rule clue from the Shed first. Go back and find it.",
           },
           {
-            id: "cooler-p1-offer-boost",
+            id: "cooler-puzzle-team-a",
+            label: "Enter the Combination (Team A)",
+            description:
+              "Your team found:\n— The terrace countdown began at 6\n— The damaged inventory line placed the cooler at item 7\n— The shed warned you to use order, not math\n\nPlace the two numbers in sequence. What two digits open the lock?",
+            type: "puzzle",
+            damage: 40,
+            puzzle: {
+              prompt:
+                "The lock is asking for a sequence, not a calculation.\nUse the clue about what came first, then what held it.\nEnter the two digits in order.",
+              answer: ["67", "6 7", "six seven"],
+            },
+            hint: "First lost, then locked. The countdown tells you what came first. The inventory tells you what held it.",
+            rewardText:
+              "CLICK. The lock responds. The cooler takes serious damage. Your team is close.",
+            failureText:
+              "The lock is unimpressed. Think about what you found first — and what you found it locked inside.",
+          },
+
+          // ——— Team B: Receipt Tumbler ———
+          {
+            id: "cooler-clue-check-team-b",
+            label: "Apply the Time Format (Team B)",
+            description:
+              "The torn receipt in the shed showed a damaged timestamp — only the colon remained. The note said: \"The hour came from the railing. The minutes came from the list.\" Your team has both numbers.",
+            type: "clue_check",
+            damage: 20,
+            requiredClueId: "clue-shed-torn-timestamp",
+            rewardText:
+              "The time format clicks. The receipt clue is confirmed. Your numbers slot into hours and minutes.",
+            failureText:
+              "You need the Torn Timestamp clue from the Shed first. Go back and find it.",
+          },
+          {
+            id: "cooler-puzzle-team-b",
+            label: "Enter the Combination (Team B)",
+            description:
+              "Your team found:\n— The terrace railing was carved by 4 different people (the hour)\n— The valid inventory count was 8 (the minutes)\n— The torn receipt told you to format it as a time\n\nWhat time opens the receipt lock?",
+            type: "puzzle",
+            damage: 40,
+            puzzle: {
+              prompt:
+                "Use the two numbers as parts of a clock, not as one normal number.\nA single-digit hour often needs help standing in the hour slot.\nEnter the time.",
+              answer: ["04:08", "4:08", "0408", "408", "04.08", "4.08"],
+            },
+            hint: "Railing gives the hour (4 carvers). Inventory gives the minutes (8 valid items). Format: HH:MM.",
+            rewardText:
+              "CLICK. The frozen receipt timestamp is confirmed. The cooler shudders. Major damage dealt.",
+            failureText:
+              "The lock rejects it. Check the format — does the hour need a leading zero?",
+          },
+
+          // ——— Shared: Offer boosts ———
+          {
+            id: "cooler-offer-boost",
             label: "Force it with Ritual Strength",
             description:
-              "Your team doesn't have the clue yet but is determined. Pay the ritual cost to force partial progress through sheer collective will.",
+              "Your team doesn't have all the clues yet but is determined. Pay the ritual cost to force partial progress through sheer collective will.",
             type: "offer_boost",
             damage: 15,
             offerCost: 3,
             rewardText:
-              "Three Offers paid. The cooler registers your commitment. One tumbler yields slightly — not all the way, but enough. 15 damage dealt.",
-          },
-        ],
-      },
-      // ==========================================
-      // PHASE 2 — 75% to 50% HP
-      // "The Second Tumbler"
-      // ==========================================
-      {
-        phase: 2,
-        title: "The Second Tumbler",
-        description:
-          "One tumbler has yielded. The combination is partly entered. Phase 2: the next two digits are hidden in the shed's inventory. The cooler is item 7 — think about what surrounds it.",
-        hpThreshold: 75,
-        actions: [
-          {
-            id: "cooler-p2-clue-check",
-            label: "Apply the Shed Inventory",
-            description:
-              "The inventory listed every item in this cabin. The cooler is item 7. The combination digits are hiding among its neighbors on that list.",
-            type: "clue_check",
-            damage: 25,
-            requiredClueId: "clue-shed-inventory",
-            rewardText:
-              "The items immediately surrounding the cooler on the inventory — their numbers together form the next digits. Another tumbler clicks. Two down.",
-            failureText:
-              "You need the shed inventory clue. Complete the Shed room and return.",
+              "Three Offers paid. The cooler registers your commitment. Something yields slightly. 15 damage dealt.",
           },
           {
-            id: "cooler-p2-puzzle",
-            label: "Read the Lock Plate",
-            description:
-              "On the lock casing, etched into the metal on either side of the dial, are two Roman numerals: one to the left, one to the right. They flank the dial the way certain items flank the cooler on a list. What two-digit number do those Roman numerals represent, read left to right?",
-            type: "puzzle",
-            damage: 20,
-            puzzle: {
-              prompt: "The Roman numeral to the left of the dial is VI. The Roman numeral to the right is VIII. Write both as standard digits, side by side, as a single two-digit number.",
-              answer: ["68", "6 8", "six eight"],
-            },
-            hint: "VI = 6. VIII = 8. Read them together.",
-            rewardText: "68. The second tumbler yields. Progress measured in clicks.",
-            failureText: "Convert each Roman numeral to its Arabic digit, then place them side by side.",
-          },
-          {
-            id: "cooler-p2-offer-boost",
-            label: "Pay the Cooler's Demand",
-            description:
-              "The cooler seems to want tribute. It wants Offer. Your team obliges.",
-            type: "offer_boost",
-            damage: 10,
-            offerCost: 4,
-            rewardText: "The cooler absorbs your offering. It yields slightly. 10 damage.",
-          },
-        ],
-      },
-      // ==========================================
-      // PHASE 3 — 50% to 25% HP
-      // "The Last Two Digits"
-      // ==========================================
-      {
-        phase: 3,
-        title: "The Last Two Digits",
-        description:
-          "Phase 3: the cooler is rattling. The final two digits come from the coaster card — a five-letter code hidden under the coffee table. The alphabet holds the key.",
-        hpThreshold: 50,
-        actions: [
-          {
-            id: "cooler-p3-coaster-code",
-            label: "Decode the Coaster Code",
-            description:
-              "The coaster card bears a five-letter code. The alphabet assigns a number to each letter. Look at the first and last letters of that code — their positions in the alphabet form the final two digits.",
-            type: "clue_check",
-            damage: 25,
-            requiredClueId: "clue-coffee-table-coaster",
-            rewardText:
-              "The first and last letters of the code, converted by their position in the alphabet: two single digits side by side. The third tumbler yields. Almost there.",
-            failureText:
-              "You need the coaster code clue. Find it at the Coffee Table room.",
-          },
-          {
-            id: "cooler-p3-social",
-            label: "The Group Must Decide",
-            description:
-              "The cooler demands a group verdict. Every player must agree on the final two digits by social consensus — no puzzle, just collective decision. If the group is wrong, pay the penalty.",
-            type: "social",
-            damage: 15,
-            rewardText:
-              "The group reaches consensus. The cooler respects a unified decision. 15 damage.",
-            failureText: "The group is divided. The cooler is unmoved. Pay and try again.",
-          },
-          {
-            id: "cooler-p3-offer-boost",
-            label: "Overwhelm It With Ritual",
-            description: "Brute force through Offer. Expensive, but effective.",
-            type: "offer_boost",
-            damage: 20,
-            offerCost: 5,
-            rewardText:
-              "Five Offers laid down. The cooler's resistance crumbles under the weight of your dedication. 20 damage. The final tumbler loosens.",
-          },
-        ],
-      },
-      // ==========================================
-      // PHASE 4 — 25% to 0% HP
-      // "The Final Turn"
-      // ==========================================
-      {
-        phase: 4,
-        title: "The Final Turn",
-        description:
-          "All three tumblers are set. Phase 4: verify the complete combination — three pairs of two digits, written together as a six-digit number. Enter it correctly and the cooler opens.",
-        hpThreshold: 25,
-        actions: [
-          {
-            id: "cooler-p4-final-open",
-            label: "Turn the Final Dial",
-            description:
-              "Every digit is entered. The tumblers are aligned. One team member places their hand on the cooler lid. This is the moment. Enter the full six-digit combination to open it.",
-            type: "puzzle",
-            damage: 25,
-            puzzle: {
-              prompt:
-                "What is the complete six-digit combination you have assembled across the three phases? Write it as a continuous number.",
-              answer: ["546815", "54 68 15", "54-68-15", "5 4 6 8 1 5"],
-            },
-            hint: "Three phases, three clues, three pairs of digits. Review your case file.",
-            rewardText:
-              "CLICK. The lock opens. The cooler lid lifts. Inside: ice. A lot of ice. And nested in the center — two perfectly cold beers, and a sealed envelope labeled \"THE VERDICT.\" Chapter 1 complete.",
-            failureText:
-              "The digits don't match. Review your clues from each phase. The cooler waits.",
-          },
-          {
-            id: "cooler-p4-grand-offering",
+            id: "cooler-grand-offering",
             label: "The Grand Offering",
             description:
               "Your team has struggled. The cooler has resisted. End it now with the Grand Offering — pay the maximum tribute and force the lock open through sheer ritual power.",
             type: "offer_boost",
-            damage: 30,
-            offerCost: 6,
+            damage: 35,
+            offerCost: 7,
             rewardText:
-              "Six Offers. The cooler cannot stand against such commitment. The lock surrenders. The cooler opens. The Grand Offering is complete.",
+              "Seven Offers. The cooler cannot stand against such commitment. The lock surrenders. The Grand Offering is complete.",
           },
         ],
       },
@@ -241,132 +144,71 @@ export const BOSSES: Boss[] = [
       phases: [
         {
           phase: 1,
-          title: "Den Første Modstand",
+          title: "Låsen",
           description:
-            "Kombinationslåsen giver ikke efter. Køleren synes at mærke jeres tilstedeværelse. Fase 1: find de første to cifre i kombinationen. Et spor var ridset ind i terrasse-gelænderet.",
+            "Kombinationslåsen giver ikke efter. Jeres hold har samlet spor gennem hele hytten. Brug dem nu. Anvend hvad I fandt — eller betal tribut.",
           actions: [
             {
-              id: "cooler-p1-clue-check",
-              label: "Anvend Terrasse-Ristningen",
+              id: "cooler-clue-check-team-a",
+              label: "Anvend Ordensreglen (Hold A)",
               description:
-                "Terrassens gelænder havde en ristet nedtællingssekvens. Studér den omhyggeligt — kombinationen begynder et sted i den sekvens.",
+                "Skuret advarede jeres hold om ikke at addere eller multiplicere — men om at bruge rækkefølge. I har to tal fra hytten: nedtællingen startede ved 6, og den låste køler er Genstand 7. Placer dem i rækkefølge.",
               rewardText:
-                "Du studerer nedtællingen: 5-4-3-2-1-0. Ritualet begynder øverst. Den første tromle accepterer dit svar. Noget klikker inde i låsen.",
+                "Ordensreglen klikker på plads. Sporene flugter: 6 først, derefter 7. Noget bevæger sig inde i låsen.",
               failureText:
-                "Du har brug for terrasse-ristnings-sporet. Gå tilbage og fuldfør Terrasse-rummet.",
+                "Du har brug for Ordensregels-sporet fra Skuret først. Gå tilbage og find det.",
             },
             {
-              id: "cooler-p1-puzzle",
-              label: "Afkod De Første Cifre",
+              id: "cooler-puzzle-team-a",
+              label: "Indtast Kombinationen (Hold A)",
               description:
-                "På lågets overflade, næsten for svagt at læse: \"Ritualet åbner hvor nedtællingen begynder.\" Terrassen havde en ristet nedtællingssekvens. Hvor begynder den?",
-              puzzlePrompt: "Terrasse-nedtællingen er en sekvens af tal fra høj til lav, der slutter ved nul. Hvad er de første to tal i den sekvens, skrevet som et enkelt tocifret tal?",
-              hint: "Nedtællingen begynder på det højeste punkt og falder. Tænk på de første to trin ned.",
-              rewardText: "Den første tromle giver efter med et klik. Et skridt nærmere.",
-              failureText: "Låsen er imponeret. Studér nedtællingen igen fra begyndelsen.",
+                "Jeres hold fandt:\n— Terrasse-nedtællingen begyndte ved 6\n— Den beskadigede inventarlinje placerede køleren ved genstand 7\n— Skuret advarede jer om at bruge rækkefølge, ikke matematik\n\nPlacer de to tal i rækkefølge. Hvilke to cifre åbner låsen?",
+              puzzlePrompt:
+                "Låsen beder om en sekvens, ikke en beregning.\nBrug sporet om hvad kom først, derefter hvad der holdt det.\nIndtast de to cifre i rækkefølge.",
+              hint: "Først tabt, derefter låst. Nedtællingen fortæller hvad der kom først. Inventaret fortæller hvad der holdt det.",
+              rewardText:
+                "KLIK. Låsen reagerer. Køleren tager alvorlig skade. Jeres hold er tæt på.",
+              failureText:
+                "Låsen er uimponeret. Tænk på hvad I fandt først — og hvad I fandt det låst inde i.",
             },
             {
-              id: "cooler-p1-offer-boost",
+              id: "cooler-clue-check-team-b",
+              label: "Anvend Tidsformatet (Hold B)",
+              description:
+                "Den iturevne kvittering i skuret viste et beskadiget tidsstempel — kun kolonen var tilbage. Noten sagde: \"Timen kom fra gelænderet. Minutterne kom fra listen.\" Jeres hold har begge tal.",
+              rewardText:
+                "Tidsformatet klikker. Kvitteringssporet er bekræftet. Jeres tal passer ind som timer og minutter.",
+              failureText:
+                "Du har brug for Iturevet Tidsstempel-sporet fra Skuret først. Gå tilbage og find det.",
+            },
+            {
+              id: "cooler-puzzle-team-b",
+              label: "Indtast Kombinationen (Hold B)",
+              description:
+                "Jeres hold fandt:\n— Terrasse-gelænderet var ridset af 4 forskellige personer (timen)\n— Det gyldige inventarantal var 8 (minutterne)\n— Den iturevne kvittering fortalte jer at formatere det som et klokkeslæt\n\nHvilket klokkeslæt åbner kvitteringslåsen?",
+              puzzlePrompt:
+                "Brug de to tal som dele af et ur, ikke som et normalt tal.\nEt enkeltcifret antal timer har ofte brug for hjælp i timefeltet.\nIndtast klokkeslættet.",
+              hint: "Gelænderet giver timen (4 ristere). Inventaret giver minutterne (8 gyldige). Format: TT:MM.",
+              rewardText:
+                "KLIK. Det frosne kvitteringstidsstempel er bekræftet. Køleren skælver. Stor skade tilføjet.",
+              failureText:
+                "Låsen afviser det. Tjek formatet — skal timen have et foranstillet nul?",
+            },
+            {
+              id: "cooler-offer-boost",
               label: "Tving Den Med Ritualstyrke",
               description:
-                "Jeres hold har ikke sporet endnu, men er fast besluttet. Betal ritualomkostningen for at tvinge delvis fremgang igennem med ren kollektiv vilje.",
+                "Jeres hold har ikke alle sporene endnu, men er fast besluttet. Betal ritualomkostningen for at tvinge delvis fremgang igennem med ren kollektiv vilje.",
               rewardText:
-                "Tre Offers betalt. Køleren registrerer jeres engagement. En tromle giver en smule efter — ikke helt, men nok. 15 skade tilføjet.",
-            },
-          ],
-        },
-        {
-          phase: 2,
-          title: "Den Anden Tromle",
-          description:
-            "Én tromle har givet efter. Kombinationen er delvist indtastet. Fase 2: de næste to cifre er gemt i skurets inventar. Køleren er genstand 7 — tænk på hvad der omgiver den.",
-          actions: [
-            {
-              id: "cooler-p2-clue-check",
-              label: "Anvend Skurets Inventar",
-              description:
-                "Inventaret listede alle genstande i denne hytte. Køleren er genstand 7. Kombinationscifre gemmer sig blandt dens naboer på den liste.",
-              rewardText:
-                "Genstandene der umiddelbart omgiver køleren på inventaret — deres numre danner tilsammen de næste cifre. Endnu en tromle klikker. To ned.",
-              failureText:
-                "Du har brug for skurets inventar-spor. Fuldfør Skur-rummet og vend tilbage.",
+                "Tre Offers betalt. Køleren registrerer jeres engagement. Noget giver en smule efter. 15 skade tilføjet.",
             },
             {
-              id: "cooler-p2-puzzle",
-              label: "Læs Låsepladen",
-              description:
-                "På låsehuset, ridset ind i metallet på hver side af skiven, er to romertal: et til venstre, et til højre. De flankerer skiven ligesom visse genstande flankerer køleren på en liste. Hvilket tocifret tal repræsenterer disse romertal, læst fra venstre mod højre?",
-              puzzlePrompt: "Romertal til venstre for skiven er VI. Romertal til højre er VIII. Skriv begge som standardcifre, side om side, som et enkelt tocifret tal.",
-              hint: "VI = 6. VIII = 8. Læs dem sammen.",
-              rewardText: "68. Den anden tromle giver efter. Fremgang målt i klik.",
-              failureText: "Konvertér hvert romertal til dets arabiske ciffer, og placér dem derefter side om side.",
-            },
-            {
-              id: "cooler-p2-offer-boost",
-              label: "Betal Kølerens Krav",
-              description: "Køleren synes at ville have tribut. Den vil have Offer. Jeres hold efterkommer det.",
-              rewardText: "Køleren absorberer jeres offergave. Den giver en smule efter. 10 skade.",
-            },
-          ],
-        },
-        {
-          phase: 3,
-          title: "De Sidste To Cifre",
-          description:
-            "Fase 3: køleren ryster. De sidste to cifre kommer fra brikkortet — en fembogstavskode gemt under sofabordet. Alfabetet holder nøglen.",
-          actions: [
-            {
-              id: "cooler-p3-coaster-code",
-              label: "Afkod Brikkekoden",
-              description:
-                "Brikkortet bærer en fembogstavskode. Alfabetet tildeler et tal til hvert bogstav. Se på første og sidste bogstav i den kode — deres placering i alfabetet danner de sidste to cifre.",
-              rewardText:
-                "Det første og sidste bogstav i koden, konverteret via deres placering i alfabetet: to enkeltcifre side om side. Den tredje tromle giver efter. Næsten der.",
-              failureText:
-                "Du har brug for brikkekode-sporet. Find det i Sofabord-rummet.",
-            },
-            {
-              id: "cooler-p3-social",
-              label: "Gruppen Skal Beslutte",
-              description:
-                "Køleren kræver en gruppekendelse. Alle spillere skal blive enige om de sidste to cifre via social konsensus — ingen gåde, blot kollektiv beslutning. Betaler gruppen hvis de tager fejl.",
-              rewardText: "Gruppen når konsensus. Køleren respekterer en samlet beslutning. 15 skade.",
-              failureText: "Gruppen er splitted. Køleren er uberørt. Betal og prøv igen.",
-            },
-            {
-              id: "cooler-p3-offer-boost",
-              label: "Overmand Den Med Ritual",
-              description: "Brutal kraft via Offer. Dyrt, men effektivt.",
-              rewardText: "Fem Offers lagt ned. Kølerens modstand smuldrer under vægten af jeres dedikation. 20 skade. Den sidste tromle løsner.",
-            },
-          ],
-        },
-        {
-          phase: 4,
-          title: "Det Endelige Drej",
-          description:
-            "Alle tre tromler er sat. Fase 4: bekræft den komplette kombination — tre par af to cifre, skrevet sammen som et sescifret tal. Indtast det korrekt og køleren åbner.",
-          actions: [
-            {
-              id: "cooler-p4-final-open",
-              label: "Drej Den Endelige Skive",
-              description:
-                "Hvert ciffer er indtastet. Tromlerne er justeret. Ét holdmedlem lægger hånden på kølerens låg. Dette er øjeblikket. Indtast den fulde sekscifrede kombination for at åbne den.",
-              puzzlePrompt:
-                "Hvad er den komplette sekscifrede kombination du har samlet på tværs af de tre faser? Skriv den som et sammenhængende tal.",
-              hint: "Tre faser, tre spor, tre par cifre. Gennemse din sagsmapp.",
-              rewardText:
-                "KLIK. Låsen åbner. Kølerens låg løftes. Indeni: is. Meget is. Og gemt i midten — to perfekt kolde øl, og en forseglet konvolut mærket \"KENDELSEN.\" Kapitel 1 fuldført.",
-              failureText:
-                "Cifrene stemmer ikke. Gennemse dine spor fra hver fase. Køleren venter.",
-            },
-            {
-              id: "cooler-p4-grand-offering",
+              id: "cooler-grand-offering",
               label: "Den Store Offergave",
               description:
                 "Jeres hold har kæmpet. Køleren har modstået. Afslut det nu med Den Store Offergave — betal det maksimale tribut og tving låsen op med ren ritualstyrke.",
               rewardText:
-                "Seks Offers. Køleren kan ikke modstå et sådant engagement. Låsen kapitulerer. Køleren åbner. Den Store Offergave er fuldført.",
+                "Syv Offers. Køleren kan ikke modstå et sådant engagement. Låsen kapitulerer. Den Store Offergave er fuldført.",
             },
           ],
         },

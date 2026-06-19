@@ -62,6 +62,7 @@ export default function BossFightPage({ params }: Props) {
   // Drunk gamble mechanic
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
+  const [resistAnim, setResistAnim] = useState(false); // boss resist animation
   // Keep drunkSips in range [1, offerSpent] whenever offerSpent loads/changes
   useEffect(() => {
     if (offerSpent > 0) setDrunkSips((prev) => Math.min(prev, offerSpent));
@@ -240,33 +241,43 @@ export default function BossFightPage({ params }: Props) {
   };
 
   const handleDrunkGamble = async () => {
+    const wagered = drunkSips;      // sips on the line
+    const bossDamage = wagered * 3; // boss takes 3× if it loses
     setLoading("drunk-gamble");
-    const isSuccessful = Math.random() < 0.5;
-
-    if (isSuccessful) {
-      const result = await applyBossDamage(gameId, teamId, bossId, drunkSips);
-      setLoading(null);
-      if (result.success) {
-        setFeedback({
-          actionId: "drunk-gamble",
-          text: result.data.defeated
-            ? `🍺 Bossen er totalt fuld! ${boss.defeatText}`
-            : `🍺 Bossen drikker! ${drunkSips} skade! HP: ${result.data.newHp}`,
-          success: true,
-        });
-        fetchData();
-      }
-    } else {
-      setLoading(null);
-      setFeedback({
-        actionId: "drunk-gamble",
-        text: `😅 Bossen ler ad jer... Holdet drikker ${drunkSips} ${drunkSips === 1 ? "slurk" : "slurke"}!`,
-        success: false,
-      });
-    }
-
     setDrunkModal(false);
     setActiveTab("fight");
+
+    const isSuccessful = Math.random() < 0.5;
+
+    try {
+      if (isSuccessful) {
+        // Boss drinks — takes wagered × 3 damage
+        const result = await applyBossDamage(gameId, teamId, bossId, wagered, bossDamage);
+        if (result.success) {
+          setFeedback({
+            actionId: "drunk-gamble",
+            text: result.data.defeated
+              ? `🍺 Bossen er totalt fuld! ${boss.defeatText}`
+              : `🍺 Bossen drikker ${bossDamage} slurke! (${wagered}×3) HP: ${result.data.newHp}`,
+            success: true,
+          });
+          fetchData();
+        } else {
+          setFeedback({ actionId: "drunk-gamble", text: result.error ?? "Noget gik galt.", success: false });
+        }
+      } else {
+        // Boss resists — team drinks only the wagered amount (not ×3)
+        setResistAnim(true);
+        setTimeout(() => setResistAnim(false), 1800);
+        setFeedback({
+          actionId: "drunk-gamble",
+          text: `💪 Bossen modstår! Holdet drikker ${wagered} ${wagered === 1 ? "slurk" : "slurke"} selv.`,
+          success: false,
+        });
+      }
+    } finally {
+      setLoading(null);
+    }
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -316,6 +327,23 @@ export default function BossFightPage({ params }: Props) {
           60%     { transform: translateX(2px)  rotate(0.2deg);  }
           76%     { transform: translateX(-1px) rotate(0deg);    }
         }
+        @keyframes resistBounce {
+          0%   { transform: translateX(0)    scale(1);    }
+          10%  { transform: translateX(-6px) scale(1.03); }
+          22%  { transform: translateX(7px)  scale(1.04); }
+          36%  { transform: translateX(-5px) scale(1.02); }
+          50%  { transform: translateX(5px)  scale(1.03); }
+          65%  { transform: translateX(-3px) scale(1.01); }
+          80%  { transform: translateX(3px)  scale(1);    }
+          100% { transform: translateX(0)    scale(1);    }
+        }
+        @keyframes resistFlash {
+          0%   { opacity: 0;    }
+          15%  { opacity: 0.55; }
+          45%  { opacity: 0.40; }
+          70%  { opacity: 0.20; }
+          100% { opacity: 0;    }
+        }
       `}</style>
 
       {/* ── Sticky hero + HP wrapper ── */}
@@ -332,12 +360,30 @@ export default function BossFightPage({ params }: Props) {
             alt={boss.title}
             className="absolute inset-0 w-full h-full object-cover object-center"
             style={{
-              animation: isLowHp ? "angryShake 0.75s ease-in-out infinite" : undefined,
+              animation: resistAnim
+                ? "resistBounce 0.9s ease-in-out"
+                : isLowHp ? "angryShake 0.75s ease-in-out infinite" : undefined,
               filter: isLowHp ? "brightness(0.8) contrast(1.15) saturate(1.2)" : "brightness(0.95)",
             }}
           />
         ) : (
           <div className={cn("absolute inset-0 bg-gradient-to-br", boss.look.colorFrom, boss.look.colorTo)} />
+        )}
+
+        {/* Resist flash overlay */}
+        {resistAnim && (
+          <div
+            className="absolute inset-0 pointer-events-none flex items-center justify-center"
+            style={{ animation: "resistFlash 1.8s ease-out forwards" }}
+          >
+            <div className="absolute inset-0" style={{ background: "rgba(80,200,80,0.35)" }} />
+            <span
+              className="relative z-10 text-2xl font-black tracking-widest text-green-200 drop-shadow-lg select-none"
+              style={{ fontFamily: "Georgia,serif", textShadow: "0 0 20px rgba(80,255,80,0.8)" }}
+            >
+              💪 MODSTÅR!
+            </span>
+          </div>
         )}
 
         {/* Low-HP red pulse */}
@@ -810,8 +856,8 @@ export default function BossFightPage({ params }: Props) {
               🍺 Beruse Bossen
             </h3>
             <p className="text-xs text-stone-500 text-center mb-5 leading-relaxed">
-              50/50 chance — bossen tager {drunkSips} {drunkSips === 1 ? "slurk" : "slurke"} i skade,
-              <br />eller holdet drikker dem selv.
+              50/50 — bossen tager <span className="text-amber-400 font-bold">{drunkSips * 3} skade</span> ({drunkSips}×3)
+              <br />eller holdet drikker <span className="text-red-400 font-bold">{drunkSips} {drunkSips === 1 ? "slurk" : "slurke"}</span> selv.
             </p>
 
             {/* Sip picker */}

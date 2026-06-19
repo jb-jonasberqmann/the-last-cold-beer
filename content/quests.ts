@@ -8,7 +8,7 @@ import type { Quest } from "@/types/content";
 
 export const QUESTS: Quest[] = [
   // ==========================================
-  // THE KITCHEN — 3 quests
+  // THE KITCHEN — 3 quests per team
   // ==========================================
   {
     id: "kitchen-inspection",
@@ -17,21 +17,21 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The First Inspection",
     description:
-      "You walk into the kitchen. The lights flicker once. Everything looks normal — except the fridge is humming louder than it should. On the counter, someone left a sticky note. It says: \"Count the magnets. Subtract the ones that don't belong.\"",
+      "You walk into the kitchen. The lights flicker once. Everything looks normal — except the fridge is humming louder than it should. On the counter, someone left a sticky note. It says: \"Count what belongs. Ignore what clearly came from another fridge.\"",
     prompt:
-      "There are 11 magnets on the fridge. 3 of them are shaped like beer bottles, 2 are shaped like tiny pineapples, and the rest are letters. The pineapples are clearly from a different fridge in a different life. How many magnets belong?",
+      "There are 11 magnets on the fridge. 3 are shaped like beer bottles. 2 are shaped like tiny pineapples. The rest are letters. The sticky note says: \"Count what belongs. Ignore what clearly came from another fridge.\" The pineapples look aggressively tropical for a Scandinavian cabin. How many magnets belong?",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 1,
-        text: "\"Don't belong\" means the pineapples. They have no business being here.",
+        text: "Look for the magnets that feel like they belong to a different story.",
       },
       {
         order: 2,
         offerCost: 2,
-        text: "11 total. 2 pineapples don't belong. 11 - 2 = ?",
+        text: "You are removing outsiders from the total, not choosing one category.",
       },
     ],
     answer: {
@@ -40,17 +40,20 @@ export const QUESTS: Quest[] = [
     },
     rewardClueId: "clue-kitchen-calendar",
     rewardText:
-      "As you count the magnets, your eye drifts to the wall calendar. Something's marked. Something old.",
+      "9 magnets belong. As you count them, your eye drifts to the wall calendar. Something's marked. Something old.",
     failureText: "The magnets stare back at you. Pineapples have no place in this cabin.",
     da: {
       title: "Den Første Inspektion",
-      description: "Du går ind i køkkenet. Lyset blinker én gang. Alt ser normalt ud — bortset fra at køleskabet summer højere end det burde. På disken har nogen efterladt en klæbrig lap. Den siger: \"Tæl magneterne. Træk dem fra, der ikke hører til.\"",
-      prompt: "Der er 11 magneter på køleskabet. 3 af dem er formet som ølflasker, 2 er formet som små ananas, og resten er bogstaver. Ananasserne stammer tydeligvis fra et andet køleskab i et andet liv. Hvor mange magneter hører til?",
+      description:
+        "Du går ind i køkkenet. Lyset blinker én gang. Alt ser normalt ud — bortset fra at køleskabet summer højere end det burde. På disken har nogen efterladt en klæbrig lap. Den siger: \"Tæl hvad der hører til. Ignorer hvad der tydeligvis kom fra et andet køleskab.\"",
+      prompt:
+        "Der er 11 magneter på køleskabet. 3 er formet som ølflasker. 2 er formet som små ananas. Resten er bogstaver. Den klæbrige lap siger: \"Tæl hvad der hører til. Ignorer hvad der tydeligvis kom fra et andet køleskab.\" Ananasserne ser aggressivt tropiske ud til en skandinavisk hytte. Hvor mange magneter hører til?",
       hints: [
-        "\"Hører ikke til\" er ananasserne. De har intet at gøre her.",
-        "11 i alt. 2 ananas hører ikke til. 11 - 2 = ?",
+        "Led efter magneterne der føles som om de hører til i en anden fortælling.",
+        "Du fjerner fremmedelementer fra totalen — ikke vælger én kategori.",
       ],
-      rewardText: "Mens du tæller magneterne, får øjet fat på vægkalenderen. Noget er markeret. Noget gammelt.",
+      rewardText:
+        "9 magneter hører til. Mens du tæller dem, får øjet fat på vægkalenderen. Noget er markeret. Noget gammelt.",
       failureText: "Magneterne stirrer tilbage på dig. Ananas hører ikke hjemme i denne hytte.",
     },
   },
@@ -71,9 +74,11 @@ export const QUESTS: Quest[] = [
       "The door swings open. Cold air rushes out. There it is — one single beer, alone in the center, covered in condensation. A note is taped to it.",
     da: {
       title: "Åbn Køleskabet",
-      description: "Køleskabet står foran dig. Kold luft siver under lågen. Du kan mærke det — den svage, fjerne summen af noget umuligt koldt. Betal tolden og åbn det.",
+      description:
+        "Køleskabet står foran dig. Kold luft siver under lågen. Du kan mærke det — den svage, fjerne summen af noget umuligt koldt. Betal tolden og åbn det.",
       prompt: "Køleskabet åbner sig ikke selv. Betal den rituelle pris for at undersøge det.",
-      rewardText: "Lågen svinger åben. Kold luft strømmer ud. Der er det — én enkelt øl, alene i midten, dækket af kondens. En seddel er klistret til den.",
+      rewardText:
+        "Lågen svinger åben. Kold luft strømmer ud. Der er det — én enkelt øl, alene i midten, dækket af kondens. En seddel er klistret til den.",
     },
   },
   {
@@ -93,38 +98,135 @@ export const QUESTS: Quest[] = [
     failureText: "The cabin is unmoved. Try harder next time.",
     da: {
       title: "Hyttens Velkomstskål",
-      description: "Enhver god hyttetur starter på samme måde. Nogen skal give velkomstskålen. Den skal referere til mindst én person der IKKE er til stede, slutte med en nedtælling, og indeholde ordet \"køleskab\".",
-      prompt: "Ét holdmedlem giver en velkomstskål. Det andet hold bedømmer om den opfylder kravene. Bedøm ved gruppeafstemning. Godkendes skålen: tjen bonussen.",
+      description:
+        "Enhver god hyttetur starter på samme måde. Nogen skal give velkomstskålen. Den skal referere til mindst én person der IKKE er til stede, slutte med en nedtælling, og indeholde ordet \"køleskab\".",
+      prompt:
+        "Ét holdmedlem giver en velkomstskål. Det andet hold bedømmer om den opfylder kravene. Bedøm ved gruppeafstemning. Godkendes skålen: tjen bonussen.",
       rewardText: "En værdig skål. Hytten anerkender jeres ankomst.",
       failureText: "Hytten er uberørt. Prøv hårdere næste gang.",
     },
   },
 
+  {
+    id: "b-kitchen-inspection",
+    roomId: "kitchen",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Wrong Word on the Fridge",
+    description:
+      "Your team enters the kitchen. The letter magnets on the fridge have been rearranged. Someone clearly had a theory. Or a message. Or both.",
+    prompt:
+      "The letter magnets on the fridge are arranged like this:\nR  A  L  T  U  I\nSomeone has tried to spell something while clearly standing too close to the fridge.\nRearrange the letters into the word that best describes what this whole situation is starting to feel like.",
+    order: 1,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "The letters form one word connected to repeated traditions.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "Look for a word that begins with R and explains why this feels planned.",
+      },
+    ],
+    answer: {
+      correct: ["ritual", "RITUAL", "Ritual"],
+      normalized: true,
+    },
+    rewardClueId: "clue-kitchen-calendar",
+    rewardText:
+      "RITUAL. Not random at all. This is a ritual, not a random missing beer. Something has been planned here.",
+    failureText: "The magnets are all there. Six letters. One word. Try rearranging.",
+    da: {
+      title: "Det Forkerte Ord på Køleskabet",
+      description:
+        "Jeres hold træder ind i køkkenet. Bogstavmagneterne på køleskabet er omrodet. Nogen har tydeligvis haft en teori. Eller en besked. Eller begge.",
+      prompt:
+        "Bogstavmagneterne på køleskabet er arrangeret sådan:\nR  A  L  T  U  I\nNogen har forsøgt at stave noget mens de tydeligvis stod for tæt på køleskabet.\nOmarrangér bogstaverne til det ord der bedst beskriver hvad hele denne situation begynder at føles som.",
+      hints: [
+        "Bogstaverne danner ét ord forbundet med gentagne traditioner.",
+        "Led efter et ord der begynder med R og forklarer hvorfor dette føles planlagt.",
+      ],
+      rewardText:
+        "RITUAL. Slet ikke tilfældigt. Dette er et ritual, ikke en tilfældig forsvunden øl. Noget har været planlagt her.",
+      failureText: "Magneterne er alle der. Seks bogstaver. Et ord. Prøv at omarrangere.",
+    },
+  },
+  {
+    id: "b-kitchen-fridge-unlock",
+    roomId: "kitchen",
+    forTeam: "team-b",
+    type: "unlock",
+    title: "Approach the Fridge",
+    description:
+      "The fridge is humming at an unusual frequency. Your team can feel it before you touch the handle. Whatever is in there has been waiting. Pay the toll and open it.",
+    prompt: "Pay the ritual cost to investigate the fridge.",
+    order: 2,
+    isRequired: true,
+    offerCost: 2,
+    hints: [],
+    rewardText:
+      "The door opens. Cold rushes out. One beer. Alone in the center. A note taped to it with tape so old it's almost transparent.",
+    da: {
+      title: "Nærm Dig Køleskabet",
+      description:
+        "Køleskabet summer med en usædvanlig frekvens. Jeres hold kan mærke det inden I rører håndtaget. Hvad end der er derinde har ventet. Betal tolden og åbn det.",
+      prompt: "Betal den rituelle pris for at undersøge køleskabet.",
+      rewardText:
+        "Lågen åbner. Kulde strømmer ud. Én øl. Alene i midten. En seddel klistret til den med tape så gammelt at det næsten er gennemsigtigt.",
+    },
+  },
+  {
+    id: "b-kitchen-social",
+    roomId: "kitchen",
+    forTeam: "team-b",
+    type: "social_challenge",
+    title: "The Cabin Confession",
+    description:
+      "Your team must collectively confess one thing that happened on a previous cabin trip that was never officially acknowledged. The confession must be delivered by one person standing, using the phrase \"we never spoke of it\" at least once.",
+    prompt:
+      "One member delivers the Cabin Confession. Group votes on whether it is genuine, specific, and appropriately dramatic. If approved: bonus earned.",
+    order: 3,
+    isRequired: false,
+    hints: [],
+    rewardText: "The cabin has heard. The cabin remembers. The unspoken is now spoken.",
+    da: {
+      title: "Hytteskriftemålet",
+      description:
+        "Jeres hold skal samlet bekende én ting der skete på en tidligere hyttetur, som aldrig officielt er blevet anerkendt. Bekendelsen skal fremføres af én person stående, med sætningen \"vi talte aldrig om det\" mindst én gang.",
+      prompt:
+        "Ét holdmedlem fremfører Hytteskriftemålet. Gruppen stemmer om det er ægte, specifikt og tilpas dramatisk. Godkendes det: bonus optjent.",
+      rewardText: "Hytten har hørt det. Hytten husker. Det usagte er nu sagt.",
+    },
+  },
+
   // ==========================================
-  // THE FRIDGE — 3 quests
+  // THE FRIDGE — 3 quests per team
   // ==========================================
   {
     id: "fridge-read-note",
     forTeam: "team-a",
     roomId: "fridge",
     type: "puzzle",
-    title: "Read the Note",
+    title: "The Last One Standing",
     description:
-      "You lift the note from the beer. It's handwritten. Something about the ink looks deliberate — not hurried. The note says: \"Only the worthy may open me. First: prove you remember the number.\" Below that: a riddle.",
+      "Inside the fridge is exactly one beer. A note taped to it says something about a group that was supposed to show up together.",
     prompt:
-      "\"I am the number of beers you were supposed to bring last year. You brought two fewer. What number am I?\" — The correct answer is whatever your group actually agreed on. If you can't remember, pay for the truth.",
+      "Inside the fridge is exactly one beer.\nA note taped to it says:\n\"I was supposed to arrive with five others. Only four made it through the door. Now everyone is pretending this was planned.\"\nHow many beers were originally promised?",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 2,
-        text: "Think about how beers are typically sold at the shop — not loose, not a crate. The standard carry-home unit. The one with the cardboard handle.",
+        text: "The note describes a group that should have arrived together.",
       },
       {
         order: 2,
         offerCost: 3,
-        text: "The answer is 6. A full standard carrier. Someone promised a complete one and showed up with only 4.",
+        text: "\"One beer plus five others\" is the important phrase.",
       },
     ],
     answer: {
@@ -132,19 +234,21 @@ export const QUESTS: Quest[] = [
       normalized: true,
     },
     rewardClueId: "clue-fridge-note",
-    rewardText: "Correct. The note seems satisfied. It yields one of its secrets.",
+    rewardText: "Six beers were promised. One survived. Promised beer count: 6.",
     failureText:
-      "The note says nothing. The beer remains cold. The fridge hums, unimpressed.",
+      "The note says nothing more. The beer remains cold. The fridge hums, unimpressed.",
     da: {
-      title: "Læs Sedlen",
-      description: "Du løfter sedlen fra øl'en. Den er håndskrevet. Noget ved blækket ser bevidst ud — ikke hastigt. Sedlen siger: \"Kun den værdige må åbne mig. Først: bevis at du husker nummeret.\" Nedenfor: en gåde.",
-      prompt: "\"Jeg er antallet af øl du skulle have medbragt i fjor. Du bragte to færre. Hvad er jeg?\" — Det rigtige svar er hvad jeres gruppe faktisk aftalte. Kan du ikke huske det, betaler du for sandheden.",
+      title: "Den Sidste Tilbageværende",
+      description:
+        "Inde i køleskabet er præcis én øl. En seddel klistret til den siger noget om en gruppe der skulle være ankommet sammen.",
+      prompt:
+        "Inde i køleskabet er præcis én øl.\nEn seddel klistret til den siger:\n\"Jeg skulle være ankommet med fem andre. Kun fire kom igennem døren. Nu lader alle som om dette var planlagt.\"\nHvor mange øl var der oprindeligt lovet?",
       hints: [
-        "Tænk på hvordan øl typisk sælges i butikken — ikke enkeltvis, ikke en hel kasse. Den standard bæreenhed. Den med paphank.",
-        "Svaret er 6. En fuld standardpakke. Nogen lovede en komplet en og dukkede op med kun 4.",
+        "Sedlen beskriver en gruppe der skulle være ankommet sammen.",
+        "\"Én øl plus fem andre\" er den vigtige sætning.",
       ],
-      rewardText: "Korrekt. Sedlen virker tilfreds. Den afgiver sin hemmelighed.",
-      failureText: "Sedlen siger intet. Øl'en forbliver kold. Køleskabet summer, uimponeret.",
+      rewardText: "Seks øl var lovet. Én overlevede. Lovet ølantal: 6.",
+      failureText: "Sedlen siger intet mere. Øl'en forbliver kold. Køleskabet summer, uimponeret.",
     },
   },
   {
@@ -154,11 +258,11 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Impossible Cold",
     description:
-      "The fridge temperature dial is turned to its maximum. This beer has been cold for a very, very long time. You need to determine how long.",
+      "The fridge temperature dial is turned to its maximum. This beer has been cold for a very, very long time. The condensation ring under the beer perfectly matches a ring stain you noticed elsewhere in the cabin.",
     prompt:
       "The condensation ring under the beer perfectly matches the ring stain you noticed elsewhere in the cabin. Where was that ring stain?",
     order: 2,
-    isRequired: true,
+    isRequired: false,
     hints: [
       {
         order: 1,
@@ -182,13 +286,16 @@ export const QUESTS: Quest[] = [
       "You're not sure. The beer says nothing. The fridge hums louder.",
     da: {
       title: "Den Umulige Kulde",
-      description: "Køleskabets temperaturknap er drejet til maksimum. Denne øl har været kold i meget, meget lang tid. Du skal finde ud af hvor længe.",
-      prompt: "Kondensationsringen under øl'en passer præcist til en ringplet du har bemærket andetsteds i hytten. Hvor var den ringplet?",
+      description:
+        "Køleskabets temperaturknap er drejet til maksimum. Denne øl har været kold i meget, meget lang tid. Kondensationsringen under øl'en passer præcist til en ringplet du har bemærket andetsteds i hytten.",
+      prompt:
+        "Kondensationsringen under øl'en passer præcist til en ringplet du har bemærket andetsteds i hytten. Hvor var den ringplet?",
       hints: [
         "Du skal besøge et andet rum for at bekræfte dette. Tjek et sted folk normalt sætter drikkevarer.",
         "Sofabordet. Der er en ringplet på sofabordet der passer præcist.",
       ],
-      rewardText: "Målingerne stemmer overens. Denne øl har rejst. Den har ventet til præcis det rette tidspunkt.",
+      rewardText:
+        "Målingerne stemmer overens. Denne øl har rejst. Den har ventet til præcis det rette tidspunkt.",
       failureText: "Du er ikke sikker. Øl'en siger intet. Køleskabet summer højere.",
     },
   },
@@ -199,23 +306,34 @@ export const QUESTS: Quest[] = [
     type: "choice",
     title: "The Dial Decision",
     description:
-      "The dial is at maximum. The beer is already at optimal coldness — maybe beyond optimal. If you turn the dial down now, you might save electricity. If you leave it, the beer stays exactly as the ritual intended.",
+      "The fridge dial is turned all the way to maximum cold. The fridge hums like it is trying to win an argument. If you leave it, the beer stays exactly as the ritual intended.",
     prompt: "What does your team do with the temperature dial?",
     order: 3,
     isRequired: false,
-    hints: [],
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "Ask whether your job is to fix the fridge or investigate it.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "Changing the setting may destroy the meaning of the setting.",
+      },
+    ],
     choices: [
       {
         id: "dial-leave",
-        label: "Leave it exactly as found",
+        label: "Leave it",
         description: "Respect the ritual. The cold is intentional.",
         isCorrect: true,
         consequence:
-          "Wise. The ritual respects those who respect the ritual. A small advantage is noted.",
+          "Wise. The ritual respects those who respect the ritual. The cold was intentional.",
       },
       {
         id: "dial-turn-down",
-        label: "Turn it down — electricity is expensive",
+        label: "Turn it down",
         description: "Practical. Slightly boring.",
         isCorrect: false,
         offerCost: 1,
@@ -224,503 +342,84 @@ export const QUESTS: Quest[] = [
       },
       {
         id: "dial-turn-up",
-        label: "Turn it higher — make it colder",
+        label: "Turn it up",
         description: "Maximum cold for maximum ritual.",
         isCorrect: false,
         offerCost: 2,
         consequence:
-          "The fridge makes a worrying noise. Pay 2 Offer for your hubris. The beer respects the commitment, but not the execution.",
+          "The fridge makes a worrying noise. Pay 2 Offer for your hubris.",
       },
     ],
-    rewardText: "The cabin hums with approval.",
+    rewardText: "The cold was intentional.",
     da: {
       title: "Knap-Beslutningen",
-      description: "Knappen er på maksimum. Øl'en er allerede ved optimal kulde — måske ud over optimal. Hvis du drejer knappen ned nu, sparer I el. Hvis du lader den stå, forbliver øl'en præcis som ritualet tiltænkte.",
+      description:
+        "Køleskabsknappen er drejet til maksimum kulde. Køleskabet summer som om det forsøger at vinde en diskussion. Lader du den stå, forbliver øl'en præcis som ritualet tiltænkte.",
       prompt: "Hvad gør jeres hold med temperaturknappen?",
       choices: {
         "dial-leave": {
-          label: "Lad den stå præcist som fundet",
+          label: "Lad den stå",
           description: "Respektér ritualet. Kulden er bevidst.",
-          consequence: "Klogt. Ritualet respekterer dem, der respekterer ritualet. En lille fordel er noteret.",
+          consequence: "Klogt. Ritualet respekterer dem, der respekterer ritualet. Kulden var bevidst.",
         },
         "dial-turn-down": {
-          label: "Drej den ned — el er dyrt",
+          label: "Drej den ned",
           description: "Praktisk. Lidt kedeligt.",
           consequence: "Ritualet er skuffet. Betal 1 Offer som anerkendelse af din pragmatisme.",
         },
         "dial-turn-up": {
-          label: "Drej den højere — gør den koldere",
+          label: "Drej den højere",
           description: "Maksimal kulde til maksimalt ritual.",
-          consequence: "Køleskabet laver en bekymrende lyd. Betal 2 Offer for din hovmod. Øl'en respekterer engagementet, men ikke udførelsen.",
+          consequence: "Køleskabet laver en bekymrende lyd. Betal 2 Offer for din hovmod.",
         },
       },
-      rewardText: "Hytten summer med godkendelse.",
+      rewardText: "Kulden var bevidst.",
     },
   },
 
-  // ==========================================
-  // THE COFFEE TABLE — 3 quests
-  // ==========================================
-  {
-    id: "coffee-table-ring",
-    forTeam: "team-a",
-    roomId: "coffee-table",
-    type: "puzzle",
-    title: "The Ring Mark",
-    description:
-      "You crouch beside the coffee table. There it is — a perfect ring stain, slightly faded, with a faint chalk outline around it. Someone marked this spot deliberately. The outline was made to be found.",
-    prompt:
-      "Measure the diameter of the ring mark (in centimeters, roughly) and compare it to the beer in the fridge. What is your verdict: is this the same bottle?",
-    order: 1,
-    isRequired: true,
-    hints: [
-      {
-        order: 1,
-        offerCost: 1,
-        text: "You don't need a ruler. Hold the beer can near the ring. Does it match? Trust your eyes.",
-      },
-      {
-        order: 2,
-        offerCost: 2,
-        text: "For the purposes of this game: yes. The diameter matches. The beer was placed here first, then moved to the fridge. Someone staged this location.",
-      },
-    ],
-    answer: {
-      correct: ["yes", "same", "match", "matches", "it matches", "the same", "ja", "det passer", "ja det er den samme"],
-      normalized: true,
-    },
-    rewardClueId: "clue-coffee-table-ring",
-    rewardText:
-      "The mark confirms it. The beer has a history in this room. Something was planned here.",
-    failureText: "The ring says nothing. Try a different approach.",
-    da: {
-      title: "Ringpletten",
-      description: "Du sætter dig på hug ved sofabordet. Der er den — en perfekt ringplet, let falmet, med en svag kritridning rundt om den. Nogen markerede dette sted bevidst. Ridningen er lavet til at blive fundet.",
-      prompt: "Mål ringplettens diameter (i centimeter, cirka) og sammenlign den med øl'en fra køleskabet. Hvad er din konklusion: er det den samme flaske?",
-      hints: [
-        "Du behøver ikke en lineal. Hold øl'en tæt på pletten. Passer det? Stol på dine øjne.",
-        "Til spillets formål: ja. Diameteren passer. Øl'en stod her først, så blev den flyttet til køleskabet. Nogen planlagde dette sted.",
-      ],
-      rewardText: "Pletten bekræfter det. Øl'en har en historie i dette rum. Noget var planlagt her.",
-      failureText: "Ringen siger intet. Prøv en anden tilgang.",
-    },
-  },
-  {
-    id: "coffee-table-coaster",
-    forTeam: "team-a",
-    roomId: "coffee-table",
-    type: "puzzle",
-    title: "The Hidden Coaster",
-    description:
-      "You lift each coaster on the table. Under the third one — of course it's the third one — you find a small card with five symbols drawn in pen. You recognize this immediately: it's the Cabin Alphabet, the made-up code your group invented three trips ago.",
-    prompt:
-      "Decode the symbols: ▲ □ ● ▲ ■ . In the Cabin Alphabet, ▲ = A, □ = S, ● = K, ■ = E. What word does this spell?",
-    order: 2,
-    isRequired: true,
-    hints: [
-      {
-        order: 1,
-        offerCost: 1,
-        text: "Go symbol by symbol. ▲ □ ● ▲ ■. Use the key provided.",
-      },
-      {
-        order: 2,
-        offerCost: 2,
-        text: "A-S-K-A-E? Wait. Try: A-S-K... hmm. The fourth symbol is ▲ again = A. Fifth is ■ = E. A-S-K-A-E? That's not a word. Unless... it's a name.",
-      },
-    ],
-    answer: {
-      correct: ["askae", "ask ae", "ask a-e"],
-      normalized: true,
-    },
-    rewardClueId: "clue-coffee-table-coaster",
-    rewardText:
-      "ASKAE. Not a word. A name? An acronym? Initials? Something to keep in the case file.",
-    failureText: "The symbols remain a puzzle. Try again — or pay for the answer.",
-    da: {
-      title: "Den Skjulte Brik",
-      description: "Du løfter hver brik på bordet. Under den tredje — selvfølgelig den tredje — finder du et lille kort med fem symboler tegnet med pen. Du genkender det med det samme: det er Hyttealfabetet, den hjemmelavede kode jeres gruppe opfandt for tre ture siden.",
-      prompt: "Dekodér symbolerne: ▲ □ ● ▲ ■. I Hyttealfabetet er ▲ = A, □ = S, ● = K, ■ = E. Hvad staver dette?",
-      hints: [
-        "Gå symbol for symbol. ▲ □ ● ▲ ■. Brug nøglen der er givet.",
-        "A-S-K-A-E? Det fjerde symbol er ▲ igen = A. Det femte er ■ = E. A-S-K-A-E? Det er ikke et ord. Medmindre... det er et navn.",
-      ],
-      rewardText: "ASKAE. Ikke et ord. Et navn? Et akronym? Initialer? Noget der hører hjemme i sagsmappen.",
-      failureText: "Symbolerne er stadig en gåde. Prøv igen — eller betal for svaret.",
-    },
-  },
-  {
-    id: "coffee-table-social",
-    forTeam: "team-a",
-    roomId: "coffee-table",
-    type: "social_challenge",
-    title: "The Cabin Oath",
-    description:
-      "The coffee table has clearly seen a lot of cabin trips. It deserves respect. One team member must ceremonially apologize to the coffee table for all past damage done to it, in a formal tone, for at least 20 seconds. The other team and group judges.",
-    prompt:
-      "One team member performs a formal apology to the coffee table. Duration: at least 20 seconds. Tone: formal, sincere, slightly absurd. Judged by group applause.",
-    order: 3,
-    isRequired: false,
-    hints: [],
-    rewardText: "The table seems satisfied. Or at least, it stops judging you.",
-    da: {
-      title: "Hytteeden",
-      description: "Sofabordet har tydeligvis set mange hytteture. Det fortjener respekt. Ét holdmedlem skal ceremonielt undskylde til sofabordet for al tidligere skade, i en formel tone, i mindst 20 sekunder. Det andet hold og gruppen bedømmer.",
-      prompt: "Ét holdmedlem fremfører en formel undskyldning til sofabordet. Varighed: mindst 20 sekunder. Tone: formel, oprigtig, let absurd. Bedømt af gruppeklap.",
-      rewardText: "Bordet virker tilfreds. Eller ihvertfald holder det op med at dømme jer.",
-    },
-  },
-
-  // ==========================================
-  // THE TERRACE — 2 quests
-  // ==========================================
-  {
-    id: "terrace-railing-carving",
-    forTeam: "team-a",
-    roomId: "terrace",
-    type: "puzzle",
-    title: "Who Started It",
-    description:
-      "Standing on the terrace, looking out at the treeline, it hits someone in the group: this ritual didn't start itself. Someone was first. Someone opened the first beer, looked out at these exact trees, and said \"same time next year.\" Who was it?",
-    prompt:
-      "Almost everyone here knows the answer. Who started this annual cabin ritual? Write their initials — two letters, no dots, no spaces. But think carefully: are you certain it was them, or is that just the story that got told?",
-    order: 1,
-    isRequired: true,
-    hints: [
-      {
-        order: 1,
-        offerCost: 2,
-        text: "Think about who in the group is most likely to have organised the very first trip. Who sends the first message in the group chat every year? Who would be most devastated if this stopped?",
-      },
-      {
-        order: 2,
-        offerCost: 3,
-        text: "The initials are JB. Whether that makes you certain or just slightly less uncertain — that's the point.",
-      },
-    ],
-    answer: {
-      correct: ["JB", "J.B.", "jb", "j.b."],
-      normalized: true,
-    },
-    rewardClueId: "clue-terrace-inscription",
-    rewardText:
-      "JB. The name everyone knew but no one had said out loud yet. Now it's in the case file.",
-    failureText:
-      "The terrace offers no confirmation. Think harder — or pay for the certainty.",
-    da: {
-      title: "Hvem Startede Det",
-      description: "Stående på terrassen, med blikket ud mod træerne, går det op for nogen i gruppen: dette ritual startede ikke af sig selv. Nogen var først. Nogen åbnede den første øl, kiggede ud på disse præcis disse træer og sagde \"samme tid næste år.\" Hvem var det?",
-      prompt: "Næsten alle her kender svaret. Hvem startede dette årlige hytteritual? Skriv deres initialer — to bogstaver, ingen punkter, ingen mellemrum. Men tænk efter: er du sikker på det var dem, eller er det bare den historie der blev fortalt?",
-      hints: [
-        "Tænk på hvem i gruppen der mest sandsynligt organiserede den allerførste tur. Hvem sender den første besked i gruppechatten hvert år? Hvem ville være mest knust hvis dette stoppede?",
-        "Initialerne er JB. Om det gør dig sikker eller bare lidt mindre usikker — det er pointen.",
-      ],
-      rewardText: "JB. Navnet alle kendte men ingen havde sagt højt endnu. Nu er det i sagsmappen.",
-      failureText: "Terrassen giver ingen bekræftelse. Tænk hårdere — eller betal for sikkerheden.",
-    },
-  },
-  {
-    id: "terrace-countdown",
-    forTeam: "team-a",
-    roomId: "terrace",
-    type: "choice",
-    title: "The Countdown Meaning",
-    description:
-      "\"5-4-3-2-1-0. The ritual completes at zero.\" What does the countdown refer to? Your team must choose the most likely interpretation based on the clues so far.",
-    prompt:
-      "What does 5-4-3-2-1-0 most likely represent in the context of the Last Cold Beer mystery?",
-    order: 2,
-    isRequired: true,
-    hints: [
-      {
-        order: 1,
-        offerCost: 2,
-        text: "Think about what's being counted down. Not time. Not lives. Something that gets consumed over a trip.",
-      },
-    ],
-    choices: [
-      {
-        id: "countdown-beers",
-        label: "Number of beers remaining",
-        description: "A countdown of beers, ending when the last one is opened.",
-        isCorrect: true,
-        consequence:
-          "Exactly right. The last cold beer is number zero — the final one. The ritual demands it be opened only at the right moment.",
-      },
-      {
-        id: "countdown-days",
-        label: "Days of the cabin trip",
-        description: "A five-day countdown to something on the last day.",
-        isCorrect: false,
-        consequence: "Plausible, but the clues point elsewhere. Not wrong, but not the answer.",
-      },
-      {
-        id: "countdown-people",
-        label: "Number of people at the original ritual",
-        description: "Five people who knew, down to zero who remained silent.",
-        isCorrect: false,
-        offerCost: 1,
-        consequence:
-          "A creative interpretation. Not the answer, but interesting enough that you must pay 1 Offer for the detour.",
-      },
-    ],
-    rewardText: "The countdown makes sense now. The last cold beer is number zero.",
-    failureText: "Interesting theory. But not quite right.",
-    da: {
-      title: "Nedtællingens Betydning",
-      description: "\"5-4-3-2-1-0. Ritualet fuldendes ved nul.\" Hvad refererer nedtællingen til? Jeres hold skal vælge den mest sandsynlige fortolkning baseret på de spor I hidtil har samlet.",
-      prompt: "Hvad repræsenterer 5-4-3-2-1-0 sandsynligvis i konteksten af Den Sidste Kolde Øl-mysteriet?",
-      hints: [
-        "Tænk på hvad der tælles ned. Ikke tid. Ikke liv. Noget der forbruges på en tur.",
-      ],
-      choices: {
-        "countdown-beers": {
-          label: "Antal øl der er tilbage",
-          description: "En nedtælling af øl, der slutter når den sidste åbnes.",
-          consequence: "Præcis rigtigt. Den sidste kolde øl er nummer nul — den endelige. Ritualet kræver at den åbnes kun til det rette øjeblik.",
-        },
-        "countdown-days": {
-          label: "Dage på hyttetur",
-          description: "En femdagstur mod noget på den sidste dag.",
-          consequence: "Plausibelt, men sporene peger et andet sted hen. Ikke forkert, men ikke svaret.",
-        },
-        "countdown-people": {
-          label: "Antal deltagere ved det originale ritual",
-          description: "Fem mennesker der vidste det, ned til nul der forblev tavse.",
-          consequence: "En kreativ fortolkning. Ikke svaret, men interessant nok til at du skal betale 1 Offer for omvejen.",
-        },
-      },
-      rewardText: "Nedtællingen giver mening nu. Den sidste kolde øl er nummer nul.",
-      failureText: "Interessant teori. Men ikke helt rigtigt.",
-    },
-  },
-
-  // ==========================================
-  // THE SHED — 3 quests
-  // ==========================================
-  {
-    id: "shed-unlock",
-    forTeam: "team-a",
-    roomId: "shed",
-    type: "unlock",
-    title: "Force the Shed Door",
-    description:
-      "The shed door is stuck — not locked, just swollen from the damp. It needs a firm push. Or, more accurately, it needs someone to decide to commit to pushing it.",
-    prompt:
-      "Pay the ritual cost to investigate the shed. This represents someone actually going and dealing with the door.",
-    order: 1,
-    isRequired: true,
-    offerCost: 1,
-    hints: [],
-    rewardText:
-      "The door gives. Inside: the usual cabin junk — old tools, a broken chair, a laminated inventory sheet pinned to the wall. The sheet gets your attention immediately.",
-    da: {
-      title: "Tving Skurdøren",
-      description: "Skurdøren sidder fast — ikke låst, bare hævet af fugt. Den kræver et fast skub. Eller mere præcist: den kræver at nogen beslutter sig for at forpligte sig til at skubbe.",
-      prompt: "Betal den rituelle pris for at undersøge skuret. Det repræsenterer nogen der faktisk går ud og tager sig af døren.",
-      rewardText: "Døren giver efter. Indenfor: det sædvanlige hytteskrot — gamle redskaber, en ødelagt stol, et lamineret inventarark fastgjort til væggen. Arket fanger straks din opmærksomhed.",
-    },
-  },
-  {
-    id: "shed-inventory",
-    forTeam: "team-a",
-    roomId: "shed",
-    type: "puzzle",
-    title: "The Inventory Sheet",
-    description:
-      "You pull the laminated sheet off the wall. It's an official-looking \"CABIN INVENTORY\" — someone made this with a label maker and a sense of ceremony. At the bottom, in different handwriting: \"ITEM 7: THE COOLER. STATUS: Locked. COMBINATION: ??? — Ask the one who broke the pact.\"",
-    prompt:
-      "According to the inventory sheet, what is Item 7, and what is its listed status?",
-    order: 2,
-    isRequired: true,
-    hints: [
-      {
-        order: 1,
-        offerCost: 1,
-        text: "Read the sheet. It's right there on the laminate. The question is a reading comprehension test disguised as a mystery.",
-      },
-    ],
-    answer: {
-      correct: [
-        "the cooler, locked",
-        "cooler, locked",
-        "the cooler is locked",
-        "cooler locked",
-        "item 7 is the cooler and it's locked",
-        "køleren, låst",
-        "køleren er låst",
-        "køleren låst",
-      ],
-      normalized: true,
-    },
-    rewardClueId: "clue-shed-inventory",
-    rewardText:
-      "The Cooler. Locked. Combination unknown. And whoever knows is \"the one who broke the pact.\" Now you have a direction.",
-    failureText: "You squint at the inventory. The answer is literally printed on it.",
-    da: {
-      title: "Inventararket",
-      description: "Du trækker det laminerede ark af væggen. Det er et officielt udseende \"HYTTE-INVENTAR\" — nogen lavede dette med en labelprinter og en ceremoniøs indstilling. Forneden, med anden håndskrift: \"GENSTAND 7: KØLEREN. STATUS: Låst. KOMBINATION: ??? — Spørg den der brød pagten.\"",
-      prompt: "Ifølge inventararket: hvad er Genstand 7, og hvad er dens angivne status?",
-      hints: [
-        "Læs arket. Det er der på laminatet. Spørgsmålet er en læseforståelsestest forklædt som et mysterium.",
-      ],
-      rewardText: "Køleren. Låst. Kombination ukendt. Og den der kender den er \"den der brød pagten.\" Nu har I en retning.",
-      failureText: "Du kniper øjnene på inventaret. Svaret er bogstaveligt talt printet på det.",
-    },
-  },
-  {
-    id: "shed-dedication",
-    forTeam: "team-a",
-    roomId: "shed",
-    type: "social_challenge",
-    title: "The Shed Offering",
-    description:
-      "The shed contains a broken garden chair, a rusted trowel, one empty beer can from last year (vintage!), and what appears to be a paint roller used once and never cleaned. This junk deserves an inventory poem.",
-    prompt:
-      "One team member must recite an original poem (at least 4 lines) dedicated to the contents of the shed. Rhyming optional. Sincerity mandatory. The group votes on whether it honors the shed.",
-    order: 3,
-    isRequired: false,
-    hints: [],
-    rewardText:
-      "The shed is honored. Somewhere, the spirit of the uncleaned paint roller rests easier.",
-    da: {
-      title: "Skurofferingen",
-      description: "Skuret indeholder en ødelagt havestol, en rusten gravespade, én tom ølboks fra i fjor (vintage!), og hvad der ser ud som en malingsrulle brugt én gang og aldrig rengjort. Dette skrot fortjener et hylstdigtem.",
-      prompt: "Ét holdmedlem skal recitere et originaldigtem (mindst 4 linjer) dedikeret til skurets indhold. Rim er valgfrit. Oprigtighed er obligatorisk. Gruppen stemmer om det ærer skuret.",
-      rewardText: "Skuret er æreret. Et sted hviler malerullens ånd lidt lettere.",
-    },
-  },
-
-  // ==========================================
-  // TEAM B QUESTS — parallel track, same rooms, different riddles
-  // ==========================================
-
-  // THE KITCHEN — Team B
-  {
-    id: "b-kitchen-inspection",
-    roomId: "kitchen",
-    forTeam: "team-b",
-    type: "puzzle",
-    title: "The Other Inspection",
-    description:
-      "Your team enters from the other side. The sticky note on the counter has been flipped over — someone left a message on the back. It reads: \"Spices on the shelf. Count only the ones that would actually belong at a cabin. Everything else is a lie.\"",
-    prompt:
-      "On the spice shelf: salt, pepper, paprika, cinnamon, cardamom, star anise, truffle oil, and saffron. Be honest — how many of those actually belong at a cabin weekend?",
-    order: 1,
-    isRequired: true,
-    hints: [
-      {
-        order: 1,
-        offerCost: 1,
-        text: "Think about what anyone actually uses at a cabin. Salt and pepper are obvious. Paprika maybe. The rest is wishful thinking.",
-      },
-      {
-        order: 2,
-        offerCost: 2,
-        text: "Salt, pepper, paprika. Three. The rest belong in a cooking show, not a cabin.",
-      },
-    ],
-    answer: { correct: ["3", "three", "tre"], normalized: true },
-    rewardClueId: "clue-kitchen-calendar",
-    rewardText:
-      "Three honest spices. As you note them, you notice the wall calendar is open to a month circled in red. Something happened then.",
-    failureText: "Be honest with yourself. This is a cabin, not a Michelin-star kitchen.",
-    da: {
-      title: "Den Anden Inspektion",
-      description: "Jeres hold træder ind fra den anden side. Den klæbrige lap på disken er vendt om — nogen efterlod en besked på bagsiden. Den lyder: \"Krydderier på hylden. Tæl kun dem der faktisk hører hjemme på en hyttetur. Alt andet er en løgn.\"",
-      prompt: "På krydderiehylden: salt, peber, paprika, kanel, kardemomme, stjerneanis, trøffelolie og safran. Vær ærlig — hvor mange af dem hører faktisk til på en hyttetur?",
-      hints: [
-        "Tænk på hvad nogen faktisk bruger på en hyttetur. Salt og peber er åbenlyse. Paprika måske. Resten er ønsketænkning.",
-        "Salt, peber, paprika. Tre. Resten hører hjemme på et madlavningsprogram, ikke en hyttetur.",
-      ],
-      rewardText: "Tre ærlige krydderier. Mens du noterer dem, bemærker du at vægkalenderen er åben på en måned ringet ind med rødt. Noget skete dengang.",
-      failureText: "Vær ærlig over for dig selv. Dette er en hytte, ikke et Michelin-stjernekok.",
-    },
-  },
-  {
-    id: "b-kitchen-fridge-unlock",
-    roomId: "kitchen",
-    forTeam: "team-b",
-    type: "unlock",
-    title: "Approach the Fridge",
-    description:
-      "The fridge is humming at an unusual frequency. Your team can feel it before you touch the handle. Whatever is in there has been waiting. Pay the toll and open it.",
-    prompt: "Pay the ritual cost to investigate the fridge.",
-    order: 2,
-    isRequired: true,
-    offerCost: 2,
-    hints: [],
-    rewardText:
-      "The door opens. Cold rushes out. One beer. Alone in the center. A note taped to it with tape so old it's almost transparent.",
-    da: {
-      title: "Nærm Dig Køleskabet",
-      description: "Køleskabet summer med en usædvanlig frekvens. Jeres hold kan mærke det inden I rører håndtaget. Hvad end der er derinde har ventet. Betal tolden og åbn det.",
-      prompt: "Betal den rituelle pris for at undersøge køleskabet.",
-      rewardText: "Lågen åbner. Kulde strømmer ud. Én øl. Alene i midten. En seddel klistret til den med tape så gammelt at det næsten er gennemsigtigt.",
-    },
-  },
-  {
-    id: "b-kitchen-social",
-    roomId: "kitchen",
-    forTeam: "team-b",
-    type: "social_challenge",
-    title: "The Cabin Confession",
-    description:
-      "Your team must collectively confess one thing that happened on a previous cabin trip that was never officially acknowledged. The confession must be delivered by one person standing, using the phrase \"we never spoke of it\" at least once.",
-    prompt:
-      "One member delivers the Cabin Confession. Group votes on whether it is genuine, specific, and appropriately dramatic. If approved: bonus earned.",
-    order: 3,
-    isRequired: false,
-    hints: [],
-    rewardText: "The cabin has heard. The cabin remembers. The unspoken is now spoken.",
-    da: {
-      title: "Hytteskriftemålet",
-      description: "Jeres hold skal samlet bekende én ting der skete på en tidligere hyttetur, som aldrig officielt er blevet anerkendt. Bekendelsen skal fremføres af én person stående, med sætningen \"vi talte aldrig om det\" mindst én gang.",
-      prompt: "Ét holdmedlem fremfører Hytteskriftemålet. Gruppen stemmer om det er ægte, specifikt og tilpas dramatisk. Godkendes det: bonus optjent.",
-      rewardText: "Hytten har hørt det. Hytten husker. Det usagte er nu sagt.",
-    },
-  },
-
-  // THE FRIDGE — Team B
   {
     id: "b-fridge-read-note",
     roomId: "fridge",
     forTeam: "team-b",
     type: "puzzle",
-    title: "The Other Note",
+    title: "The Frozen Evidence",
     description:
-      "You lift the note from the beer. The handwriting is careful — deliberate. It says: \"The fridge was set to maximum because someone wanted to preserve something. Not the beer. Something else. What was it?\" Below that, a clue.",
+      "Inside the fridge is a sealed plastic bag. Inside the bag is not food. It is thin, folded, and has faded numbers on it.",
     prompt:
-      "\"I start with ice and end with evidence. I keep what shouldn't be thrown away. I am not food. I am not drink. What am I kept inside a fridge for preservation purposes?\" Answer: a specific type of document.",
+      "Inside the fridge is a sealed plastic bag.\nInside the bag is not food. It is thin, folded, and has faded numbers on it.\nA note says:\n\"Kept cold because people forget what they owe.\"\nWhat is inside the bag?",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 2,
-        text: "People keep receipts, photos, or written notes in the freezer to preserve them in an emergency. Think of the oldest, most important kind of document.",
+        text: "The clue is about proving payment, not preserving food.",
       },
       {
         order: 2,
         offerCost: 3,
-        text: "A receipt. Specifically the receipt for last year's cabin trip — kept as evidence of who bought what and who still owes who.",
+        text: "The faded numbers are probably prices or totals.",
       },
     ],
-    answer: { correct: ["receipt", "a receipt", "the receipt", "kvittering", "en kvittering"], normalized: true },
+    answer: {
+      correct: ["receipt", "a receipt", "the receipt", "kvittering", "en kvittering"],
+      normalized: true,
+    },
     rewardClueId: "clue-fridge-note",
-    rewardText: "A receipt. The note yields its secret — and points you to an old argument that was never resolved.",
-    failureText: "The fridge hums. The note says nothing more yet.",
+    rewardText: "A receipt. Kept cold because people forget what they owe. Receipts are evidence.",
+    failureText: "The bag holds its secret. Think about what has faded numbers and proves payment.",
     da: {
-      title: "Den Anden Seddel",
-      description: "Du løfter sedlen fra øl'en. Håndskriften er omhyggelig — bevidst. Den siger: \"Køleskabet var sat på maksimum fordi nogen ville bevare noget. Ikke øl'en. Noget andet. Hvad var det?\" Nedenfor: en gåde.",
-      // Danish riddle is different: original English "I start with ice and end with evidence" doesn't translate — new riddle points to "kvittering" (receipt)
-      prompt: "\"Jeg er hverken mad eller drikke, men folk gemmer mig i fryseren for at bevare mig i årevis. Jeg er et skriftligt bevis på en gammel handel. Hvad er jeg?\" Svar: en specifik type dokument.",
+      title: "Det Frosne Bevis",
+      description:
+        "Inde i køleskabet er en forseglet plastikpose. Inde i posen er der ikke mad. Den er tynd, foldet, og har blegnede tal på sig.",
+      prompt:
+        "Inde i køleskabet er en forseglet plastikpose.\nInde i posen er der ikke mad. Den er tynd, foldet, og har blegnede tal på sig.\nEn seddel siger:\n\"Holdt koldt fordi folk glemmer hvad de skylder.\"\nHvad er inde i posen?",
       hints: [
-        "Folk opbevarer kvitteringer og vigtige dokumenter i fryseren som beskyttelse. Tænk på den type dokument der beviser hvem der betalte hvad.",
-        "En kvittering. Specifikt kvitteringen fra hyttetur i fjor — opbevaret som bevis på hvem der betalte hvad og hvem der stadig skylder hvem.",
+        "Sporet handler om at bevise betaling, ikke om at bevare mad.",
+        "De blegnede tal er sandsynligvis priser eller totaler.",
       ],
-      rewardText: "En kvittering. Sedlen afslører sin hemmelighed — og peger jer mod et gammelt skænderi der aldrig blev løst.",
-      failureText: "Køleskabet summer. Sedlen siger ikke mere endnu.",
+      rewardText: "En kvittering. Holdt kold fordi folk glemmer hvad de skylder. Kvitteringer er bevismateriale.",
+      failureText: "Posen holder på sin hemmelighed. Tænk på hvad der har blegnede tal og beviser betaling.",
     },
   },
   {
@@ -728,39 +427,44 @@ export const QUESTS: Quest[] = [
     roomId: "fridge",
     forTeam: "team-b",
     type: "puzzle",
-    title: "The Temperature Record",
+    title: "The Temperature Log",
     description:
-      "The temperature dial is at maximum. But there's also a small log sheet taped to the inside wall — handwritten dates and temperatures. Someone was tracking this carefully.",
+      "A temperature log is taped inside the fridge door — handwritten dates and temperatures. Someone was tracking this carefully.",
     prompt:
-      "The log has five entries. Temperatures (in approximate °C): -5, -7, -8, -10, -14. What is the average of these five readings? Round to the nearest whole number.",
+      "A temperature log is taped inside the fridge door:\n−5, −7, −8, −10, −14°C\nWhat is the average temperature, rounded to the nearest whole number?",
     order: 2,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 1,
-        text: "Add all five numbers together. Then divide by 5. Remember they are all negative.",
+        text: "Treat the minus signs as part of the numbers.",
       },
       {
         order: 2,
         offerCost: 2,
-        text: "-5 + -7 + -8 + -10 + -14 = -44. Divided by 5 = -8.8. Rounded = -9.",
+        text: "The result should still be below zero after you divide.",
       },
     ],
-    answer: { correct: ["-9", "minus 9", "-9°c", "-9 degrees", "minus ni", "-9 grader"], normalized: true },
+    answer: {
+      correct: ["-9", "minus 9", "-9°c", "-9 degrees", "minus ni", "-9 grader"],
+      normalized: true,
+    },
     rewardClueId: "clue-cold-timestamp",
-    rewardText: "Minus nine degrees average. The log has meaning — and one date is circled.",
-    failureText: "The numbers stare at you. Work through it step by step.",
+    rewardText: "Average fridge temperature: −9. The log has meaning — and one date is circled.",
+    failureText: "The numbers stare at you. Add them all up, then divide by 5. Watch your signs.",
     da: {
       title: "Temperaturloggen",
-      description: "Temperaturknappen er på maksimum. Men der er også et lille logark klistret til den inderste væg — håndskrevne datoer og temperaturer. Nogen fulgte nøje med i dette.",
-      prompt: "Loggen har fem poster. Temperaturer (i ca. °C): -5, -7, -8, -10, -14. Hvad er gennemsnittet af disse fem aflæsninger? Afrund til nærmeste hele tal.",
+      description:
+        "En temperaturlog er klistret til indersiden af køleskabslågen — håndskrevne datoer og temperaturer. Nogen fulgte nøje med i dette.",
+      prompt:
+        "En temperaturlog er klistret til indersiden af køleskabslågen:\n−5, −7, −8, −10, −14°C\nHvad er gennemsnitstemperaturen, afrundet til nærmeste hele tal?",
       hints: [
-        "Læg alle fem tal sammen. Divider derefter med 5. Husk at de alle er negative.",
-        "-5 + -7 + -8 + -10 + -14 = -44. Divideret med 5 = -8,8. Afrundet = -9.",
+        "Behandl minustegnene som en del af tallene.",
+        "Resultatet bør stadig være under nul efter du dividerer.",
       ],
-      rewardText: "Minus ni graders gennemsnit. Loggen har en betydning — og én dato er ringet ind.",
-      failureText: "Tallene stirrer på dig. Gå igennem det trin for trin.",
+      rewardText: "Gennemsnitstemperatur: −9. Loggen har en betydning — og én dato er ringet ind.",
+      failureText: "Tallene stirrer på dig. Læg dem alle op, divider med 5. Hold øje med fortegnene.",
     },
   },
   {
@@ -781,7 +485,8 @@ export const QUESTS: Quest[] = [
         label: "Evidence — someone needed this cold for a reason",
         description: "The coldest setting was deliberate. Something needed preserving.",
         isCorrect: true,
-        consequence: "Your instinct is sharp. Something needed to be kept cold that isn't just a beer. The ritual acknowledges your suspicion.",
+        consequence:
+          "Your instinct is sharp. Something needed to be kept cold that isn't just a beer. The ritual acknowledges your suspicion.",
       },
       {
         id: "b-dial-careless",
@@ -796,13 +501,15 @@ export const QUESTS: Quest[] = [
         label: "Pure dedication — the coldest beer deserves the coldest setting",
         description: "Maximum respect for the Last Cold Beer.",
         isCorrect: false,
-        consequence: "Admirable, but you've missed the clue underneath. Try again after more investigation.",
+        consequence:
+          "Admirable, but you've missed the clue underneath. Try again after more investigation.",
       },
     ],
     rewardText: "The cabin approves of your suspicious mind.",
     da: {
       title: "Knappen — Dit Valg",
-      description: "Knappen er på maksimum. Øl'en er iskold. Jeres hold har en beslutning: er dette hengivenhed til ritualet, bevis for at nogen skjuler noget, eller simpel sjuskethed?",
+      description:
+        "Knappen er på maksimum. Øl'en er iskold. Jeres hold har en beslutning: er dette hengivenhed til ritualet, bevis for at nogen skjuler noget, eller simpel sjuskethed?",
       prompt: "Hvad er jeres holds konklusion om køleskabstemperaturen?",
       choices: {
         "b-dial-evidence": {
@@ -825,85 +532,247 @@ export const QUESTS: Quest[] = [
     },
   },
 
-  // THE COFFEE TABLE — Team B
+  // ==========================================
+  // THE COFFEE TABLE — Secret Room
+  // ==========================================
   {
-    id: "b-coffee-table-ring",
+    id: "coffee-table-ring",
+    forTeam: "team-a",
     roomId: "coffee-table",
-    forTeam: "team-b",
     type: "puzzle",
-    title: "The Other Ring",
+    title: "The Fresh Ring",
     description:
-      "You kneel beside the coffee table. There's a ring stain — but your eye goes to something underneath it. Someone scratched a calculation into the wood beneath the stain, barely visible. Three numbers multiplied together.",
+      "The coffee table is covered in old drink rings. But one ring is different from all the others.",
     prompt:
-      "Scratched into the wood under the ring stain: 3 × 4 × 7 = ? What is the result? And then: what time does that number represent if it's read as hours on a 24-hour clock?",
+      "The coffee table is covered in old drink rings.\nOne ring is different:\n— cleaner\n— colder to the touch\n— sharper edges\n— exactly the size of the beer bottle\n\nWhere was the beer before it went into the fridge?",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 1,
-        text: "3 × 4 = 12. 12 × 7 = ?",
+        text: "Compare the fresh mark to the object you already found.",
       },
       {
         order: 2,
         offerCost: 2,
-        text: "3 × 4 × 7 = 84. On a 24-hour clock, 84 hours = 3 days and 12 hours = not useful. But 84 mod 24 = 12. So: noon. The answer is 84, or 'noon', or '12'.",
+        text: "A ring stain tells you where something rested.",
       },
     ],
-    answer: { correct: ["84", "eighty four", "eighty-four", "noon", "12", "12:00", "middag", "fireogfirs", "kl. 12"], normalized: true },
+    answer: {
+      correct: ["coffee table", "the coffee table", "table", "sofabordet", "sofabord", "bordet"],
+      normalized: true,
+    },
     rewardClueId: "clue-coffee-table-ring",
-    rewardText: "84. Or noon. Something happened at noon — and now you have a number.",
-    failureText: "The scratched numbers wait. Work through the multiplication.",
+    rewardText:
+      "The beer was placed on the coffee table before it went into the fridge. The ring confirms it.",
+    failureText: "The ring says nothing. Try a different approach.",
     da: {
-      title: "Den Anden Ring",
-      description: "Du knæler ved sofabordet. Der er en ringplet — men øjet falder på noget under den. Nogen har ridset en beregning ind i træet under pletten, næsten usynlig. Tre tal ganget med hinanden.",
-      prompt: "Ridset ind i træet under ringpletten: 3 × 4 × 7 = ? Hvad er resultatet? Og dernæst: hvad tidspunkt repræsenterer det tal, læst som timer på et 24-timers ur?",
+      title: "Den Friske Ring",
+      description:
+        "Sofabordet er dækket af gamle drikkepletter. Men én ring er anderledes end alle de andre.",
+      prompt:
+        "Sofabordet er dækket af gamle drikkepletter.\nÉn ring er anderledes:\n— renere\n— koldere at røre ved\n— skarpere kanter\n— præcis størrelsen på ølflasken\n\nHvor var øl'en inden den gik i køleskabet?",
       hints: [
-        "3 × 4 = 12. 12 × 7 = ?",
-        "3 × 4 × 7 = 84. På et 24-timers ur: 84 mod 24 = 12. Altså: middag. Svaret er 84, 'middag' eller '12'.",
+        "Sammenlign den friske plet med den genstand du allerede har fundet.",
+        "En ringplet fortæller dig hvor noget har hvilet.",
       ],
-      rewardText: "84. Eller middag. Noget skete ved middagstid — og nu har I et tal.",
-      failureText: "De ristede tal venter. Gå igennem multiplikationen.",
+      rewardText:
+        "Øl'en stod på sofabordet inden den gik i køleskabet. Ringen bekræfter det.",
+      failureText: "Ringen siger intet. Prøv en anden tilgang.",
     },
   },
   {
-    id: "b-coffee-table-coaster",
+    id: "coffee-table-coaster",
+    forTeam: "team-a",
     roomId: "coffee-table",
-    forTeam: "team-b",
     type: "puzzle",
-    title: "The Coaster Poem",
+    title: "Under the Damp Coaster",
     description:
-      "Under the second coaster, your team finds not a code but a short poem, written in a hand that shook slightly: \"The first is what you came for. The last is what you leave. The middle is the number of things you cannot grieve.\" Three things. The middle one is a number.",
+      "You lift the damp coaster. There is a message written on a card underneath it.",
     prompt:
-      "You came for the beer (1). You leave with a memory (1). The 'middle' that you cannot grieve — in the context of this cabin and the Last Cold Beer mystery — is the number of people who knew the combination. From the terrace initials: how many?",
+      "Under the damp coaster is a message:\n\"The last one went outside to cool off.\"\n\nWhere should your team search next?",
     order: 2,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 1,
-        text: "You need to know the terrace clue. There were four sets of initials carved into the railing.",
+        text: "\"Outside\" narrows the search more than \"cool.\"",
       },
       {
         order: 2,
         offerCost: 2,
-        text: "Four initials. Four people. The middle number is 4.",
+        text: "Choose the outdoor part of the cabin, not the forest itself.",
       },
     ],
-    answer: { correct: ["4", "four", "fire"], normalized: true },
-    rewardClueId: "clue-coffee-table-coaster",
-    rewardText: "Four. The number carved and the number of those who knew. The coaster surrenders its secret.",
-    failureText: "Read the poem again. The middle thing — what number is it?",
+    answer: {
+      correct: ["terrace", "the terrace", "terrassen", "terrasse"],
+      normalized: true,
+    },
+    rewardClueId: "clue-terrace-direction",
+    rewardText: "The terrace matters. Head outside.",
+    failureText: "The message is pointing somewhere specific. Where does a cabin open to the outside?",
     da: {
-      title: "Brikkedigtet",
-      description: "Under den anden brik finder jeres hold ikke en kode, men et kort digt skrevet med en hånd der rystede let: \"Den første er det, du kom efter. Den sidste er det, du tager med. Det midterste er antallet af dem, du ikke kan glemme.\" Tre ting. Det midterste er et tal.",
-      prompt: "Du kom efter øl'en (1). Du tager et minde med (1). Det 'midterste' du ikke kan glemme — i konteksten af denne hytte og Det Sidste Kolde Øl-mysteriet — er antallet af mennesker der kendte kombinationen. Fra terrasse-initialerne: hvor mange?",
+      title: "Under den Fugtige Brik",
+      description:
+        "Du løfter den fugtige brik. Der er en besked skrevet på et kort underneath.",
+      prompt:
+        "Under den fugtige brik er en besked:\n\"Den sidste gik udenfor for at køle af.\"\n\nHvor skal jeres hold søge næste gang?",
       hints: [
-        "Du skal kende terrasse-sporet. Der var fire sæt initialer ridset i gelænderet.",
-        "Fire initialer. Fire mennesker. Det midterste tal er 4.",
+        "\"Udenfor\" indsnævrer søgningen mere end \"køle\".",
+        "Vælg den udendørs del af hytten, ikke skoven selv.",
       ],
-      rewardText: "Fire. Antallet ristet i træet og antallet af dem der vidste det. Brikken afgiver sin hemmelighed.",
-      failureText: "Læs digtet igen. Det midterste ting — hvad er dets tal?",
+      rewardText: "Terrassen er vigtig. Gå udenfor.",
+      failureText: "Beskeden peger et bestemt sted hen. Hvor åbner en hytte sig udendørs?",
+    },
+  },
+  {
+    id: "coffee-table-social",
+    forTeam: "team-a",
+    roomId: "coffee-table",
+    type: "social_challenge",
+    title: "The Cabin Oath",
+    description:
+      "The coffee table has clearly seen a lot of cabin trips. It deserves respect. One team member must ceremonially apologize to the coffee table for all past damage done to it, in a formal tone, for at least 20 seconds.",
+    prompt:
+      "One team member performs a formal apology to the coffee table. Duration: at least 20 seconds. Tone: formal, sincere, slightly absurd. Judged by group applause.",
+    order: 3,
+    isRequired: false,
+    hints: [],
+    rewardText: "The table seems satisfied. Or at least, it stops judging you.",
+    da: {
+      title: "Hytteeden",
+      description:
+        "Sofabordet har tydeligvis set mange hytteture. Det fortjener respekt. Ét holdmedlem skal ceremonielt undskylde til sofabordet for al tidligere skade, i en formel tone, i mindst 20 sekunder.",
+      prompt:
+        "Ét holdmedlem fremfører en formel undskyldning til sofabordet. Varighed: mindst 20 sekunder. Tone: formel, oprigtig, let absurd. Bedømt af gruppeklap.",
+      rewardText: "Bordet virker tilfreds. Eller ihvertfald holder det op med at dømme jer.",
+    },
+  },
+
+  {
+    id: "b-coffee-table-ring",
+    roomId: "coffee-table",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Coaster Line",
+    description:
+      "Four coasters sit in a row on the coffee table. Someone arranged them deliberately. A note is underneath the candle.",
+    prompt:
+      "Four coasters sit in a row.\nTheir symbols are:\nBeer — Pineapple — Beer — Lock\n\nA note underneath the candle says:\n\"Only cabin things count.\"\n\nAfter ignoring the coaster that does not belong, what position is the lock?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "Think back to the kitchen. One type of object already felt out of place.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "Count the lock only after removing the symbol that does not fit the cabin.",
+      },
+    ],
+    answer: {
+      correct: ["3", "three", "tre", "third", "tredje"],
+      normalized: true,
+    },
+    rewardClueId: "clue-coaster-position",
+    rewardText: "Lock position: 3. The pineapple doesn't belong. Remove it, and the lock sits third.",
+    failureText: "Read the note again. Which coaster symbol doesn't belong in a cabin?",
+    da: {
+      title: "Brikkerækken",
+      description:
+        "Fire brikker sidder på række på sofabordet. Nogen har arrangeret dem bevidst. Et kort er under lyset.",
+      prompt:
+        "Fire brikker sidder på række.\nDeres symboler er:\nØl — Ananas — Øl — Lås\n\nEt kort under lyset siger:\n\"Kun hytteting tæller.\"\n\nEfter at have ignoreret den brik der ikke hører til, hvad er låsens position?",
+      hints: [
+        "Tænk tilbage på køkkenet. Én type genstand føltes allerede malplaceret.",
+        "Tæl låsen kun efter du har fjernet symbolet der ikke passer til hytten.",
+      ],
+      rewardText: "Låsens position: 3. Ananassen hører ikke til. Fjern den, og låsen er nr. tre.",
+      failureText: "Læs sedlen igen. Hvilket brikkesymbol hører ikke hjemme i en hytte?",
+    },
+  },
+  {
+    id: "b-coffee-table-coaster",
+    roomId: "coffee-table",
+    forTeam: "team-b",
+    type: "choice",
+    title: "The Table Scratch",
+    description:
+      "Scratched lightly into the table surface is a note someone left. Below it, another hand added a second line.",
+    prompt:
+      "Scratched lightly into the table is:\nCOLD = NOT HERE\nUnder it, someone added:\n\"Too warm for the final hiding place.\"\n\nWas the coffee table the final hiding place?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "The scratch says where the beer did not stay.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "Think of the table as one stop on the route.",
+      },
+    ],
+    choices: [
+      {
+        id: "table-no",
+        label: "No",
+        description: "The table was a waypoint, not the destination.",
+        isCorrect: true,
+        consequence: "Correct. The coffee table was only temporary. The beer moved on from here.",
+      },
+      {
+        id: "table-yes",
+        label: "Yes",
+        description: "The beer was left here on purpose.",
+        isCorrect: false,
+        offerCost: 1,
+        consequence: "The scratch says otherwise. COLD = NOT HERE. Pay 1 Offer and look again.",
+      },
+      {
+        id: "table-maybe",
+        label: "Maybe",
+        description: "It's unclear from the evidence.",
+        isCorrect: false,
+        consequence: "The scratch is clear. Inspect again — the evidence is right in front of you.",
+      },
+    ],
+    rewardText: "The coffee table was only temporary.",
+    da: {
+      title: "Bordridsen",
+      description:
+        "Ridset let ind i bordet er en note nogen efterlod. Under den har en anden hånd tilføjet en anden linje.",
+      prompt:
+        "Ridset let ind i bordet er:\nKOLD = IKKE HER\nUnder det har nogen tilføjet:\n\"For varmt til det endelige gemmested.\"\n\nVar sofabordet det endelige gemmested?",
+      hints: [
+        "Ridsen siger hvor øl'en ikke forblev.",
+        "Tænk på bordet som ét stop på ruten.",
+      ],
+      choices: {
+        "table-no": {
+          label: "Nej",
+          description: "Bordet var et mellemstop, ikke destinationen.",
+          consequence: "Korrekt. Sofabordet var kun midlertidigt. Øl'en bevægede sig herfra.",
+        },
+        "table-yes": {
+          label: "Ja",
+          description: "Øl'en blev efterladt her med vilje.",
+          consequence: "Ridsen siger noget andet. KOLD = IKKE HER. Betal 1 Offer og se igen.",
+        },
+        "table-maybe": {
+          label: "Måske",
+          description: "Det er uklart ud fra beviserne.",
+          consequence: "Ridsen er klar. Undersøg igen — beviset er lige foran dig.",
+        },
+      },
+      rewardText: "Sofabordet var kun midlertidigt.",
     },
   },
   {
@@ -922,50 +791,158 @@ export const QUESTS: Quest[] = [
     rewardText: "The new rule is added to the unofficial cabin constitution.",
     da: {
       title: "Bordtraktaten",
-      description: "Sofabordet har overværet enhver skænderi dette hold har haft på en hyttetur. Jeres hold skal forhandle og annoncere en ny hytteregel — en der ville have forhindret mindst én rigtig diskussion. Den skal være specifik, håndhævbar og lidt absurd.",
-      prompt: "Ét holdmedlem foreslår en ny hytteregel. Hele gruppen stemmer om den er specifik, håndhævbar og sjov nok til at honorere. Godkendt = bonus optjent.",
+      description:
+        "Sofabordet har overværet enhver skænderi dette hold har haft på en hyttetur. Jeres hold skal forhandle og annoncere en ny hytteregel — en der ville have forhindret mindst én rigtig diskussion. Den skal være specifik, håndhævbar og lidt absurd.",
+      prompt:
+        "Ét holdmedlem foreslår en ny hytteregel. Hele gruppen stemmer om den er specifik, håndhævbar og sjov nok til at honorere. Godkendt = bonus optjent.",
       rewardText: "Den nye regel tilføjes den uofficielle hytteforfatning.",
     },
   },
 
-  // THE TERRACE — Team B
+  // ==========================================
+  // THE TERRACE — 2 quests per team
+  // ==========================================
   {
-    id: "b-terrace-railing-carving",
+    id: "terrace-countdown",
+    forTeam: "team-a",
     roomId: "terrace",
-    forTeam: "team-b",
     type: "puzzle",
-    title: "The Name Behind the Ritual",
+    title: "The Countdown",
     description:
-      "Your team's investigation leads to the same question the other team is circling: who started all of this? Standing on the terrace, the answer feels obvious — and yet. Are you sure you know the full name?",
+      "Carved into the terrace railing is a sequence of numbers. Someone did this deliberately. The final number is circled twice.",
     prompt:
-      "Everyone knows who started this annual ritual. Write their last name. Exactly as it's spelled — capitals matter.",
+      "Carved into the terrace railing:\n6 → 5 → 4 → 3 → 2 → 1\nThe final number is circled twice.\nUnderneath it says:\n\"Everyone swears they will not take the last one.\"\n\nWhat does the circled number represent?",
     order: 1,
     isRequired: true,
     hints: [
       {
         order: 1,
         offerCost: 2,
-        text: "Think about who in the group has been coming here the longest. Whose idea was the very first trip? Eight letters in the last name.",
+        text: "The sequence counts something that disappears during the evening.",
       },
       {
         order: 2,
         offerCost: 3,
-        text: "The last name is Bergmann. With two n's at the end.",
+        text: "The phrase \"the last one\" is not about a person.",
       },
     ],
-    answer: { correct: ["Bergmann", "bergmann", "BERGMANN"], normalized: true },
+    answer: {
+      correct: ["last beer", "the last beer", "beer", "final beer", "sidste øl", "den sidste øl", "øl"],
+      normalized: true,
+    },
+    rewardClueId: "clue-terrace-countdown",
+    rewardText:
+      "The countdown is about the last beer. It began at 6 — and ended at the one left behind.",
+    failureText:
+      "The railing gives nothing away. Think about what the group was counting down from the beginning.",
+    da: {
+      title: "Nedtællingen",
+      description:
+        "Ridset ind i terrasse-gelænderet er en sekvens af tal. Nogen gjorde dette bevidst. Det sidste tal er ringet ind to gange.",
+      prompt:
+        "Ridset ind i terrasse-gelænderet:\n6 → 5 → 4 → 3 → 2 → 1\nDet sidste tal er ringet ind to gange.\nUnder det står:\n\"Alle sværger at de ikke vil tage den sidste.\"\n\nHvad repræsenterer det indringede tal?",
+      hints: [
+        "Sekvensen tæller noget der forsvinder i løbet af aftenen.",
+        "Sætningen \"den sidste\" handler ikke om en person.",
+      ],
+      rewardText:
+        "Nedtællingen handler om den sidste øl. Den begyndte ved 6 — og endte med den der blev efterladt.",
+      failureText:
+        "Gelænderet røber ingenting. Tænk på hvad gruppen talte ned fra begyndelsen.",
+    },
+  },
+  {
+    id: "terrace-railing-carving",
+    forTeam: "team-a",
+    roomId: "terrace",
+    type: "puzzle",
+    title: "First Here",
+    description:
+      "Four sets of initials are carved into the terrace railing. They are not the same depth. One set is older, deeper, and slightly more dramatic than the rest.",
+    prompt:
+      "Four sets of initials are carved into the terrace railing:\nMS  EK  JB  LA\nBelow them, someone has scratched:\n\"First here. Last accused.\"\n\nOne set of initials is older, deeper, and slightly more dramatic than the rest.\nWho started the ritual? Write the initials.",
+    order: 2,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 2,
+        text: "You are not looking for alphabetical order. You are looking for the carving that looks oldest.",
+      },
+      {
+        order: 2,
+        offerCost: 3,
+        text: "Depth and age matter more than where the initials appear in the list.",
+      },
+    ],
+    answer: {
+      correct: ["JB", "J.B.", "jb", "j.b."],
+      normalized: true,
+    },
     rewardClueId: "clue-terrace-inscription",
-    rewardText: "Bergmann. The name at the origin of all of this. Now it's in your case file.",
+    rewardText:
+      "Founder initials: JB. The name everyone knew but no one had said out loud yet. Now it's in the case file.",
+    failureText:
+      "The terrace offers no confirmation. Think harder — or pay for the certainty.",
+    da: {
+      title: "Første Her",
+      description:
+        "Fire sæt initialer er ridset ind i terrasse-gelænderet. De har ikke samme dybde. Et sæt er ældre, dybere, og lidt mere dramatisk end resten.",
+      prompt:
+        "Fire sæt initialer er ridset ind i terrasse-gelænderet:\nMS  EK  JB  LA\nUnder dem har nogen ridset:\n\"Første her. Sidst anklaget.\"\n\nEt sæt initialer er ældre, dybere, og lidt mere dramatisk end resten.\nHvem startede ritualet? Skriv initialerne.",
+      hints: [
+        "Du leder ikke efter alfabetisk rækkefølge. Du leder efter ristningen der ser ældst ud.",
+        "Dybde og alder tæller mere end hvor initialerne optræder på listen.",
+      ],
+      rewardText:
+        "Grundlæggerens initialer: JB. Navnet alle kendte men ingen havde sagt højt endnu. Nu er det i sagsmappen.",
+      failureText:
+        "Terrassen giver ingen bekræftelse. Tænk hårdere — eller betal for sikkerheden.",
+    },
+  },
+
+  {
+    id: "b-terrace-railing-carving",
+    roomId: "terrace",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Founder's Name",
+    description:
+      "A scratched note on the railing raises a question the group has probably avoided. It is time to answer it properly.",
+    prompt:
+      "A scratched note on the railing says:\n\"The one who started it never used initials here. Eight letters. Two of them the same. Ask the group who that could be.\"\n\nWhat last name should your team enter?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 2,
+        text: "You are looking for a surname, not initials.",
+      },
+      {
+        order: 2,
+        offerCost: 3,
+        text: "The name has 8 letters, and the repeated letter is at the end.",
+      },
+    ],
+    answer: {
+      correct: ["Bergmann", "bergmann", "BERGMANN"],
+      normalized: true,
+    },
+    rewardClueId: "clue-terrace-inscription",
+    rewardText: "Founder surname: Bergmann. The name at the origin of all of this.",
     failureText: "The terrace gives nothing away. Think — or pay.",
     da: {
-      title: "Navnet Bag Ritualet",
-      description: "Jeres holds efterforskning fører til det samme spørgsmål som det andet hold kredser om: hvem startede alt dette? Stående på terrassen virker svaret oplagt — og dog. Er I sikre på I kender hele navnet?",
-      prompt: "Alle ved hvem der startede dette årlige ritual. Skriv deres efternavn. Præcis som det staves — store bogstaver har betydning.",
+      title: "Grundlæggerens Navn",
+      description:
+        "En ridset note på gelænderet rejser et spørgsmål gruppen sandsynligvis har undgået. Det er tid til at besvare det ordentligt.",
+      prompt:
+        "En ridset note på gelænderet siger:\n\"Den der startede det brugte aldrig initialer her. Otte bogstaver. To af dem ens. Spørg gruppen hvem det kunne være.\"\n\nHvilket efternavn skal jeres hold indtaste?",
       hints: [
-        "Tænk på hvem i gruppen der har været her længst. Hvis idé var den allerførste tur? Otte bogstaver i efternavnet.",
-        "Efternavnet er Bergmann. Med to n'er til sidst.",
+        "Du leder efter et efternavn, ikke initialer.",
+        "Navnet har 8 bogstaver, og det gentagne bogstav er til sidst.",
       ],
-      rewardText: "Bergmann. Navnet ved oprindelsen af alt dette. Nu er det i jeres sagsmapp.",
+      rewardText: "Grundlæggerens efternavn: Bergmann. Navnet ved oprindelsen af alt dette.",
       failureText: "Terrassen røber ingenting. Tænk — eller betal.",
     },
   },
@@ -974,71 +951,231 @@ export const QUESTS: Quest[] = [
     roomId: "terrace",
     forTeam: "team-b",
     type: "choice",
-    title: "Who Carved It?",
+    title: "The Four Cuts",
     description:
-      "\"5-4-3-2-1-0. The ritual completes at zero.\" Four sets of initials below. Your team must decide: was this carving made by one person on behalf of all four, or did all four carve it together?",
-    prompt: "What is most likely about the origin of the carving?",
+      "Around the railing are four carved marks. Something about them is inconsistent in a way that matters.",
+    prompt:
+      "Around the railing are four carved marks.\nThey are not the same depth. They are not the same angle. They do not look like one person made them.\n\nWho carved the railing?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 2, text: "Look at the quality of the carving. Is the depth and style consistent throughout?" },
+      {
+        order: 1,
+        offerCost: 2,
+        text: "Different pressure can mean different hands.",
+      },
+      {
+        order: 2,
+        offerCost: 3,
+        text: "Focus on the inconsistency between the marks, not the message itself.",
+      },
     ],
     choices: [
       {
         id: "b-carved-together",
-        label: "All four carved it together — a group ritual",
+        label: "Four people",
         description: "Each person carved their own initials as a pact.",
         isCorrect: true,
-        consequence: "Exactly. Different depths, slightly different styles — four hands, one ritual. The countdown was a pact they each committed to.",
+        consequence:
+          "Exactly. Different depths, slightly different styles — four hands, one ritual. There were four original carvers.",
       },
       {
         id: "b-carved-one",
-        label: "One person carved all of it, signing for the others",
-        description: "One hand, one moment of commitment.",
+        label: "One person",
+        description: "One hand, one moment of commitment, signing for the others.",
         isCorrect: false,
-        consequence: "Close, but the variations in carving depth suggest multiple hands. Not quite.",
+        consequence:
+          "Close, but the variations in carving depth suggest multiple hands. Not quite.",
       },
       {
         id: "b-carved-later",
-        label: "Added later by someone who wasn't there",
-        description: "A fake — added to mislead.",
+        label: "A professional",
+        description: "Someone was hired to make it look deliberate.",
         isCorrect: false,
         offerCost: 1,
-        consequence: "No. The weathering of the wood matches. This was made at the same time. Pay 1 Offer for the detour.",
+        consequence:
+          "No. The weathering and inconsistency confirm amateur hands. Pay 1 Offer for the detour.",
       },
     ],
-    rewardText: "A group ritual. Four people. One countdown. One pact about the last cold beer.",
-    failureText: "Look more carefully at the physical evidence.",
+    rewardText: "There were four original carvers. Four people. One pact.",
+    rewardClueId: "clue-terrace-carvers",
     da: {
-      title: "Hvem Ristede Det?",
-      description: "\"5-4-3-2-1-0. Ritualet fuldendes ved nul.\" Fire sæt initialer nedenunder. Jeres hold skal beslutte: blev denne ristning lavet af én person på vegne af alle fire, eller ristede alle fire den sammen?",
-      prompt: "Hvad er mest sandsynligt om ristningens oprindelse?",
+      title: "De Fire Snit",
+      description:
+        "Rundt om gelænderet er fire ristede mærker. Noget ved dem er inkonsistent på en måde der er vigtig.",
+      prompt:
+        "Rundt om gelænderet er fire ristede mærker.\nDe har ikke samme dybde. De har ikke samme vinkel. De ligner ikke noget én person lavede.\n\nHvem ristede gelænderet?",
       hints: [
-        "Se på kvaliteten af ristningen. Er dybden og stilen ensartet gennem hele ristningen?",
+        "Forskelligt tryk kan betyde forskellige hænder.",
+        "Fokusér på inkonsistensen mellem mærkerne, ikke selve budskabet.",
       ],
       choices: {
         "b-carved-together": {
-          label: "Alle fire ristede det sammen — et grupperitual",
+          label: "Fire mennesker",
           description: "Hver person ristede sine egne initialer som en pagt.",
-          consequence: "Præcis. Forskellig dybde, lidt forskellige stilarter — fire hænder, ét ritual. Nedtællingen var en pagt de hver især indgik.",
+          consequence: "Præcis. Forskellig dybde, lidt forskellige stilarter — fire hænder, ét ritual. Der var fire originale ristere.",
         },
         "b-carved-one": {
-          label: "Én person ristede det hele og underskrev for de andre",
-          description: "Én hånd, ét øjeblik af engagement.",
+          label: "Én person",
+          description: "Én hånd, ét øjeblik af engagement, underskrev for de andre.",
           consequence: "Tæt på, men variationerne i ristningsdybde tyder på flere hænder. Ikke helt.",
         },
         "b-carved-later": {
-          label: "Tilføjet senere af nogen der ikke var der",
-          description: "Et falsum — tilføjet for at vildlede.",
-          consequence: "Nej. Træets forvitring stemmer overens. Det blev lavet på samme tid. Betal 1 Offer for omvejen.",
+          label: "En professionel",
+          description: "Nogen blev hyret til at få det til at se bevidst ud.",
+          consequence: "Nej. Forvitringen og inkonsistensen bekræfter amatørhænder. Betal 1 Offer for omvejen.",
         },
       },
-      rewardText: "Et grupperitual. Fire mennesker. Én nedtælling. Én pagt om den sidste kolde øl.",
-      failureText: "Se nærmere på de fysiske beviser.",
+      rewardText: "Der var fire originale ristere. Fire mennesker. Én pagt.",
     },
   },
 
-  // THE SHED — Team B
+  // ==========================================
+  // THE SHED — 3 quests + 1 new per team
+  // ==========================================
+  {
+    id: "shed-unlock",
+    forTeam: "team-a",
+    roomId: "shed",
+    type: "unlock",
+    title: "Force the Shed Door",
+    description:
+      "The shed door is stuck — not locked, just swollen from the damp. It needs a firm push. Or, more accurately, it needs someone to decide to commit to pushing it.",
+    prompt:
+      "Pay the ritual cost to investigate the shed. This represents someone actually going and dealing with the door.",
+    order: 1,
+    isRequired: true,
+    offerCost: 1,
+    hints: [],
+    rewardText:
+      "The door gives. Inside: the usual cabin junk — old tools, a broken chair, a laminated inventory sheet pinned to the wall. The sheet gets your attention immediately.",
+    da: {
+      title: "Tving Skurdøren",
+      description:
+        "Skurdøren sidder fast — ikke låst, bare hævet af fugt. Den kræver et fast skub. Eller mere præcist: den kræver at nogen beslutter sig for at forpligte sig til at skubbe.",
+      prompt:
+        "Betal den rituelle pris for at undersøge skuret. Det repræsenterer nogen der faktisk går ud og tager sig af døren.",
+      rewardText:
+        "Døren giver efter. Indenfor: det sædvanlige hytteskrot — gamle redskaber, en ødelagt stol, et lamineret inventarark fastgjort til væggen. Arket fanger straks din opmærksomhed.",
+    },
+  },
+  {
+    id: "shed-inventory",
+    forTeam: "team-a",
+    roomId: "shed",
+    type: "puzzle",
+    title: "The Missing Inventory Line",
+    description:
+      "The laminated inventory sheet has numbered rows. Most rows are readable, but one has been damaged.",
+    prompt:
+      "The laminated inventory sheet has numbered rows.\nMost rows are readable:\n1 — Axe\n2 — Lantern\n3 — Matches\n4 — Rope\n5 — Broken chair\n6 — Emergency mugs\n7 — [water damage]\n8 — Firewood crate\n9 — Extension cord\n\nA note at the bottom says:\n\"The locked thing is listed between the mugs and the firewood.\"\n\nWhat item number belongs to the locked cooler?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "Do not read the damaged word. Use the position of the damaged row.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "The note tells you what sits between item 6 and item 8.",
+      },
+    ],
+    answer: {
+      correct: ["7", "seven", "syv"],
+      normalized: true,
+    },
+    rewardClueId: "clue-shed-inventory",
+    rewardText:
+      "The locked cooler is Item 7. Listed between mugs and firewood — right where the water damage is.",
+    failureText: "You squint at the inventory. Use the note at the bottom — it tells you the position.",
+    da: {
+      title: "Den Manglende Inventarlinje",
+      description:
+        "Det laminerede inventarark har nummererede rækker. De fleste rækker er læsbare, men én er beskadiget.",
+      prompt:
+        "Det laminerede inventarark har nummererede rækker.\nDe fleste rækker er læsbare:\n1 — Økse\n2 — Lygte\n3 — Tændstikker\n4 — Reb\n5 — Ødelagt stol\n6 — Nødkrus\n7 — [vandskadet]\n8 — Brændekasse\n9 — Forlængerledning\n\nEn note nederst siger:\n\"Den låste ting er oplistet mellem krusene og brændet.\"\n\nHvilket genstands-nummer tilhører den låste køler?",
+      hints: [
+        "Læs ikke det beskadigede ord. Brug placeringen af den beskadigede række.",
+        "Noten fortæller dig hvad der sidder mellem genstand 6 og genstand 8.",
+      ],
+      rewardText:
+        "Den låste køler er Genstand 7. Oplistet mellem krusene og brændet — præcis der hvor vandskaden er.",
+      failureText: "Du kniper øjnene ved inventaret. Brug noten nederst — den fortæller dig positionen.",
+    },
+  },
+  {
+    id: "shed-order-rule",
+    forTeam: "team-a",
+    roomId: "shed",
+    type: "puzzle",
+    title: "The Order Rule",
+    description:
+      "At the bottom of the inventory sheet, below the note about the cooler, someone left one more line — in different handwriting.",
+    prompt:
+      "At the bottom of the inventory sheet, someone wrote:\n\"Do not add the numbers. Do not multiply them. The first thing lost comes before the thing that keeps it.\"\n\nWhich operation should your team use later?",
+    order: 3,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "The note is warning you against math.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "This is about placing clues beside each other, not calculating them.",
+      },
+    ],
+    answer: {
+      correct: ["order", "sequence", "arrange", "rækkefølge", "arrangere", "orden"],
+      normalized: true,
+    },
+    rewardClueId: "clue-shed-order-rule",
+    rewardText: "Use order, not math. Place the clues side by side in the right sequence.",
+    failureText: "The note tells you what NOT to do. What's left is what you should do.",
+    da: {
+      title: "Ordensreglen",
+      description:
+        "Nederst på inventararket, under noten om køleren, har nogen efterladt endnu en linje — i en anden håndskrift.",
+      prompt:
+        "Nederst på inventararket har nogen skrevet:\n\"Addér ikke tallene. Multiplicér dem ikke. Den første ting der gik tabt kommer før den ting der holder den.\"\n\nHvilken operation skal jeres hold bruge senere?",
+      hints: [
+        "Noten advarer dig mod matematik.",
+        "Dette handler om at placere spor ved siden af hinanden, ikke om at beregne dem.",
+      ],
+      rewardText: "Brug rækkefølge, ikke matematik. Placer sporene side om side i den rigtige rækkefølge.",
+      failureText: "Noten fortæller dig hvad du IKKE skal gøre. Det der er tilbage er hvad du skal gøre.",
+    },
+  },
+  {
+    id: "shed-dedication",
+    forTeam: "team-a",
+    roomId: "shed",
+    type: "social_challenge",
+    title: "The Shed Offering",
+    description:
+      "The shed contains a broken garden chair, a rusted trowel, one empty beer can from last year (vintage!), and what appears to be a paint roller used once and never cleaned. This junk deserves an inventory poem.",
+    prompt:
+      "One team member must recite an original poem (at least 4 lines) dedicated to the contents of the shed. Rhyming optional. Sincerity mandatory. The group votes on whether it honors the shed.",
+    order: 4,
+    isRequired: false,
+    hints: [],
+    rewardText:
+      "The shed is honored. Somewhere, the spirit of the uncleaned paint roller rests easier.",
+    da: {
+      title: "Skurofferingen",
+      description:
+        "Skuret indeholder en ødelagt havestol, en rusten gravespade, én tom ølboks fra i fjor (vintage!), og hvad der ser ud som en malingsrulle brugt én gang og aldrig rengjort. Dette skrot fortjener et hylstdigtem.",
+      prompt:
+        "Ét holdmedlem skal recitere et originaldigtem (mindst 4 linjer) dedikeret til skurets indhold. Rim er valgfrit. Oprigtighed er obligatorisk. Gruppen stemmer om det ærer skuret.",
+      rewardText: "Skuret er æreret. Et sted hviler malerullens ånd lidt lettere.",
+    },
+  },
+
   {
     id: "b-shed-unlock",
     roomId: "shed",
@@ -1052,12 +1189,15 @@ export const QUESTS: Quest[] = [
     isRequired: true,
     offerCost: 1,
     hints: [],
-    rewardText: "The door gives. Inside: tools, junk, and pinned to the wall — an inventory sheet in a laminate sleeve.",
+    rewardText:
+      "The door gives. Inside: tools, junk, and pinned to the wall — an inventory sheet in a laminate sleeve.",
     da: {
       title: "Åbn Skuret",
-      description: "Skurets dør er opsvulmet af fugt. Det kræver kraft — ikke hjerner, bare vilje. Jeres hold beslutter hvem der tager sig af det.",
+      description:
+        "Skurets dør er opsvulmet af fugt. Det kræver kraft — ikke hjerner, bare vilje. Jeres hold beslutter hvem der tager sig af det.",
       prompt: "Betal ritualomkostningen for at komme ind i skuret.",
-      rewardText: "Døren giver efter. Indeni: værktøj, skrammel, og fastgjort til væggen — et inventarark i en laminathylster.",
+      rewardText:
+        "Døren giver efter. Indeni: værktøj, skrammel, og fastgjort til væggen — et inventarark i en laminathylster.",
     },
   },
   {
@@ -1065,29 +1205,89 @@ export const QUESTS: Quest[] = [
     roomId: "shed",
     forTeam: "team-b",
     type: "puzzle",
-    title: "The Item Count",
+    title: "The Duplicate Item",
     description:
-      "The CABIN INVENTORY sheet has 9 items listed. Item 7 is the cooler (locked). But your team notices something odd — two of the items on the list are duplicated under different names. Someone padded the inventory to confuse.",
+      "The shed inventory has 10 lines. Someone was clearly frustrated when they wrote it.",
     prompt:
-      "If there are 9 listed items but 2 are duplicates of existing items, how many genuinely unique items are in the cabin inventory?",
+      "The shed inventory has 10 lines.\nTwo entries are crossed out so hard that someone must have been annoyed:\n— \"Cooler\"\n— \"Cooler, but colder\"\n\nA note beside the list says:\n\"Do not count bad bookkeeping.\"\n\nHow many valid lines remain?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "9 items total. 2 are duplicates. 9 - 2 = ?" },
+      {
+        order: 1,
+        offerCost: 1,
+        text: "Crossed-out lines should not survive the count.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "Start with the full list, then remove only the entries the inventory rejects.",
+      },
     ],
-    answer: { correct: ["7", "seven", "syv"], normalized: true },
-    rewardClueId: "clue-shed-inventory",
-    rewardText: "Seven unique items. Item 7 is the cooler — and it's locked. You have what you need.",
-    failureText: "Simple arithmetic. How many unique items remain when you remove the duplicates?",
+    answer: {
+      correct: ["8", "eight", "otte"],
+      normalized: true,
+    },
+    rewardClueId: "clue-b-shed-inventory",
+    rewardText: "Valid inventory count: 8. Two crossed out, eight remain.",
+    failureText: "Simple arithmetic. How many lines survive when you remove the crossed-out ones?",
     da: {
-      title: "Antal Genstande",
-      description: "HYTTE-INVENTARLISTEN har 9 genstande oplistet. Genstand 7 er køleren (låst). Men jeres hold bemærker noget mærkeligt — to af genstandene på listen er duplikeret under forskellige navne. Nogen puffede inventaret op for at forvirre.",
-      prompt: "Hvis der er 9 listede genstande men 2 er dubletter af eksisterende genstande, hvor mange genuint unikke genstande er der i hytte-inventaret?",
+      title: "Den Duplikerede Genstand",
+      description:
+        "Skurets inventar har 10 linjer. Nogen var tydeligvis frustreret da de skrev det.",
+      prompt:
+        "Skurets inventar har 10 linjer.\nTo poster er streget over så hårdt at nogen må have været irriteret:\n— \"Køler\"\n— \"Køler, men koldere\"\n\nEn note ved siden af listen siger:\n\"Tæl ikke dårlig bogføring.\"\n\nHvor mange gyldige linjer er tilbage?",
       hints: [
-        "9 genstande i alt. 2 er dubletter. 9 - 2 = ?",
+        "Overstrøgne linjer bør ikke overleve optællingen.",
+        "Start med den fulde liste, og fjern derefter kun de poster inventaret afviser.",
       ],
-      rewardText: "Syv unikke genstande. Genstand 7 er køleren — og den er låst. I har hvad I har brug for.",
-      failureText: "Simpel regning. Hvor mange unikke genstande er tilbage når du fjerner dubletterne?",
+      rewardText: "Gyldigt inventarantal: 8. To overstreget, otte tilbage.",
+      failureText: "Simpel regning. Hvor mange linjer overlever når du fjerner de overstrøgne?",
+    },
+  },
+  {
+    id: "b-shed-torn-timestamp",
+    roomId: "shed",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Torn Timestamp",
+    description:
+      "Behind the inventory sheet is a torn receipt. Only part of the timestamp survived.",
+    prompt:
+      "Behind the inventory sheet is a torn receipt.\nThe timestamp is damaged:\n          :\nOnly the colon remains. The digits are gone.\n\nA note beside it says:\n\"The hour came from the railing. The minutes came from the list.\"\n\nWhat kind of answer are you trying to restore?",
+    order: 3,
+    isRequired: true,
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "Look at the shape of the missing clue.",
+      },
+      {
+        order: 2,
+        offerCost: 2,
+        text: "The colon is more important than the numbers right now.",
+      },
+    ],
+    answer: {
+      correct: ["time", "timestamp", "tid", "tidsstempel", "klokkeslæt"],
+      normalized: true,
+    },
+    rewardClueId: "clue-shed-torn-timestamp",
+    rewardText: "The final clue should be formatted as a time. The colon separates hours from minutes.",
+    failureText: "What format has a colon in the middle? What does HH:MM look like?",
+    da: {
+      title: "Den Iturevne Tidsstempel",
+      description:
+        "Bag inventararket er en iturevet kvittering. Kun en del af tidsstemplet overlevede.",
+      prompt:
+        "Bag inventararket er en iturevet kvittering.\nTidsstemplet er beskadiget:\n          :\nKun kolonen er tilbage. Cifrene er væk.\n\nEn note ved siden af siger:\n\"Timen kom fra gelænderet. Minutterne kom fra listen.\"\n\nHvilken slags svar forsøger du at gendanne?",
+      hints: [
+        "Se på formen af det manglende spor.",
+        "Kolonen er vigtigere end tallene lige nu.",
+      ],
+      rewardText: "Det endelige spor skal formateres som et klokkeslæt. Kolonen adskiller timer fra minutter.",
+      failureText: "Hvilket format har en kolon i midten? Hvad ligner TT:MM?",
     },
   },
   {
@@ -1100,14 +1300,16 @@ export const QUESTS: Quest[] = [
       "The shed is dying slowly. The broken chair, the rusted tools, the paint roller hardened into a monument to forgotten projects. Your team must deliver a proper eulogy for ONE specific item in the shed. Not the shed itself — one item. At least 5 sentences. With genuine emotion.",
     prompt:
       "One member delivers a eulogy for a shed item of their choice. Minimum 5 sentences. The group decides by applause if it achieves genuine emotion. Success = bonus.",
-    order: 3,
+    order: 4,
     isRequired: false,
     hints: [],
     rewardText: "The item is remembered. The shed trembles slightly. Or it's just the wind.",
     da: {
       title: "Skurets Gravtale",
-      description: "Skuret dør langsomt. Den ødelagte stol, det rustne værktøj, malerrullen der er hærdet til et monument over glemte projekter. Jeres hold skal holde en ordentlig gravtale for ÉN specifik genstand i skuret. Ikke selve skuret — én genstand. Mindst 5 sætninger. Med ægte følelse.",
-      prompt: "Ét holdmedlem holder en gravtale for en skuret-genstand efter eget valg. Minimum 5 sætninger. Gruppen beslutter ved applaus om det opnår ægte følelse. Succes = bonus.",
+      description:
+        "Skuret dør langsomt. Den ødelagte stol, det rustne værktøj, malerrullen der er hærdet til et monument over glemte projekter. Jeres hold skal holde en ordentlig gravtale for ÉN specifik genstand i skuret. Ikke selve skuret — én genstand. Mindst 5 sætninger. Med ægte følelse.",
+      prompt:
+        "Ét holdmedlem holder en gravtale for en skuret-genstand efter eget valg. Minimum 5 sætninger. Gruppen beslutter ved applaus om det opnår ægte følelse. Succes = bonus.",
       rewardText: "Genstanden huskes. Skuret skælver en smule. Eller det er bare vinden.",
     },
   },

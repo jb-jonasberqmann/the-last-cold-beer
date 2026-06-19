@@ -637,9 +637,12 @@ export async function applyBossDamage(
   gameId: string,
   teamId: TeamId,
   bossId: string,
-  sips: number
+  sips: number,    // wagered sips (what the team risked)
+  damage?: number  // actual damage to apply; defaults to sips; caller passes sips*3
 ): Promise<ActionResult<{ newHp: number; defeated: boolean }>> {
-  const safeSips = Math.min(Math.max(1, Math.floor(sips)), 10);
+  // Allow up to however many sips the team has spent on their expedition (no artificial cap)
+  const safeSips = Math.max(1, Math.floor(sips));
+  const actualDamage = damage != null ? Math.max(1, Math.floor(damage)) : safeSips;
 
   // Fetch or initialise boss progress
   let bpRows = await sql`
@@ -664,14 +667,14 @@ export async function applyBossDamage(
   const bp = bpRows[0] as DbBossProgress;
   if (bp.status === "defeated") return { success: false, error: "Boss is already defeated." };
 
-  const newHp = Math.max(0, bp.current_hp - safeSips);
+  const newHp = Math.max(0, bp.current_hp - actualDamage);
   const defeated = newHp <= 0;
   const newStatus = defeated ? "defeated" : "active";
 
   await sql`
     UPDATE boss_progress SET
       current_hp   = ${newHp},
-      damage_dealt = damage_dealt + ${safeSips},
+      damage_dealt = damage_dealt + ${actualDamage},
       status       = ${newStatus},
       updated_at   = NOW()
       ${defeated ? sql`, defeated_at = NOW()` : sql``}
@@ -682,7 +685,7 @@ export async function applyBossDamage(
     INSERT INTO game_events (game_id, team_id, event_type, event_data)
     VALUES (
       ${gameId}, ${teamId}, 'boss_damaged',
-      ${JSON.stringify({ action_id: "drunk-gamble", damage: safeSips, method: "drunk" })}::jsonb
+      ${JSON.stringify({ action_id: "drunk-gamble", wagered: safeSips, damage: actualDamage, method: "drunk" })}::jsonb
     )
   `;
 
