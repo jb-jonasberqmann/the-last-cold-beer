@@ -42,7 +42,7 @@ const CH1_PATHS = [
   { from: "kitchen",      to: "fridge",        d: "M170,423 L170,365",                         secret: false },
   { from: "fridge",       to: "terrace",        d: "M170,339 L170,280",                         secret: false },
   { from: "terrace",      to: "shed",           d: "M170,254 L170,198",                         secret: false },
-  { from: "shed",         to: "boss",           d: "M170,172 L170,115",                         secret: false },
+  { from: "shed",         to: "boss",           d: "M170,172 L170,132",                         secret: false },
   { from: "kitchen",      to: "coffee-table",   d: "M181,432 C200,420 214,410 217,397",         secret: true  },
 ];
 
@@ -289,7 +289,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               <stop offset="100%" stopColor="#906415" />
             </radialGradient>
             <clipPath id="bossImgClip">
-              <polygon points={wp(170, 88, 24, 0)} />
+              <polygon points={wp(170, 92, 36, 0)} />
             </clipPath>
           </defs>
 
@@ -419,8 +419,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
           <line x1="214" y1="50" x2="264" y2="50" stroke="#5a3010" strokeWidth={0.8} opacity={0.5} />
 
           {/* ── Fog ── */}
-          <rect x="12" y="122" width="316" height="50" fill="#c8b880" opacity={0.28} />
-          <text x="170" y="150" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#8a6020" letterSpacing={2} opacity={0.55} fontStyle="italic">
+          <rect x="12" y="148" width="316" height="48" fill="#c8b880" opacity={0.28} />
+          <text x="170" y="176" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#8a6020" letterSpacing={2} opacity={0.55} fontStyle="italic">
             ~ ukendt territorium ~
           </text>
 
@@ -438,16 +438,16 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
           {/* ── Boss node ── */}
           <g onClick={() => { if (canInteract && chapter) router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`); }} style={{ cursor: canInteract ? "pointer" : "default" }}>
-            <circle cx="170" cy="88" r="36" fill="transparent" />
-            <image href="/rooms/boss-cooler.png" x="146" y="46" width="48" height="85" clipPath="url(#bossImgClip)" preserveAspectRatio="xMidYMid slice" />
-            <polygon points={wp(170, 88, 24, 0)} fill="none" stroke="#c0392b" strokeWidth={2.2} opacity={0.9} />
+            <circle cx="170" cy="92" r="50" fill="transparent" />
+            <image href="/rooms/boss-cooler.png" x="128" y="33" width="84" height="118" clipPath="url(#bossImgClip)" preserveAspectRatio="xMidYMid slice" />
+            <polygon points={wp(170, 92, 36, 0)} fill="none" stroke="#c0392b" strokeWidth={2.5} opacity={0.92} />
             {bossUnlockable && (
               <>
-                <polygon points={wp(170, 88, 29, 0)} fill="none" stroke="#e04020" strokeWidth={1.6} opacity={0.4} />
-                <polygon points={wp(170, 88, 34, 0)} fill="none" stroke="#e04020" strokeWidth={0.8} opacity={0.18} />
+                <polygon points={wp(170, 92, 43, 0)} fill="none" stroke="#e04020" strokeWidth={1.8} opacity={0.45} />
+                <polygon points={wp(170, 92, 52, 0)} fill="none" stroke="#e04020" strokeWidth={0.9} opacity={0.18} />
               </>
             )}
-            <text x="170" y="124" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#3a2208" letterSpacing={2}>BOSS</text>
+            <text x="170" y="142" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#3a2208" letterSpacing={2}>BOSS</text>
           </g>
 
           {/* ── Room nodes ── */}
@@ -469,11 +469,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
               <g key={id} onClick={() => handleNodeClick(id)} style={{ cursor: clickable ? "pointer" : "default" }} opacity={s.opacity}>
                 <circle cx={cx} cy={cy} r={r + 14} fill="transparent" />
 
-                {/* Active glow rings */}
+                {/* Active glow rings — large + dramatic like reference */}
                 {state === "active" && !isSecret && (
                   <>
-                    <polygon points={wp(cx, cy, r + 8, shift)} fill="none" stroke="#e05818" strokeWidth={3.5} opacity={0.55} />
-                    <polygon points={wp(cx, cy, r + 14, shift)} fill="none" stroke="#e05818" strokeWidth={1.5} opacity={0.22} />
+                    <polygon points={wp(cx, cy, r + 9,  shift)} fill="rgba(210,70,10,0.10)" stroke="#f07228" strokeWidth={5} opacity={0.80} />
+                    <polygon points={wp(cx, cy, r + 18, shift)} fill="none" stroke="#e05010" strokeWidth={2.5} opacity={0.50} />
+                    <polygon points={wp(cx, cy, r + 29, shift)} fill="none" stroke="#c83808" strokeWidth={1.4} opacity={0.25} />
+                    <polygon points={wp(cx, cy, r + 40, shift)} fill="none" stroke="#b82808" strokeWidth={0.8} opacity={0.12} />
                   </>
                 )}
                 {isSecret && state !== "locked" && (
@@ -482,11 +484,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 {/* Pulse ring */}
                 {(state === "active" || state === "can_unlock") && (
                   <circle cx={cx} cy={cy} r={r + 4} fill="none"
-                    stroke={isSecret ? "#3ab8c8" : state === "active" ? "#e05010" : "#2a9a4a"}
-                    strokeWidth={2} opacity={0}
+                    stroke={isSecret ? "#3ab8c8" : state === "active" ? "#f06018" : "#2a9a4a"}
+                    strokeWidth={3} opacity={0}
                   >
-                    <animate attributeName="r" values={`${r+4};${r+20};${r+4}`} dur="2.2s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.85;0;0.85" dur="2.2s" repeatCount="indefinite" />
+                    <animate attributeName="r" values={`${r+4};${r+46};${r+4}`} dur="2.5s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.95;0;0.95" dur="2.5s" repeatCount="indefinite" />
                   </circle>
                 )}
 

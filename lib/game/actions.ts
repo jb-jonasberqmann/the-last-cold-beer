@@ -625,6 +625,77 @@ export async function hostResetBoss(
 }
 
 // ==========================================
+// DRUNK GAMBLE — variable damage from the team's offer pool
+// ==========================================
+
+/**
+ * Apply a variable amount of boss damage for the "Beruse Bossen" drunk-gamble mechanic.
+ * The random outcome is decided by the caller; this action just records the damage
+ * and updates boss HP when the gamble succeeds.
+ */
+export async function applyBossDamage(
+  gameId: string,
+  teamId: TeamId,
+  bossId: string,
+  sips: number
+): Promise<ActionResult<{ newHp: number; defeated: boolean }>> {
+  const safeSips = Math.min(Math.max(1, Math.floor(sips)), 10);
+
+  // Fetch or initialise boss progress
+  let bpRows = await sql`
+    SELECT * FROM boss_progress
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND boss_id = ${bossId}
+    LIMIT 1
+  `;
+
+  const boss = getBoss(bossId);
+  if (!boss) return { success: false, error: "Boss not found." };
+
+  if (bpRows.length === 0) {
+    bpRows = await sql`
+      INSERT INTO boss_progress
+        (game_id, team_id, boss_id, current_hp, max_hp, current_phase, damage_dealt, offer_spent, status)
+      VALUES
+        (${gameId}, ${teamId}, ${bossId}, ${boss.maxHp}, ${boss.maxHp}, 1, 0, 0, 'active')
+      RETURNING *
+    `;
+  }
+
+  const bp = bpRows[0] as DbBossProgress;
+  if (bp.status === "defeated") return { success: false, error: "Boss is already defeated." };
+
+  const newHp = Math.max(0, bp.current_hp - safeSips);
+  const defeated = newHp <= 0;
+  const newStatus = defeated ? "defeated" : "active";
+
+  await sql`
+    UPDATE boss_progress SET
+      current_hp   = ${newHp},
+      damage_dealt = damage_dealt + ${safeSips},
+      status       = ${newStatus},
+      updated_at   = NOW()
+      ${defeated ? sql`, defeated_at = NOW()` : sql``}
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND boss_id = ${bossId}
+  `;
+
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (
+      ${gameId}, ${teamId}, 'boss_damaged',
+      ${JSON.stringify({ action_id: "drunk-gamble", damage: safeSips, method: "drunk" })}::jsonb
+    )
+  `;
+
+  if (defeated) {
+    if (boss.chapterId === "chapter-1") {
+      await sql`UPDATE games SET chapter_1_winner = ${teamId} WHERE id = ${gameId} AND chapter_1_winner IS NULL`;
+    }
+  }
+
+  return { success: true, data: { newHp, defeated } };
+}
+
+// ==========================================
 // INTERNAL HELPERS
 // ==========================================
 

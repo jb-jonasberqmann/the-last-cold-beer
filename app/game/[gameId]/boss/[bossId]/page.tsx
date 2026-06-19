@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { dealBossDamage } from "@/lib/game/actions";
+import { dealBossDamage, applyBossDamage } from "@/lib/game/actions";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
@@ -58,6 +58,10 @@ export default function BossFightPage({ params }: Props) {
   const [puzzleAnswer, setPuzzleAnswer] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"fight" | "clues" | "log">("fight");
+
+  // Drunk gamble mechanic
+  const [drunkModal, setDrunkModal] = useState(false);
+  const [drunkSips, setDrunkSips] = useState(1);
 
   // Free action (secret room advantage)
   const freeActionUsedKey = `boss_free_action_used_${gameId}_${teamId}_${bossId}`;
@@ -231,6 +235,36 @@ export default function BossFightPage({ params }: Props) {
     }
   };
 
+  const handleDrunkGamble = async () => {
+    setLoading("drunk-gamble");
+    const isSuccessful = Math.random() < 0.5;
+
+    if (isSuccessful) {
+      const result = await applyBossDamage(gameId, teamId, bossId, drunkSips);
+      setLoading(null);
+      if (result.success) {
+        setFeedback({
+          actionId: "drunk-gamble",
+          text: result.data.defeated
+            ? `🍺 Bossen er totalt fuld! ${boss.defeatText}`
+            : `🍺 Bossen drikker! ${drunkSips} skade! HP: ${result.data.newHp}`,
+          success: true,
+        });
+        fetchData();
+      }
+    } else {
+      setLoading(null);
+      setFeedback({
+        actionId: "drunk-gamble",
+        text: `😅 Bossen ler ad jer... Holdet drikker ${drunkSips} ${drunkSips === 1 ? "slurk" : "slurke"}!`,
+        success: false,
+      });
+    }
+
+    setDrunkModal(false);
+    setActiveTab("fight");
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <GameLayout
@@ -280,10 +314,13 @@ export default function BossFightPage({ params }: Props) {
         }
       `}</style>
 
+      {/* ── Sticky hero + HP wrapper ── */}
+      <div className="sticky top-0 z-20 -mx-4" style={{ background: "rgba(5,3,1,1)" }}>
+
       {/* ── Hero image ── */}
       <div
-        className="relative -mx-4 overflow-hidden"
-        style={{ height: "clamp(160px, 48vw, 230px)", marginTop: -4 }}
+        className="relative overflow-hidden"
+        style={{ height: "clamp(130px, 38vw, 190px)", marginTop: -4 }}
       >
         {bossImage ? (
           <img
@@ -365,84 +402,39 @@ export default function BossFightPage({ params }: Props) {
             {boss.subtitle}
           </p>
         </div>
+      </div>{/* end hero image */}
+
+      {/* ── HP bar (inside sticky wrapper) ── */}
+      <div className="px-4 pt-2 pb-2.5" style={{ fontFamily: "Georgia, serif" }}>
+        <div className="flex items-baseline gap-1.5 mb-1.5">
+          <span className="text-xs text-stone-500">{teamName}</span>
+          <span className="text-sm font-bold text-white ml-1">{currentHp}</span>
+          <span className="text-xs text-stone-600">/ {boss.maxHp} HP</span>
+          {otherBossProgress && (
+            <span className="text-[10px] text-stone-600 ml-auto">
+              {otherTeamName}:{" "}
+              {otherBossProgress.status === "defeated"
+                ? "💀"
+                : `${otherBossProgress.current_hp} HP`}
+            </span>
+          )}
+        </div>
+        <div className="h-[10px] rounded-full overflow-hidden bg-stone-900">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${hpPercent}%`,
+              background: hpPercent > 50
+                ? "linear-gradient(90deg, #c4880a, #f0b020)"
+                : hpPercent > 25
+                ? "linear-gradient(90deg, #a05808, #d08010)"
+                : "linear-gradient(90deg, #7a1806, #c02808)",
+            }}
+          />
+        </div>
       </div>
 
-      {/* ── HP card ── */}
-      <div className="rounded-xl bg-stone-950 border border-amber-900/20 p-3 mt-3" style={{ fontFamily: "Georgia, serif" }}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-amber-100">{teamName}</span>
-            <span className="text-xs text-stone-600">vs</span>
-            <span className="text-xl">{boss.icon}</span>
-          </div>
-          <span className="text-xs text-amber-800">Phase {currentPhase}/{boss.phases.length}</span>
-        </div>
-
-        <div className="flex items-baseline gap-1.5 mb-2">
-          <span className="text-xs text-stone-500">HP:</span>
-          <span className="text-base font-bold text-white">{currentHp}</span>
-          <span className="text-xs text-stone-600">/{boss.maxHp}</span>
-        </div>
-
-        {/* Segmented HP bar */}
-        <div>
-          <div className="flex h-[18px] rounded-full overflow-hidden gap-[2px] bg-stone-900">
-            {boss.phases.map((ph, i) => {
-              const prevPct  = i === 0 ? 100 : boss.phases[i - 1].hpThreshold;
-              const thisPct  = ph.hpThreshold;
-              const span     = prevPct - thisPct;
-              const topHp    = (prevPct / 100) * boss.maxHp;
-              const botHp    = (thisPct / 100) * boss.maxHp;
-              const fill     = Math.max(0, Math.min(1, (Math.max(0, currentHp) - botHp) / (topHp - botHp)));
-              const isActive = ph.phase === currentPhase;
-              return (
-                <div key={ph.phase} className="relative" style={{ flex: span }}>
-                  <div className="absolute inset-0 bg-stone-800" />
-                  <div
-                    className="absolute inset-y-0 left-0 transition-all duration-700"
-                    style={{
-                      width: `${fill * 100}%`,
-                      background: fill > 0.6
-                        ? "linear-gradient(90deg, #c4880a, #f0b020)"
-                        : fill > 0.3
-                        ? "linear-gradient(90deg, #a05808, #d08010)"
-                        : "linear-gradient(90deg, #7a1806, #b02808)",
-                    }}
-                  />
-                  {isActive && fill > 0 && (
-                    <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,200,80,0.12) 100%)" }} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex mt-1">
-            {boss.phases.map((ph, i) => {
-              const prevPct = i === 0 ? 100 : boss.phases[i - 1].hpThreshold;
-              const span    = prevPct - ph.hpThreshold;
-              return (
-                <div key={ph.phase} className="text-center" style={{ flex: span }}>
-                  <span className={cn("text-[9px]", ph.phase === currentPhase ? "text-amber-400 font-bold" : "text-stone-600")}>
-                    P{ph.phase}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Other team strip */}
-        {otherBossProgress && (
-          <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-stone-800/50">
-            <span className="text-stone-600" style={{ fontFamily: "Georgia, serif" }}>{otherTeamName}</span>
-            {otherBossProgress.status === "defeated" ? (
-              <span className="text-amber-700">💀 Defeated</span>
-            ) : (
-              <span className="text-red-500">{otherBossProgress.current_hp}/{boss.maxHp} HP</span>
-            )}
-          </div>
-        )}
-      </div>
+      </div>{/* end sticky wrapper */}
 
       {/* ── Auto-apply notices ── */}
       {autoApplyNotices.map((n) => (
@@ -788,6 +780,75 @@ export default function BossFightPage({ params }: Props) {
         </div>
       )}
 
+      {/* ── Drunk gamble modal ── */}
+      {drunkModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: "rgba(0,0,0,0.72)" }}
+          onClick={() => setDrunkModal(false)}
+        >
+          <div
+            className="w-full rounded-t-2xl p-5"
+            style={{
+              background: "rgba(8,5,2,0.99)",
+              border: "1px solid rgba(180,130,50,0.22)",
+              paddingBottom: "max(28px, env(safe-area-inset-bottom, 28px))",
+              fontFamily: "Georgia, serif",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center mb-3">
+              <div className="w-8 h-[3px] rounded-full bg-stone-700" />
+            </div>
+
+            <h3 className="text-lg font-bold text-amber-300 text-center mb-1">
+              🍺 Beruse Bossen
+            </h3>
+            <p className="text-xs text-stone-500 text-center mb-5 leading-relaxed">
+              50/50 chance — bossen tager {drunkSips} {drunkSips === 1 ? "slurk" : "slurke"} i skade,
+              <br />eller holdet drikker dem selv.
+            </p>
+
+            {/* Sip picker */}
+            <div className="flex items-center gap-6 justify-center mb-6">
+              <button
+                onClick={() => setDrunkSips(Math.max(1, drunkSips - 1))}
+                className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center"
+                style={{ background: "rgba(20,12,4,0.9)" }}
+              >−</button>
+              <div className="text-center min-w-[48px]">
+                <div className="text-4xl font-bold text-amber-200">{drunkSips}</div>
+                <div className="text-[10px] text-stone-600 mt-0.5">{drunkSips === 1 ? "slurk" : "slurke"}</div>
+              </div>
+              <button
+                onClick={() => setDrunkSips(Math.min(10, drunkSips + 1))}
+                className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center"
+                style={{ background: "rgba(20,12,4,0.9)" }}
+              >+</button>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDrunkModal(false)}
+                className="flex-1 py-3 rounded-xl border border-stone-700/40 text-stone-400 text-sm font-bold"
+                style={{ background: "rgba(12,8,4,0.9)" }}
+              >
+                Annuller
+              </button>
+              <button
+                onClick={handleDrunkGamble}
+                disabled={!!loading}
+                className="flex-1 py-3 rounded-xl text-stone-900 font-bold text-sm disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg, #c88010, #f0b020)" }}
+              >
+                {loading === "drunk-gamble" ? "…" : "🎲 Satse!"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Bottom action bar (fixed) ── */}
       {!isDefeated && canInteract && (
         <div
@@ -803,17 +864,17 @@ export default function BossFightPage({ params }: Props) {
             <span className="text-[9px] text-amber-600 font-bold mt-0.5">{offerSpent}</span>
           </div>
 
-          {/* Team Action */}
+          {/* Drunk gamble button */}
           <button
             className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl font-bold text-stone-900"
             style={{
               background: "linear-gradient(135deg, #b87010, #e0a020)",
               fontFamily: "Georgia, serif",
             }}
-            onClick={() => setActiveTab("fight")}
+            onClick={() => setDrunkModal(true)}
           >
-            <span className="text-sm tracking-widest">TEAM ACTION</span>
-            <span className="text-[9px] font-normal opacity-70 tracking-wide">Plan together and act</span>
+            <span className="text-sm tracking-widest">🍺 BERUSE BOSSEN</span>
+            <span className="text-[9px] font-normal opacity-70 tracking-wide">50/50 — bossen eller holdet drikker</span>
           </button>
 
           {/* Retreat */}
