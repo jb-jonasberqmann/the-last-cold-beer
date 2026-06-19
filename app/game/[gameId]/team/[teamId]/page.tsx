@@ -267,26 +267,27 @@ export default function TeamQuestBoardPage({ params }: Props) {
             aria-label="Quest map — tap a room to enter or unlock it"
             xmlns="http://www.w3.org/2000/svg"
           >
-          {/* ── Defs — pulse filter only ── */}
+          {/* ── Defs ── */}
           <defs>
-            <filter id="activeGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            <filter id="titleShadow" x="-10%" y="-40%" width="120%" height="180%">
+              <feDropShadow dx="0" dy="1" stdDeviation="2.5" floodColor="#000" floodOpacity="0.85" />
             </filter>
           </defs>
 
           {/* ── Real background image ── */}
           <image href="/map/map-bg.png" x="0" y="0" width="340" height="520" preserveAspectRatio="xMidYMid slice" />
 
-          {/* ── Title overlay on parchment ── */}
-          <text x="170" y="50" textAnchor="middle" fontFamily="Georgia,serif" fontSize={18} fontWeight="bold" fill="#c8a030" letterSpacing={4} opacity={0.95}>
+          {/* ── Title overlay ── */}
+          <text x="170" y="44" textAnchor="middle" fontFamily="Georgia,serif" fontSize={14} fontWeight="bold"
+            fill="#d4a832" letterSpacing={3} filter="url(#titleShadow)" opacity={0.96}>
             SOMMERHUSET
           </text>
-          <line x1="80"  y1="58" x2="126" y2="58" stroke="#c8a030" strokeWidth={0.8} opacity={0.65} />
-          <text x="170" y="65" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7.5} fill="#c8a030" letterSpacing={6} opacity={0.85}>
+          <line x1="90"  y1="50" x2="128" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
+          <text x="170" y="56" textAnchor="middle" fontFamily="Georgia,serif" fontSize={6}
+            fill="#d4a832" letterSpacing={5} filter="url(#titleShadow)" opacity={0.8}>
             KAPITEL I
           </text>
-          <line x1="214" y1="58" x2="260" y2="58" stroke="#c8a030" strokeWidth={0.8} opacity={0.65} />
+          <line x1="212" y1="50" x2="250" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
 
           {/* ── Fog band ── */}
           <text x="170" y="178" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#8a6520" letterSpacing={2} opacity={0.6} fontStyle="italic">
@@ -307,18 +308,16 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
           {/* ── Boss node ── */}
           <g onClick={() => { if (canInteract && chapter) router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`); }} style={{ cursor: canInteract ? "pointer" : "default" }}>
-            {/* Invisible hit area */}
-            <circle cx="170" cy="97" r="42" fill="transparent" />
-            {/* Boss image */}
-            <image href="/map/node-boss.png" x="136" y="65" width="68" height="73" />
-            {/* Unlockable glow rings */}
+            <circle cx="170" cy="95" r="34" fill="transparent" />
+            <image href="/map/node-boss.png" x="143" y="68" width="54" height="58" />
             {bossUnlockable && (
               <>
-                <circle cx="170" cy="97" r="40" fill="none" stroke="#e04020" strokeWidth={2} opacity={0.45} />
-                <circle cx="170" cy="97" r="48" fill="none" stroke="#e04020" strokeWidth={0.9} opacity={0.18} />
+                <circle cx="170" cy="95" r="32" fill="none" stroke="#e04020" strokeWidth={1.8} opacity={0.5} />
+                <circle cx="170" cy="95" r="40" fill="none" stroke="#e04020" strokeWidth={0.8} opacity={0.2} />
               </>
             )}
-            <text x="170" y="148" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7.5} fill="#c8a030" letterSpacing={2} opacity={0.9}>BOSS</text>
+            <text x="170" y="136" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7}
+              fill="#d4a832" letterSpacing={2} filter="url(#titleShadow)" opacity={0.9}>BOSS</text>
           </g>
 
           {/* ── Room nodes ── */}
@@ -327,23 +326,25 @@ export default function TeamQuestBoardPage({ params }: Props) {
             const room      = getRoom(id);
             const clickable = canInteract && state !== "locked";
 
-            // Pick asset image by node state
+            // Pick asset — done gets green-tinted variant
             const nodeImg = isSecret
               ? "/map/node-secret.png"
               : state === "active"
               ? "/map/node-active.png"
+              : state === "done"
+              ? "/map/node-room-done.png"
               : "/map/node-room.png";
 
-            // Visual sizes (the images have dark padding — these represent displayed size in SVG units)
+            // Sizes in SVG units (images include transparent padding)
             const [nw, nh] = isSecret
-              ? [28, 22]
+              ? [22, 17]
               : state === "active"
-              ? [48, 46]
-              : [34, 20];
+              ? [36, 34]
+              : [26, 15];
 
-            const labelY = cy + (state === "active" ? 27 : 14);
-            const subY   = labelY + 8;
-            const opacity = state === "locked" ? 0.38 : 1;
+            const labelY = cy + (state === "active" ? 21 : 11);
+            const subY   = labelY + 7;
+            const opacity = state === "locked" ? 0.35 : 1;
 
             const LABELS: Record<string, string> = {
               kitchen: "KØKKEN", fridge: "KØLESKAB", terrace: "TERRASSE",
@@ -352,62 +353,53 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
             return (
               <g key={id} onClick={() => handleNodeClick(id)} style={{ cursor: clickable ? "pointer" : "default" }} opacity={opacity}>
-                {/* Invisible hit area */}
-                <circle cx={cx} cy={cy} r={state === "active" ? 30 : 18} fill="transparent" />
+                {/* Hit area */}
+                <circle cx={cx} cy={cy} r={state === "active" ? 22 : 14} fill="transparent" />
 
-                {/* Pulse ring (behind image for active/can_unlock) */}
+                {/* Pulse for active state */}
                 {state === "active" && !isSecret && (
-                  <circle cx={cx} cy={cy} r={22} fill="none" stroke="#f06018" strokeWidth={3} opacity={0}>
-                    <animate attributeName="r"       values="22;56;22"   dur="2.5s" repeatCount="indefinite" />
+                  <circle cx={cx} cy={cy} r={17} fill="none" stroke="#f06018" strokeWidth={2.5} opacity={0}>
+                    <animate attributeName="r"       values="17;44;17"   dur="2.5s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.9;0;0.9"  dur="2.5s" repeatCount="indefinite" />
                   </circle>
                 )}
+                {/* Pulse for can_unlock */}
                 {state === "can_unlock" && (
-                  <circle cx={cx} cy={cy} r={14} fill="none" stroke="#2a9a4a" strokeWidth={2} opacity={0}>
-                    <animate attributeName="r"       values="14;36;14"   dur="2.5s" repeatCount="indefinite" />
+                  <circle cx={cx} cy={cy} r={12} fill="none" stroke="#2a9a4a" strokeWidth={1.8} opacity={0}>
+                    <animate attributeName="r"       values="12;28;12"    dur="2.5s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.85;0;0.85" dur="2.5s" repeatCount="indefinite" />
                   </circle>
                 )}
+                {/* Secret dashed ring */}
                 {isSecret && state !== "locked" && (
-                  <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="#3ab8c8" strokeWidth={1} opacity={0.4} strokeDasharray="2,3" />
+                  <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#3ab8c8" strokeWidth={0.8} opacity={0.45} strokeDasharray="2,3" />
                 )}
 
-                {/* Node image */}
-                <image
-                  href={nodeImg}
-                  x={cx - nw / 2}
-                  y={cy - nh / 2}
-                  width={nw}
-                  height={nh}
-                />
+                {/* Node image (transparent bg, sits on map) */}
+                <image href={nodeImg} x={cx - nw / 2} y={cy - nh / 2} width={nw} height={nh} />
 
-                {/* "Done" green check overlay */}
-                {state === "done" && !isSecret && (
-                  <circle cx={cx + nw/2 - 4} cy={cy - nh/2 + 4} r={4} fill="#1a5a1a" stroke="#3a9a3a" strokeWidth={0.8}>
-                  </circle>
-                )}
-                {state === "done" && !isSecret && (
-                  <text x={cx + nw/2 - 4} y={cy - nh/2 + 6} textAnchor="middle" fontSize={4} fill="#7aee7a">✓</text>
-                )}
-
-                {/* Labels */}
-                <text x={cx} y={labelY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={6.5}
-                  fill={isSecret ? "#3ab8c8" : "#c8a030"} opacity={isSecret ? 0.9 : 0.95} letterSpacing={0.8}
+                {/* Label */}
+                <text x={cx} y={labelY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={6}
+                  fill={isSecret ? "#3ab8c8" : "#d4a832"} filter="url(#titleShadow)"
+                  opacity={isSecret ? 0.9 : 0.95} letterSpacing={0.6}
                 >
                   {LABELS[id] ?? id.toUpperCase()}
                 </text>
                 {state === "done" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#6aae30"} opacity={0.8}>
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
+                    fill="#6aee50" filter="url(#titleShadow)" opacity={0.85}>
                     Gennemført
                   </text>
                 )}
                 {state === "active" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#f07030" fontWeight="bold">
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5}
+                    fill="#f07030" fontWeight="bold" filter="url(#titleShadow)">
                     Aktiv
                   </text>
                 )}
                 {state === "can_unlock" && room && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#2a8a3a"}>
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
+                    fill={isSecret ? "#3ab8c8" : "#2aba4a"} filter="url(#titleShadow)">
                     {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Gratis"}
                   </text>
                 )}
