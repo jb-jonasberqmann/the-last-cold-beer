@@ -134,7 +134,7 @@ export default function RoomPage({ params }: Props) {
         className="absolute inset-0 pointer-events-none z-[1]"
         style={{
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 25%, transparent 42%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.88) 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.08) 22%, transparent 38%, rgba(0,0,0,0.2) 52%, rgba(0,0,0,0.72) 100%)",
         }}
       />
 
@@ -473,13 +473,13 @@ export default function RoomPage({ params }: Props) {
         <div
           className="rounded-t-2xl"
           style={{
-            background: "rgba(10,8,5,0.95)",
-            backdropFilter: "blur(16px)",
-            borderTop: "1px solid rgba(180,130,50,0.22)",
-            borderLeft: "1px solid rgba(180,130,50,0.12)",
-            borderRight: "1px solid rgba(180,130,50,0.12)",
-            boxShadow: "0 -4px 32px rgba(0,0,0,0.5)",
-            maxHeight: "62vh",
+            background: "rgba(8,6,4,0.97)",
+            backdropFilter: "blur(20px)",
+            borderTop: "1px solid rgba(180,130,50,0.18)",
+            borderLeft: "1px solid rgba(180,130,50,0.08)",
+            borderRight: "1px solid rgba(180,130,50,0.08)",
+            boxShadow: "0 -8px 40px rgba(0,0,0,0.7)",
+            maxHeight: "52vh",
             overflowY: "auto",
             overscrollBehavior: "contain",
           }}
@@ -516,6 +516,7 @@ export default function RoomPage({ params }: Props) {
                   />
                 </div>
                 <QuestBlock
+                  key={activeQuest.id}
                   quest={activeQuest}
                   isComplete={false}
                   questState={getQuestState(activeQuest.id) ?? null}
@@ -784,7 +785,7 @@ interface ArtifactProps {
   t: (key: string) => string;
 }
 
-// ─── Sticky Note — puzzle ──────────────────────────────────
+// ─── Puzzle card — clean dark design matching reference ────────
 function StickyNoteArtifact({
   quest, isComplete, feedback, shownHints, answer, loading, isReadOnly,
   hintsUsed, onAnswerChange, onSubmit, onHint, t,
@@ -794,193 +795,170 @@ function StickyNoteArtifact({
   onSubmit: () => void;
   onHint: (order: number) => void;
 }) {
-  const rotate = quest.id.charCodeAt(0) % 2 === 0 ? "-0.8deg" : "0.6deg";
   return (
-    <div
-      className={cn(
-        "relative rounded-sm shadow-xl transition-all duration-300",
-        isComplete ? "opacity-70 scale-[0.99]" : ""
-      )}
-      style={{
-        transform: `rotate(${rotate})`,
-        background: isComplete
-          ? "linear-gradient(135deg, #3d2e10 0%, #2d2008 100%)"
-          : "linear-gradient(135deg, #c8982a 0%, #b8891f 40%, #a87c18 100%)",
-        boxShadow: isComplete
-          ? "0 2px 8px rgba(0,0,0,0.5)"
-          : "0 4px 16px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.1)",
-      }}
-    >
-      {!isComplete && (
-        <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-4 rounded-sm"
-          style={{
-            background: "rgba(220,200,140,0.35)",
-            border: "1px solid rgba(220,200,140,0.2)",
-          }}
-        />
-      )}
-      <div className="p-4 pt-5">
-        {!isComplete && (
-          <div className="absolute inset-0 pt-9 px-4 pb-4 pointer-events-none overflow-hidden rounded-sm">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-5 border-b border-amber-700/20" />
-            ))}
-          </div>
+    <div className={cn("transition-all duration-300", isComplete && "opacity-55")}>
+      {/* Status badge */}
+      <div className="flex items-center gap-1.5 mb-2">
+        {isComplete && (
+          <span style={{ color: "rgba(140,100,40,0.8)", fontSize: "11px" }}>✓</span>
         )}
-        <div className="flex items-center gap-2 mb-2 relative">
-          {isComplete && <span className="text-amber-600 text-lg">✓</span>}
-          <span
-            className="text-xs uppercase tracking-widest"
-            style={{
-              fontFamily: "Georgia,serif",
-              color: isComplete ? "rgb(120,80,20)" : "rgba(60,35,5,0.7)",
-            }}
-          >
-            {isComplete ? t("room.done") : quest.isRequired ? t("room.required") : "Bonus"}
-          </span>
-        </div>
-        <h3
-          className="font-bold mb-2 leading-tight relative"
+        <span
+          className="text-[10px] uppercase tracking-[0.24em]"
           style={{
             fontFamily: "Georgia,serif",
-            fontSize: "1rem",
-            color: isComplete ? "rgba(180,130,50,0.8)" : "rgba(40,20,0,0.95)",
+            color: isComplete ? "rgba(120,80,20,0.55)" : "rgba(160,110,40,0.6)",
           }}
         >
-          {quest.title}
-        </h3>
-        <p
-          className="text-sm mb-3 leading-relaxed relative"
-          style={{
-            fontFamily: "Georgia,serif",
-            color: isComplete ? "rgba(160,120,50,0.7)" : "rgba(50,30,5,0.85)",
-          }}
-        >
-          {quest.description}
-        </p>
-        {!isComplete && (
-          <div
-            className="rounded-sm px-3 py-3 mb-3 relative"
-            style={{
-              background: "rgba(255,235,160,0.18)",
-              border: "1px solid rgba(120,80,10,0.3)",
-              borderLeft: "3px solid rgba(180,120,20,0.5)",
-            }}
-          >
-            <p
-              className="text-sm italic leading-relaxed"
-              style={{
-                fontFamily: "Georgia,serif",
-                color: "rgba(30,15,0,0.9)",
-              }}
-            >
-              {quest.prompt}
-            </p>
-          </div>
-        )}
-        {feedback && (
-          <div
-            className={cn(
-              "rounded-sm px-3 py-2 text-sm mb-3 relative",
-              feedback.type === "success"
-                ? "bg-green-950/40 border border-green-800/40 text-green-300"
-                : "bg-red-950/30 border border-red-900/40 text-red-300"
-            )}
-            style={{ fontFamily: "Georgia,serif" }}
-          >
-            {feedback.text}
-          </div>
-        )}
-        {shownHints.map((h) => (
-          <div
-            key={h.order}
-            className="rounded-sm px-3 py-2 text-sm mb-2 relative"
-            style={{
-              background: "rgba(0,0,0,0.15)",
-              border: "1px solid rgba(0,0,0,0.1)",
-              fontFamily: "Georgia,serif",
-              color: "rgba(30,15,0,0.8)",
-            }}
-          >
-            <span className="font-bold text-xs mr-1">
-              {t("room.hint")} {h.order}:
-            </span>
-            {h.text}
-          </div>
-        ))}
-        {!isComplete && !isReadOnly && quest.answer && (
-          <div className="flex gap-2 relative">
-            <input
-              type="text"
-              value={answer}
-              onChange={(e) => onAnswerChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onSubmit()}
-              placeholder={t("room.answer_placeholder")}
-              className="flex-1 rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-700/50"
-              style={{
-                background: "rgba(0,0,0,0.15)",
-                border: "1px solid rgba(0,0,0,0.2)",
-                color: "rgba(30,15,0,0.9)",
-                fontFamily: "Georgia,serif",
-              }}
-            />
-            <button
-              onClick={onSubmit}
-              disabled={loading}
-              className="px-4 py-2 text-sm font-bold rounded-sm transition-all active:scale-95 disabled:opacity-50"
-              style={{
-                background: loading ? "rgba(0,0,0,0.25)" : "linear-gradient(160deg, #b8860b, #8b6400)",
-                color: loading ? "rgba(20,10,0,0.6)" : "#fff8e8",
-                fontFamily: "Georgia,serif",
-                border: "1px solid rgba(180,130,0,0.4)",
-                boxShadow: loading ? "none" : "0 2px 8px rgba(120,80,0,0.3)",
-              }}
-            >
-              {loading ? "…" : "⚔️ Strike"}
-            </button>
-          </div>
-        )}
-        {!isComplete && !isReadOnly && quest.hints.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2 relative">
-            {quest.hints.map((hint) => {
-              const alreadyShown = shownHints.find((h) => h.order === hint.order);
-              if (alreadyShown) return null;
-              if (hint.order <= hintsUsed) return null;
-              const maxUsed = Math.max(
-                hintsUsed,
-                shownHints.length > 0 ? Math.max(...shownHints.map((h) => h.order)) : 0
-              );
-              if (hint.order > maxUsed + 1) return null;
-              return (
-                <button
-                  key={hint.order}
-                  onClick={() => onHint(hint.order)}
-                  disabled={loading}
-                  className="text-xs rounded-sm px-3 py-1.5 transition-colors disabled:opacity-50"
-                  style={{
-                    background: "rgba(0,0,0,0.2)",
-                    border: "1px solid rgba(0,0,0,0.15)",
-                    color: "rgba(30,15,0,0.75)",
-                    fontFamily: "Georgia,serif",
-                  }}
-                >
-                  🍺 {t("room.hint")} {hint.order} ({hint.offerCost} Offer)
-                </button>
-              );
-            })}
-          </div>
-        )}
+          {isComplete ? t("room.done") : quest.isRequired ? t("room.required") : "Bonus"}
+        </span>
       </div>
+
+      {/* Title */}
+      <h3
+        className="font-bold mb-2 leading-tight"
+        style={{
+          fontFamily: "Georgia,serif",
+          fontSize: "1.15rem",
+          color: isComplete ? "rgba(160,120,50,0.65)" : "rgba(245,235,205,0.97)",
+        }}
+      >
+        {quest.title}
+      </h3>
+
+      {/* Description */}
+      <p
+        className="text-sm mb-3 leading-relaxed"
+        style={{
+          fontFamily: "Georgia,serif",
+          color: isComplete ? "rgba(140,100,50,0.55)" : "rgba(205,185,145,0.85)",
+        }}
+      >
+        {quest.description}
+      </p>
+
+      {/* Prompt box */}
       {!isComplete && (
         <div
-          className="absolute bottom-0 right-0 w-6 h-6 pointer-events-none"
+          className="rounded px-3 py-3 mb-3"
           style={{
-            background:
-              "linear-gradient(225deg, rgba(0,0,0,0.25) 45%, transparent 55%)",
-            borderRadius: "0 0 2px 0",
+            background: "rgba(255,240,180,0.03)",
+            border: "1px solid rgba(180,130,50,0.22)",
+            borderLeft: "2px solid rgba(180,130,50,0.4)",
           }}
-        />
+        >
+          <p
+            className="text-sm italic leading-relaxed"
+            style={{
+              fontFamily: "Georgia,serif",
+              color: "rgba(215,180,105,0.9)",
+            }}
+          >
+            {quest.prompt}
+          </p>
+        </div>
+      )}
+
+      {/* Feedback */}
+      {feedback && (
+        <div
+          className={cn(
+            "rounded px-3 py-2 text-sm mb-3",
+            feedback.type === "success"
+              ? "bg-green-950/40 border border-green-800/40 text-green-300"
+              : "bg-red-950/30 border border-red-900/40 text-red-300"
+          )}
+          style={{ fontFamily: "Georgia,serif" }}
+        >
+          {feedback.text}
+        </div>
+      )}
+
+      {/* Shown hints */}
+      {shownHints.map((h) => (
+        <div
+          key={h.order}
+          className="rounded px-3 py-2 text-sm mb-2"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(180,130,50,0.14)",
+            fontFamily: "Georgia,serif",
+            color: "rgba(200,170,100,0.75)",
+          }}
+        >
+          <span className="font-bold text-xs mr-1" style={{ color: "rgba(180,130,50,0.6)" }}>
+            {t("room.hint")} {h.order}:
+          </span>
+          {h.text}
+        </div>
+      ))}
+
+      {/* Answer row */}
+      {!isComplete && !isReadOnly && quest.answer && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={answer}
+            onChange={(e) => onAnswerChange(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && onSubmit()}
+            placeholder={t("room.answer_placeholder")}
+            className="flex-1 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-amber-700/40"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(180,130,50,0.2)",
+              color: "rgba(230,210,165,0.9)",
+              fontFamily: "Georgia,serif",
+            }}
+          />
+          <button
+            onClick={onSubmit}
+            disabled={loading}
+            className="px-4 py-2.5 text-sm font-bold rounded transition-all active:scale-95 disabled:opacity-50"
+            style={{
+              background: loading
+                ? "rgba(60,40,10,0.4)"
+                : "linear-gradient(160deg, #a07010, #7a5200)",
+              color: loading ? "rgba(180,130,50,0.4)" : "rgba(255,240,195,0.97)",
+              fontFamily: "Georgia,serif",
+              border: "1px solid rgba(180,130,50,0.35)",
+              boxShadow: loading ? "none" : "0 2px 10px rgba(100,70,0,0.35)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {loading ? "…" : "⚔️ Strike"}
+          </button>
+        </div>
+      )}
+
+      {/* Hint buttons */}
+      {!isComplete && !isReadOnly && quest.hints.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          {quest.hints.map((hint) => {
+            const alreadyShown = shownHints.find((h) => h.order === hint.order);
+            if (alreadyShown) return null;
+            if (hint.order <= hintsUsed) return null;
+            const maxUsed = Math.max(
+              hintsUsed,
+              shownHints.length > 0 ? Math.max(...shownHints.map((h) => h.order)) : 0
+            );
+            if (hint.order > maxUsed + 1) return null;
+            return (
+              <button
+                key={hint.order}
+                onClick={() => onHint(hint.order)}
+                disabled={loading}
+                className="text-xs rounded px-3 py-1.5 transition-colors disabled:opacity-50"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(180,130,50,0.18)",
+                  color: "rgba(180,130,50,0.6)",
+                  fontFamily: "Georgia,serif",
+                }}
+              >
+                🍺 {t("room.hint")} {hint.order} ({hint.offerCost} Offer)
+              </button>
+            );
+          })}
+        </div>
       )}
     </div>
   );

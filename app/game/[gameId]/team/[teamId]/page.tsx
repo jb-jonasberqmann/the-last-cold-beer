@@ -28,20 +28,22 @@ function wp(cx: number, cy: number, r: number, shift = 0, n = 12): string {
 
 // Linear spine: Kitchen → Fridge → Terrace → Shed → Boss
 // Coffee Table: secret branch off Kitchen (right side)
+// Nodes are larger (r 17-24) for visual impact
+// Generous vertical spacing so 2 rooms are always visible while scrolling
 const CH1_NODES = [
-  { id: "kitchen",      cx: 170, cy: 404, r: 11, shift: 2, isSecret: false },
-  { id: "fridge",       cx: 170, cy: 314, r: 11, shift: 4, isSecret: false },
-  { id: "terrace",      cx: 170, cy: 224, r:  9, shift: 6, isSecret: false },
-  { id: "shed",         cx: 170, cy: 144, r:  9, shift: 3, isSecret: false },
-  { id: "coffee-table", cx: 214, cy: 355, r: 10, shift: 1, isSecret: true  },
+  { id: "kitchen",      cx: 170, cy: 438, r: 24, shift: 2, isSecret: false },
+  { id: "fridge",       cx: 170, cy: 352, r: 21, shift: 4, isSecret: false },
+  { id: "terrace",      cx: 170, cy: 267, r: 19, shift: 6, isSecret: false },
+  { id: "shed",         cx: 170, cy: 185, r: 19, shift: 3, isSecret: false },
+  { id: "coffee-table", cx: 228, cy: 395, r: 17, shift: 1, isSecret: true  },
 ] as const;
 
 const CH1_PATHS = [
-  { from: "kitchen",      to: "fridge",        d: "M170,391 L170,326",                         secret: false },
-  { from: "fridge",       to: "terrace",        d: "M170,301 L170,234",                         secret: false },
-  { from: "terrace",      to: "shed",           d: "M170,213 L170,154",                         secret: false },
-  { from: "shed",         to: "boss",           d: "M170,133 L170,103",                         secret: false },
-  { from: "kitchen",      to: "coffee-table",   d: "M181,398 C194,385 206,373 204,365",         secret: true  },
+  { from: "kitchen",      to: "fridge",        d: "M170,411 L170,376",                         secret: false },
+  { from: "fridge",       to: "terrace",        d: "M170,328 L170,289",                         secret: false },
+  { from: "terrace",      to: "shed",           d: "M170,245 L170,207",                         secret: false },
+  { from: "shed",         to: "boss",           d: "M170,163 L170,112",                         secret: false },
+  { from: "kitchen",      to: "coffee-table",   d: "M184,431 C202,418 214,408 213,399",         secret: true  },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -50,19 +52,19 @@ type NodeState = "done" | "active" | "can_unlock" | "locked";
 const NODE_STYLES: Record<NodeState, {
   fill: string; stroke: string; strokeWidth: number; opacity: number; textColor: string;
 }> = {
-  done:       { fill: "#a88828", stroke: "#5a8820", strokeWidth: 1.4, opacity: 1,    textColor: "#1a1008" },
-  active:     { fill: "#c89030", stroke: "#c0392b", strokeWidth: 2.2, opacity: 1,    textColor: "#7a1008" },
-  can_unlock: { fill: "#d4b060", stroke: "#2a7a3a", strokeWidth: 1.8, opacity: 1,    textColor: "#1a4a2a" },
-  locked:     { fill: "#c4a840", stroke: "#8a6020", strokeWidth: 1.2, opacity: 0.42, textColor: "#5a3808" },
+  done:       { fill: "#9a7e22", stroke: "#6a9828", strokeWidth: 1.6, opacity: 1,    textColor: "#1a1008" },
+  active:     { fill: "#c03a14", stroke: "#e04a18", strokeWidth: 2.8, opacity: 1,    textColor: "#fff0e0" },
+  can_unlock: { fill: "#c8a030", stroke: "#3a9a4a", strokeWidth: 2.0, opacity: 1,    textColor: "#1a4a1a" },
+  locked:     { fill: "#b89830", stroke: "#7a5818", strokeWidth: 1.2, opacity: 0.38, textColor: "#5a3808" },
 };
 
 const SECRET_NODE_STYLES: Record<NodeState, {
   fill: string; stroke: string; strokeWidth: number; opacity: number; textColor: string;
 }> = {
-  done:       { fill: "#1a4a5a", stroke: "#3ab8c8", strokeWidth: 1.6, opacity: 1,    textColor: "#a0e8f8" },
-  active:     { fill: "#1e5a6e", stroke: "#3ab8c8", strokeWidth: 2.2, opacity: 1,    textColor: "#a0f0ff" },
-  can_unlock: { fill: "#163848", stroke: "#3ab8c8", strokeWidth: 1.8, opacity: 1,    textColor: "#70d8e8" },
-  locked:     { fill: "#0e2030", stroke: "#3a6878", strokeWidth: 1.2, opacity: 0.55, textColor: "#4a8898" },
+  done:       { fill: "#1a4a5a", stroke: "#3ab8c8", strokeWidth: 1.8, opacity: 1,    textColor: "#a0e8f8" },
+  active:     { fill: "#1e5a6e", stroke: "#3ab8c8", strokeWidth: 2.4, opacity: 1,    textColor: "#a0f0ff" },
+  can_unlock: { fill: "#163848", stroke: "#3ab8c8", strokeWidth: 2.0, opacity: 1,    textColor: "#70d8e8" },
+  locked:     { fill: "#0e2030", stroke: "#3a6878", strokeWidth: 1.2, opacity: 0.50, textColor: "#4a8898" },
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -111,14 +113,35 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Start at top (show chapter title), then smooth-scroll to bottom after a beat
+  // Start at top (show chapter title), stall 1.5s, then speed-ramp to bottom (easeInCubic)
   useEffect(() => {
-    const id = setTimeout(() => {
-      if (mapScrollRef.current) {
-        mapScrollRef.current.scrollTo({ top: mapScrollRef.current.scrollHeight, behavior: "smooth" });
-      }
-    }, 900);
-    return () => clearTimeout(id);
+    let rafId: number;
+    const stallMs = 1500;
+    const swooshMs = 750;
+
+    const timeoutId = setTimeout(() => {
+      const container = mapScrollRef.current;
+      if (!container) return;
+      const startPos = container.scrollTop;
+      const endPos = container.scrollHeight - container.clientHeight;
+      const startTime = performance.now();
+
+      const easeInCubic = (t: number) => t * t * t;
+
+      const step = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / swooshMs, 1);
+        container.scrollTop = startPos + (endPos - startPos) * easeInCubic(progress);
+        if (progress < 1) rafId = requestAnimationFrame(step);
+      };
+
+      rafId = requestAnimationFrame(step);
+    }, stallMs);
+
+    return () => {
+      clearTimeout(timeoutId);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const canInteract = !session?.isHost;
@@ -236,110 +259,140 @@ export default function TeamQuestBoardPage({ params }: Props) {
             aria-label="Quest map — tap a room to enter or unlock it"
             xmlns="http://www.w3.org/2000/svg"
           >
-          {/* Navy background */}
-          <rect width="340" height="520" fill="#0c1a2c" />
+          {/* ── Defs: gradients + boss clip ── */}
+          <defs>
+            <radialGradient id="atmBg" cx="50%" cy="35%" r="75%">
+              <stop offset="0%" stopColor="#1e1208" />
+              <stop offset="55%" stopColor="#0e0805" />
+              <stop offset="100%" stopColor="#040202" />
+            </radialGradient>
+            <radialGradient id="parchGrad" cx="48%" cy="42%" r="62%">
+              <stop offset="0%" stopColor="#d8ac50" />
+              <stop offset="45%" stopColor="#c49030" />
+              <stop offset="100%" stopColor="#946818" />
+            </radialGradient>
+            <clipPath id="bossImgClip">
+              <polygon points={wp(170, 88, 26, 0)} />
+            </clipPath>
+          </defs>
+
+          {/* ── Atmospheric dark background ── */}
+          <rect width="340" height="520" fill="url(#atmBg)" />
 
           {/* Stars */}
-          <g fill="#e8d890" opacity={0.6}>
-            <circle cx="14"  cy="38"  r="1.1" /><circle cx="8"   cy="110" r="0.8" />
-            <circle cx="20"  cy="205" r="1"   /><circle cx="10"  cy="300" r="0.9" />
-            <circle cx="22"  cy="390" r="1.1" /><circle cx="326" cy="52"  r="1.2" />
-            <circle cx="320" cy="148" r="0.9" /><circle cx="330" cy="240" r="1"   />
-            <circle cx="316" cy="330" r="0.8" /><circle cx="324" cy="420" r="1.1" />
-            <circle cx="62"  cy="7"   r="0.9" /><circle cx="135" cy="4"   r="1.1" />
-            <circle cx="208" cy="7"   r="0.8" /><circle cx="278" cy="5"   r="1"   />
+          <g fill="#e8d890" opacity={0.45}>
+            <circle cx="14"  cy="34"  r="1.1" /><circle cx="8"   cy="96"  r="0.7" />
+            <circle cx="22"  cy="182" r="0.9" /><circle cx="10"  cy="274" r="0.8" />
+            <circle cx="326" cy="44"  r="1.1" /><circle cx="320" cy="138" r="0.8" />
+            <circle cx="330" cy="218" r="0.9" /><circle cx="316" cy="308" r="0.7" />
+            <circle cx="62"  cy="6"   r="0.8" /><circle cx="135" cy="4"   r="1.0" />
+            <circle cx="208" cy="6"   r="0.7" /><circle cx="278" cy="4"   r="0.9" />
           </g>
 
           {/* Moon */}
-          <circle cx="308" cy="32" r="13" fill="#e8d890" opacity={0.42} />
-          <circle cx="314" cy="28" r="10" fill="#0c1a2c" />
+          <circle cx="308" cy="28" r="13" fill="#e8d890" opacity={0.38} />
+          <circle cx="314" cy="24" r="10" fill="#060404" />
 
-          {/* Parchment polygon */}
+          {/* ── Parchment map ── */}
           <polygon
-            points="24,22 88,16 150,20 200,14 260,18 316,22 322,56 325,488 316,504 250,507 170,502 90,506 22,504 12,494 10,56 20,24"
-            fill="#c8a040"
+            points="28,18 90,12 154,16 204,10 262,14 312,18 320,52 322,492 312,506 248,509 170,504 90,508 20,506 10,494 8,52 24,20"
+            fill="url(#parchGrad)"
+          />
+          {/* Edge darkening for aged look */}
+          <polygon
+            points="28,18 90,12 154,16 204,10 262,14 312,18 320,52 322,492 312,506 248,509 170,504 90,508 20,506 10,494 8,52 24,20"
+            fill="none"
+            stroke="#5a3005"
+            strokeWidth={7}
+            opacity={0.28}
           />
 
           {/* Grain lines */}
-          <g stroke="#a88030" strokeWidth={0.25} opacity={0.18}>
-            <line x1="10" y1="88"  x2="330" y2="86"  />
-            <line x1="10" y1="188" x2="330" y2="186" />
-            <line x1="10" y1="290" x2="330" y2="288" />
-            <line x1="10" y1="400" x2="330" y2="398" />
+          <g stroke="#8a6020" strokeWidth={0.28} opacity={0.14}>
+            <line x1="8"  y1="96"  x2="322" y2="94"  />
+            <line x1="8"  y1="196" x2="322" y2="194" />
+            <line x1="8"  y1="300" x2="322" y2="298" />
+            <line x1="8"  y1="408" x2="322" y2="406" />
+            <line x1="8"  y1="468" x2="322" y2="466" />
           </g>
 
           {/* Age spots */}
-          <g fill="#906020" opacity={0.12}>
-            <circle cx="48" cy="105" r="9" />
-            <circle cx="294" cy="160" r="8" />
-            <circle cx="42" cy="444" r="7" />
+          <g fill="#7a5010" opacity={0.09}>
+            <circle cx="50"  cy="115" r="14" />
+            <circle cx="292" cy="178" r="11" />
+            <circle cx="44"  cy="462" r="10" />
+            <circle cx="296" cy="440" r="8"  />
           </g>
 
-          {/* Fog — unknown upper territory */}
-          <rect x="14" y="88" width="312" height="105" fill="#c8b880" opacity={0.4} />
+          {/* ── Title ── */}
           <text
-            x="170" y="138"
+            x="170" y="40"
             textAnchor="middle"
             fontFamily="Georgia,serif"
-            fontSize={8}
+            fontSize={20}
+            fontWeight="bold"
+            fill="#3a2008"
+            letterSpacing={4}
+            opacity={0.92}
+          >
+            SOMMERHUSET
+          </text>
+          {/* KAPITEL I with decorative dashes */}
+          <line x1="75"  y1="51" x2="126" y2="51" stroke="#5a3010" strokeWidth={0.8} opacity={0.55} />
+          <text
+            x="170" y="55"
+            textAnchor="middle"
+            fontFamily="Georgia,serif"
+            fontSize={8.5}
+            fill="#5a3010"
+            letterSpacing={5}
+          >
+            KAPITEL I
+          </text>
+          <line x1="214" y1="51" x2="265" y2="51" stroke="#5a3010" strokeWidth={0.8} opacity={0.55} />
+
+          {/* ── Fog — unknown upper territory ── */}
+          <rect x="12" y="122" width="316" height="50" fill="#c8b880" opacity={0.32} />
+          <text
+            x="170" y="150"
+            textAnchor="middle"
+            fontFamily="Georgia,serif"
+            fontSize={7}
             fill="#8a6020"
             letterSpacing={2}
-            opacity={0.65}
+            opacity={0.6}
+            fontStyle="italic"
           >
             ~ ukendt territorium ~
           </text>
 
-          {/* Title */}
-          <text
-            x="170" y="48"
-            textAnchor="middle"
-            fontFamily="Georgia,serif"
-            fontSize={12}
-            fontWeight="bold"
-            fill="#3a2208"
-            letterSpacing={3}
-          >
-            SOMMERHUSET
-          </text>
-          <text
-            x="170" y="63"
-            textAnchor="middle"
-            fontFamily="Georgia,serif"
-            fontSize={8}
-            fill="#5a3010"
-            letterSpacing={4}
-          >
-            KAPITEL I
-          </text>
-          <line x1="102" y1="68" x2="238" y2="68" stroke="#5a3010" strokeWidth={0.7} opacity={0.5} />
-
-          {/* Paths */}
+          {/* ── Paths ── */}
           {CH1_PATHS.map(({ from, to, d, secret }) => (
             <path
               key={`${from}-${to}`}
               d={d}
               stroke={secret ? "#3ab8c8" : "#c88020"}
-              strokeWidth={secret ? 1.1 : 1.3}
+              strokeWidth={secret ? 1.3 : 1.6}
               fill="none"
-              strokeDasharray={secret ? "3,5" : "4,4"}
+              strokeDasharray={secret ? "3,5" : "5,5"}
               opacity={pathOpacity(from, to, secret)}
             />
           ))}
 
           {/* Secret branch label */}
           <text
-            x="205" y="382"
+            x="241" y="416"
             textAnchor="middle"
             fontFamily="Georgia,serif"
-            fontSize={5.5}
+            fontSize={6}
             fill="#3ab8c8"
-            opacity={0.6}
+            opacity={0.65}
             letterSpacing={1}
           >
             hemmeligt
           </text>
 
-          {/* Boss node */}
+          {/* ── Boss node ── */}
           <g
             onClick={() => {
               if (canInteract && chapter) {
@@ -348,49 +401,63 @@ export default function TeamQuestBoardPage({ params }: Props) {
             }}
             style={{ cursor: canInteract ? "pointer" : "default" }}
           >
-            <circle cx="170" cy="92" r="22" fill="transparent" />
-            <polygon
-              points={wp(170, 92, 11, 0)}
-              fill="#5a1010"
-              stroke="#c0392b"
-              strokeWidth={1.8}
+            {/* Touch target */}
+            <circle cx="170" cy="88" r="38" fill="transparent" />
+
+            {/* Cooler image clipped to hex */}
+            <image
+              href="/rooms/boss-cooler.png"
+              x="145" y="44"
+              width="50" height="88"
+              clipPath="url(#bossImgClip)"
+              preserveAspectRatio="xMidYMid slice"
             />
+
+            {/* Hex border on top */}
+            <polygon
+              points={wp(170, 88, 26, 0)}
+              fill="none"
+              stroke="#c0392b"
+              strokeWidth={2.5}
+              opacity={0.9}
+            />
+
+            {/* Outer glow rings when unlockable */}
+            {bossUnlockable && (
+              <>
+                <polygon points={wp(170, 88, 31, 0)} fill="none" stroke="#e04020" strokeWidth={1.8} opacity={0.45} />
+                <polygon points={wp(170, 88, 36, 0)} fill="none" stroke="#e04020" strokeWidth={1} opacity={0.2} />
+              </>
+            )}
+
+            {/* "BOSS" label */}
             <text
-              x="170" y="89"
+              x="170" y="126"
               textAnchor="middle"
               fontFamily="Georgia,serif"
-              fontSize={9}
-              fill="#f0c8a0"
-            >
-              ◉  ◉
-            </text>
-            <text
-              x="170" y="116"
-              textAnchor="middle"
-              fontFamily="Georgia,serif"
-              fontSize={6}
+              fontSize={7.5}
               fill="#3a2208"
+              letterSpacing={2.5}
             >
               BOSS
             </text>
           </g>
 
-          {/* Room nodes */}
+          {/* ── Room nodes ── */}
           {CH1_NODES.map(({ id, cx, cy, r, shift, isSecret }) => {
             const state = getNodeState(id);
             const room = getRoom(id);
             const s = isSecret ? SECRET_NODE_STYLES[state] : NODE_STYLES[state];
             const symbol = nodeSymbol(state, room?.unlockCost ?? 0, isSecret);
             const clickable = canInteract && state !== "locked";
-            const labelY = cy + r + 14;
-            const subY   = cy + r + 23;
+            const labelY = cy + r + 15;
+            const subY   = cy + r + 25;
 
-            // Danish labels
             const LABELS: Record<string, string> = {
-              kitchen:       "KØKKEN",
-              fridge:        "KØLESKAB",
-              terrace:       "TERRASSE",
-              shed:          "SKUR",
+              kitchen:        "KØKKEN",
+              fridge:         "KØLESKAB",
+              terrace:        "TERRASSE",
+              shed:           "SKUR",
               "coffee-table": "SOFABORD",
             };
 
@@ -402,25 +469,33 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 opacity={s.opacity}
               >
                 {/* Touch target */}
-                <circle cx={cx} cy={cy} r={r + 12} fill="transparent" />
+                <circle cx={cx} cy={cy} r={r + 14} fill="transparent" />
+
+                {/* Static glow rings for active node */}
+                {state === "active" && !isSecret && (
+                  <>
+                    <polygon points={wp(cx, cy, r + 9, shift)} fill="none" stroke="#e05818" strokeWidth={3.5} opacity={0.5} />
+                    <polygon points={wp(cx, cy, r + 16, shift)} fill="none" stroke="#e05818" strokeWidth={1.5} opacity={0.2} />
+                  </>
+                )}
 
                 {/* Secret glow ring */}
                 {isSecret && state !== "locked" && (
-                  <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#3ab8c8" strokeWidth={0.8} opacity={0.4} strokeDasharray="2,3" />
+                  <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="#3ab8c8" strokeWidth={1} opacity={0.4} strokeDasharray="2,3" />
                 )}
 
-                {/* Pulse ring — active or can_unlock rooms */}
+                {/* Animated pulse ring */}
                 {(state === "active" || state === "can_unlock") && (
-                  <circle cx={cx} cy={cy} r={r + 3} fill="none"
-                    stroke={isSecret ? "#3ab8c8" : state === "active" ? "#c0392b" : "#2a9a4a"}
-                    strokeWidth={1.8} opacity={0}
+                  <circle cx={cx} cy={cy} r={r + 5} fill="none"
+                    stroke={isSecret ? "#3ab8c8" : state === "active" ? "#e05010" : "#2a9a4a"}
+                    strokeWidth={2.2} opacity={0}
                   >
-                    <animate attributeName="r" values={`${r + 2};${r + 18};${r + 2}`} dur="2.4s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.75;0;0.75" dur="2.4s" repeatCount="indefinite" />
+                    <animate attributeName="r" values={`${r + 5};${r + 24};${r + 5}`} dur="2.2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.85;0;0.85" dur="2.2s" repeatCount="indefinite" />
                   </circle>
                 )}
 
-                {/* Node shape */}
+                {/* Node polygon */}
                 <polygon
                   points={wp(cx, cy, r, shift)}
                   fill={s.fill}
@@ -430,10 +505,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
                 {/* Symbol */}
                 <text
-                  x={cx} y={cy + 4}
+                  x={cx} y={cy + 5}
                   textAnchor="middle"
                   fontFamily="Georgia,serif"
-                  fontSize={state === "can_unlock" ? 9 : 11}
+                  fontSize={state === "can_unlock" ? r * 0.72 : r * 0.9}
                   fill={s.textColor}
                   fontWeight={state === "active" ? "bold" : "normal"}
                 >
@@ -445,26 +520,27 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   x={cx} y={labelY}
                   textAnchor="middle"
                   fontFamily="Georgia,serif"
-                  fontSize={6}
+                  fontSize={7}
                   fill={isSecret ? "#3ab8c8" : "#3a2208"}
                   opacity={isSecret ? 0.85 : 1}
+                  letterSpacing={1}
                 >
                   {LABELS[id] ?? id.toUpperCase()}
                 </text>
 
                 {/* State sub-label */}
                 {state === "done" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#5a8820"}>
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill={isSecret ? "#3ab8c8" : "#5a8820"}>
                     Gennemført
                   </text>
                 )}
                 {state === "active" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill="#c0392b">
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#e05010" fontWeight="bold">
                     Aktiv
                   </text>
                 )}
                 {state === "can_unlock" && room && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#2a7a3a"}>
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill={isSecret ? "#3ab8c8" : "#2a7a3a"}>
                     {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Gratis"}
                   </text>
                 )}
@@ -487,14 +563,14 @@ export default function TeamQuestBoardPage({ params }: Props) {
           {/* Team name + chapter */}
           <div className="flex-1 flex flex-col leading-tight">
             <span
-              className="text-[9px] uppercase tracking-[0.25em]"
-              style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}
+              className="text-[9px] uppercase tracking-[0.3em]"
+              style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
             >
               Kapitel I
             </span>
             <span
-              className="font-bold text-sm"
-              style={{ color: "rgba(245,225,170,0.95)", fontFamily: "Georgia,serif", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}
+              className="font-bold text-lg leading-tight"
+              style={{ color: "rgba(245,225,170,0.97)", fontFamily: "Georgia,serif", textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}
             >
               {teamName}
             </span>
