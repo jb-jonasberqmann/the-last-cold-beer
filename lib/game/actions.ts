@@ -413,7 +413,28 @@ export async function dealBossDamage(
   }
 
   // Puzzle check
-  if (foundAction.type === "puzzle" && foundAction.puzzle && answer) {
+  if (foundAction.type === "puzzle" && foundAction.puzzle) {
+    // Puzzles are one-time use — once they deal damage they're locked
+    const priorUse = await sql`
+      SELECT id FROM game_events
+      WHERE game_id = ${gameId}
+        AND team_id = ${teamId}
+        AND event_type = 'boss_damaged'
+        AND event_data->>'action_id' = ${actionId}
+      LIMIT 1
+    `;
+    if (priorUse.length > 0) {
+      return {
+        success: false,
+        error: "This puzzle has already been solved. Each puzzle can only deal damage once.",
+      };
+    }
+    if (!answer) {
+      return {
+        success: true,
+        data: { damage: 0, newHp: bp.current_hp, defeated: false, failureText: "Enter your answer first." },
+      };
+    }
     const correct = checkAnswer(answer, foundAction.puzzle.answer, true);
     if (!correct) {
       return {

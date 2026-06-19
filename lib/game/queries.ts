@@ -155,3 +155,15 @@ export async function getRecentGameEvents(gameId: string, limit = 20): Promise<D
   `;
   return (rows as DbGameEvent[]).reverse();
 }
+
+/** Returns action IDs for all boss_damaged events for a given team, used to mark puzzles as already solved. */
+export async function getUsedBossActionIds(gameId: string, teamId: string): Promise<string[]> {
+  const rows = await sql`
+    SELECT event_data->>'action_id' AS action_id
+    FROM game_events
+    WHERE game_id = ${gameId}
+      AND team_id = ${teamId}
+      AND event_type = 'boss_damaged'
+  `;
+  return rows.map((r) => (r as { action_id: string }).action_id).filter(Boolean);
+}

@@ -29,21 +29,21 @@ function wp(cx: number, cy: number, r: number, shift = 0, n = 12): string {
 // Linear spine: Kitchen → Fridge → Terrace → Shed → Boss
 // Coffee Table: secret branch off Kitchen (right side)
 // Nodes are larger (r 17-24) for visual impact
-// Generous vertical spacing so 2 rooms are always visible while scrolling
+// Generous vertical spacing; nodes sized to match reference (r=10-12)
 const CH1_NODES = [
-  { id: "kitchen",      cx: 170, cy: 438, r: 24, shift: 2, isSecret: false },
-  { id: "fridge",       cx: 170, cy: 352, r: 21, shift: 4, isSecret: false },
-  { id: "terrace",      cx: 170, cy: 267, r: 19, shift: 6, isSecret: false },
-  { id: "shed",         cx: 170, cy: 185, r: 19, shift: 3, isSecret: false },
-  { id: "coffee-table", cx: 228, cy: 395, r: 17, shift: 1, isSecret: true  },
+  { id: "kitchen",      cx: 170, cy: 438, r: 12, shift: 2, isSecret: false },
+  { id: "fridge",       cx: 170, cy: 352, r: 10, shift: 4, isSecret: false },
+  { id: "terrace",      cx: 170, cy: 267, r: 10, shift: 6, isSecret: false },
+  { id: "shed",         cx: 170, cy: 185, r: 10, shift: 3, isSecret: false },
+  { id: "coffee-table", cx: 228, cy: 395, r:  9, shift: 1, isSecret: true  },
 ] as const;
 
 const CH1_PATHS = [
-  { from: "kitchen",      to: "fridge",        d: "M170,411 L170,376",                         secret: false },
-  { from: "fridge",       to: "terrace",        d: "M170,328 L170,289",                         secret: false },
-  { from: "terrace",      to: "shed",           d: "M170,245 L170,207",                         secret: false },
-  { from: "shed",         to: "boss",           d: "M170,163 L170,112",                         secret: false },
-  { from: "kitchen",      to: "coffee-table",   d: "M184,431 C202,418 214,408 213,399",         secret: true  },
+  { from: "kitchen",      to: "fridge",        d: "M170,423 L170,365",                         secret: false },
+  { from: "fridge",       to: "terrace",        d: "M170,339 L170,280",                         secret: false },
+  { from: "terrace",      to: "shed",           d: "M170,254 L170,198",                         secret: false },
+  { from: "shed",         to: "boss",           d: "M170,172 L170,115",                         secret: false },
+  { from: "kitchen",      to: "coffee-table",   d: "M181,432 C200,420 214,410 217,397",         secret: true  },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -85,6 +85,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
   // Map scroll — CSS scale makes map larger than screen; native overflow-y scroll
   // Scale 2.2× means rooms span more than viewport height so you can't see them all at once.
   const mapScrollRef = useRef<HTMLDivElement>(null);
+  // Ref mirrors roomProgress so the stall-timeout can read current value without a stale closure
+  const roomProgressRef = useRef<DbRoomProgress[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
@@ -92,7 +94,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
     if (!res.ok) return;
     const data = await res.json();
     setGame(data.game);
-    setRoomProgress(data.roomProgress ?? []);
+    const rp = data.roomProgress ?? [];
+    setRoomProgress(rp);
+    roomProgressRef.current = rp;
 
     // Fetch other team's progress count (fire-and-forget, best effort)
     const otherTeam = teamId === "team-a" ? "team-b" : "team-a";
@@ -113,13 +117,17 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Start at top (show chapter title), stall 1.5s, then speed-ramp to bottom (easeInCubic)
+  // Start at top (show chapter title), stall 1.5s, then speed-ramp to active room (easeInCubic).
+  // Only runs on first visit (no completed rooms). Data arrives well within the 1.5s stall window.
   useEffect(() => {
     let rafId: number;
     const stallMs = 1500;
     const swooshMs = 750;
 
     const timeoutId = setTimeout(() => {
+      // Skip animation on return visits
+      if (roomProgressRef.current.some((rp) => rp.status === "complete")) return;
+
       const container = mapScrollRef.current;
       if (!container) return;
       const startPos = container.scrollTop;
@@ -259,188 +267,187 @@ export default function TeamQuestBoardPage({ params }: Props) {
             aria-label="Quest map — tap a room to enter or unlock it"
             xmlns="http://www.w3.org/2000/svg"
           >
-          {/* ── Defs: gradients + boss clip ── */}
+          {/* ── Defs ── */}
           <defs>
-            <radialGradient id="atmBg" cx="50%" cy="35%" r="75%">
-              <stop offset="0%" stopColor="#1e1208" />
-              <stop offset="55%" stopColor="#0e0805" />
-              <stop offset="100%" stopColor="#040202" />
+            <radialGradient id="atmBg" cx="50%" cy="40%" r="80%">
+              <stop offset="0%" stopColor="#100c06" />
+              <stop offset="100%" stopColor="#030202" />
             </radialGradient>
-            <radialGradient id="parchGrad" cx="48%" cy="42%" r="62%">
-              <stop offset="0%" stopColor="#d8ac50" />
-              <stop offset="45%" stopColor="#c49030" />
-              <stop offset="100%" stopColor="#946818" />
+            {/* Lantern glow left */}
+            <radialGradient id="lanternGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#d4820a" stopOpacity="0.55" />
+              <stop offset="100%" stopColor="#d4820a" stopOpacity="0" />
+            </radialGradient>
+            {/* Cabin window glow */}
+            <radialGradient id="cabinGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#e09030" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#e09030" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="parchGrad" cx="48%" cy="42%" r="65%">
+              <stop offset="0%" stopColor="#d2a848" />
+              <stop offset="50%" stopColor="#bf9028" />
+              <stop offset="100%" stopColor="#906415" />
             </radialGradient>
             <clipPath id="bossImgClip">
-              <polygon points={wp(170, 88, 26, 0)} />
+              <polygon points={wp(170, 88, 24, 0)} />
             </clipPath>
           </defs>
 
-          {/* ── Atmospheric dark background ── */}
+          {/* ── Deep dark background ── */}
           <rect width="340" height="520" fill="url(#atmBg)" />
 
           {/* Stars */}
-          <g fill="#e8d890" opacity={0.45}>
-            <circle cx="14"  cy="34"  r="1.1" /><circle cx="8"   cy="96"  r="0.7" />
-            <circle cx="22"  cy="182" r="0.9" /><circle cx="10"  cy="274" r="0.8" />
-            <circle cx="326" cy="44"  r="1.1" /><circle cx="320" cy="138" r="0.8" />
-            <circle cx="330" cy="218" r="0.9" /><circle cx="316" cy="308" r="0.7" />
-            <circle cx="62"  cy="6"   r="0.8" /><circle cx="135" cy="4"   r="1.0" />
-            <circle cx="208" cy="6"   r="0.7" /><circle cx="278" cy="4"   r="0.9" />
+          <g fill="#e8d890" opacity={0.4}>
+            <circle cx="62" cy="6" r="0.8" /><circle cx="135" cy="4" r="1.0" />
+            <circle cx="208" cy="6" r="0.7" /><circle cx="278" cy="4" r="0.9" />
+            <circle cx="14" cy="30" r="1.0" /><circle cx="326" cy="38" r="1.0" />
+            <circle cx="8"  cy="80" r="0.7" /><circle cx="330" cy="76" r="0.8" />
           </g>
-
           {/* Moon */}
-          <circle cx="308" cy="28" r="13" fill="#e8d890" opacity={0.38} />
-          <circle cx="314" cy="24" r="10" fill="#060404" />
+          <circle cx="306" cy="26" r="11" fill="#e8e0a0" opacity={0.35} />
+          <circle cx="311" cy="22" r="8.5" fill="#030202" />
+
+          {/* ── Atmospheric scene silhouettes ── */}
+          {/* Pine trees — far left */}
+          <g fill="#060504" opacity={0.9}>
+            <polygon points="4,200 10,170 16,200" />
+            <polygon points="2,220 9,185 16,220" />
+            <polygon points="0,245 8,205 16,245" />
+            <polygon points="0,275 9,230 18,275" />
+            <polygon points="0,310 10,260 20,310" />
+            <polygon points="0,350 12,292 24,350" />
+            <polygon points="0,400 14,330 28,400" />
+            <polygon points="0,460 16,370 32,460" />
+          </g>
+          {/* Cabin silhouette — left */}
+          <g fill="#0a0806" opacity={0.85}>
+            <rect x="0" y="174" width="30" height="32" />
+            <polygon points="0,174 15,158 30,174" />
+            {/* Roof ridge */}
+            <rect x="12" y="163" width="6" height="12" fill="#0a0806" />
+          </g>
+          {/* Cabin warm window glow */}
+          <ellipse cx="8" cy="185" rx="18" ry="14" fill="url(#cabinGlow)" />
+          <rect x="3" y="180" width="7" height="6" fill="#e09030" opacity={0.35} rx="1" />
+          {/* Lantern glow — left edge */}
+          <ellipse cx="0" cy="230" rx="30" ry="28" fill="url(#lanternGlow)" />
+          {/* Pine trees — far right */}
+          <g fill="#060504" opacity={0.88}>
+            <polygon points="322,215 330,182 338,215" />
+            <polygon points="318,245 328,205 338,245" />
+            <polygon points="314,280 326,232 338,280" />
+            <polygon points="310,320 324,264 338,320" />
+            <polygon points="308,368 324,302 340,368" />
+            <polygon points="306,425 324,348 342,425" />
+            <polygon points="304,480 324,395 344,480" />
+          </g>
+          {/* Water shimmer — bottom right behind parchment */}
+          <g stroke="#1a3040" strokeWidth={0.6} opacity={0.5}>
+            <path d="M295,460 Q310,456 325,460 Q335,464 340,460" fill="none" />
+            <path d="M290,470 Q308,466 326,470 Q336,474 340,470" fill="none" />
+            <path d="M295,480 Q310,476 328,480 Q338,484 340,480" fill="none" />
+          </g>
 
           {/* ── Parchment map ── */}
           <polygon
             points="28,18 90,12 154,16 204,10 262,14 312,18 320,52 322,492 312,506 248,509 170,504 90,508 20,506 10,494 8,52 24,20"
             fill="url(#parchGrad)"
           />
-          {/* Edge darkening for aged look */}
+          {/* Aged border */}
           <polygon
             points="28,18 90,12 154,16 204,10 262,14 312,18 320,52 322,492 312,506 248,509 170,504 90,508 20,506 10,494 8,52 24,20"
-            fill="none"
-            stroke="#5a3005"
-            strokeWidth={7}
-            opacity={0.28}
+            fill="none" stroke="#4a2804" strokeWidth={6} opacity={0.3}
           />
 
-          {/* Grain lines */}
-          <g stroke="#8a6020" strokeWidth={0.28} opacity={0.14}>
-            <line x1="8"  y1="96"  x2="322" y2="94"  />
-            <line x1="8"  y1="196" x2="322" y2="194" />
-            <line x1="8"  y1="300" x2="322" y2="298" />
-            <line x1="8"  y1="408" x2="322" y2="406" />
-            <line x1="8"  y1="468" x2="322" y2="466" />
+          {/* ── Vintage cartographic details ── */}
+          <g stroke="#7a5010" fill="#7a5010" opacity={0.18}>
+            {/* Trees — left margin */}
+            {([[32,210],[26,235],[34,262],[28,295],[32,328],[26,362],[30,400],[28,440]] as [number,number][]).map(([x,y]) => (
+              <g key={`tl${x}${y}`}>
+                <line x1={x} y1={y+7} x2={x} y2={y} strokeWidth={0.7} />
+                <polygon points={`${x},${y} ${x-4},${y+6} ${x+4},${y+6}`} />
+                <polygon points={`${x},${y+4} ${x-3},${y+8} ${x+3},${y+8}`} />
+              </g>
+            ))}
+            {/* Trees — right margin */}
+            {([[294,218],[302,245],[292,272],[300,305],[294,342],[302,378],[292,418],[298,454]] as [number,number][]).map(([x,y]) => (
+              <g key={`tr${x}${y}`}>
+                <line x1={x} y1={y+7} x2={x} y2={y} strokeWidth={0.7} />
+                <polygon points={`${x},${y} ${x-4},${y+6} ${x+4},${y+6}`} />
+                <polygon points={`${x},${y+4} ${x-3},${y+8} ${x+3},${y+8}`} />
+              </g>
+            ))}
+            {/* Mountain marks — upper parchment */}
+            <path d="M50,165 L58,148 L66,165" strokeWidth={0.8} fill="none" />
+            <path d="M58,165 L67,146 L76,165" strokeWidth={0.8} fill="none" />
+            <path d="M262,162 L270,145 L278,162" strokeWidth={0.8} fill="none" />
+            <path d="M270,162 L279,143 L288,162" strokeWidth={0.8} fill="none" />
+            {/* Water lines — right side of parchment */}
+            <path d="M252,330 Q268,326 284,330 Q298,334 310,330" strokeWidth={0.6} fill="none" />
+            <path d="M250,340 Q268,336 286,340 Q300,344 312,340" strokeWidth={0.6} fill="none" />
+            <path d="M252,350 Q270,346 288,350 Q302,354 314,350" strokeWidth={0.6} fill="none" />
+            <path d="M250,360 Q268,356 286,360 Q300,364 312,360" strokeWidth={0.6} fill="none" />
+            {/* Compass rose hint — lower right */}
+            <circle cx="292" cy="460" r="8" fill="none" strokeWidth={0.6} />
+            <line x1="292" y1="450" x2="292" y2="470" strokeWidth={0.6} />
+            <line x1="282" y1="460" x2="302" y2="460" strokeWidth={0.6} />
+            <polygon points="292,450 289,455 295,455" />
+            <text x="292" y="445" textAnchor="middle" fontFamily="Georgia,serif" fontSize={4} fill="#7a5010" opacity={0.9}>N</text>
           </g>
-
+          {/* Grain lines */}
+          <g stroke="#8a6020" strokeWidth={0.25} opacity={0.12}>
+            <line x1="8" y1="100" x2="322" y2="98"  />
+            <line x1="8" y1="200" x2="322" y2="198" />
+            <line x1="8" y1="305" x2="322" y2="303" />
+            <line x1="8" y1="415" x2="322" y2="413" />
+          </g>
           {/* Age spots */}
-          <g fill="#7a5010" opacity={0.09}>
-            <circle cx="50"  cy="115" r="14" />
-            <circle cx="292" cy="178" r="11" />
-            <circle cx="44"  cy="462" r="10" />
-            <circle cx="296" cy="440" r="8"  />
+          <g fill="#6a4008" opacity={0.08}>
+            <circle cx="50" cy="118" r="13" />
+            <circle cx="292" cy="182" r="10" />
+            <circle cx="44" cy="462" r="9" />
           </g>
 
           {/* ── Title ── */}
-          <text
-            x="170" y="40"
-            textAnchor="middle"
-            fontFamily="Georgia,serif"
-            fontSize={20}
-            fontWeight="bold"
-            fill="#3a2008"
-            letterSpacing={4}
-            opacity={0.92}
-          >
+          <text x="170" y="40" textAnchor="middle" fontFamily="Georgia,serif" fontSize={20} fontWeight="bold" fill="#3a2008" letterSpacing={4} opacity={0.92}>
             SOMMERHUSET
           </text>
-          {/* KAPITEL I with decorative dashes */}
-          <line x1="75"  y1="51" x2="126" y2="51" stroke="#5a3010" strokeWidth={0.8} opacity={0.55} />
-          <text
-            x="170" y="55"
-            textAnchor="middle"
-            fontFamily="Georgia,serif"
-            fontSize={8.5}
-            fill="#5a3010"
-            letterSpacing={5}
-          >
+          <line x1="76"  y1="50" x2="126" y2="50" stroke="#5a3010" strokeWidth={0.8} opacity={0.5} />
+          <text x="170" y="54" textAnchor="middle" fontFamily="Georgia,serif" fontSize={8} fill="#5a3010" letterSpacing={5}>
             KAPITEL I
           </text>
-          <line x1="214" y1="51" x2="265" y2="51" stroke="#5a3010" strokeWidth={0.8} opacity={0.55} />
+          <line x1="214" y1="50" x2="264" y2="50" stroke="#5a3010" strokeWidth={0.8} opacity={0.5} />
 
-          {/* ── Fog — unknown upper territory ── */}
-          <rect x="12" y="122" width="316" height="50" fill="#c8b880" opacity={0.32} />
-          <text
-            x="170" y="150"
-            textAnchor="middle"
-            fontFamily="Georgia,serif"
-            fontSize={7}
-            fill="#8a6020"
-            letterSpacing={2}
-            opacity={0.6}
-            fontStyle="italic"
-          >
+          {/* ── Fog ── */}
+          <rect x="12" y="122" width="316" height="50" fill="#c8b880" opacity={0.28} />
+          <text x="170" y="150" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#8a6020" letterSpacing={2} opacity={0.55} fontStyle="italic">
             ~ ukendt territorium ~
           </text>
 
           {/* ── Paths ── */}
           {CH1_PATHS.map(({ from, to, d, secret }) => (
-            <path
-              key={`${from}-${to}`}
-              d={d}
+            <path key={`${from}-${to}`} d={d}
               stroke={secret ? "#3ab8c8" : "#c88020"}
-              strokeWidth={secret ? 1.3 : 1.6}
+              strokeWidth={secret ? 1.2 : 1.5}
               fill="none"
               strokeDasharray={secret ? "3,5" : "5,5"}
               opacity={pathOpacity(from, to, secret)}
             />
           ))}
-
-          {/* Secret branch label */}
-          <text
-            x="241" y="416"
-            textAnchor="middle"
-            fontFamily="Georgia,serif"
-            fontSize={6}
-            fill="#3ab8c8"
-            opacity={0.65}
-            letterSpacing={1}
-          >
-            hemmeligt
-          </text>
+          <text x="240" y="412" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3ab8c8" opacity={0.65} letterSpacing={1}>hemmeligt</text>
 
           {/* ── Boss node ── */}
-          <g
-            onClick={() => {
-              if (canInteract && chapter) {
-                router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`);
-              }
-            }}
-            style={{ cursor: canInteract ? "pointer" : "default" }}
-          >
-            {/* Touch target */}
-            <circle cx="170" cy="88" r="38" fill="transparent" />
-
-            {/* Cooler image clipped to hex */}
-            <image
-              href="/rooms/boss-cooler.png"
-              x="145" y="44"
-              width="50" height="88"
-              clipPath="url(#bossImgClip)"
-              preserveAspectRatio="xMidYMid slice"
-            />
-
-            {/* Hex border on top */}
-            <polygon
-              points={wp(170, 88, 26, 0)}
-              fill="none"
-              stroke="#c0392b"
-              strokeWidth={2.5}
-              opacity={0.9}
-            />
-
-            {/* Outer glow rings when unlockable */}
+          <g onClick={() => { if (canInteract && chapter) router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`); }} style={{ cursor: canInteract ? "pointer" : "default" }}>
+            <circle cx="170" cy="88" r="36" fill="transparent" />
+            <image href="/rooms/boss-cooler.png" x="146" y="46" width="48" height="85" clipPath="url(#bossImgClip)" preserveAspectRatio="xMidYMid slice" />
+            <polygon points={wp(170, 88, 24, 0)} fill="none" stroke="#c0392b" strokeWidth={2.2} opacity={0.9} />
             {bossUnlockable && (
               <>
-                <polygon points={wp(170, 88, 31, 0)} fill="none" stroke="#e04020" strokeWidth={1.8} opacity={0.45} />
-                <polygon points={wp(170, 88, 36, 0)} fill="none" stroke="#e04020" strokeWidth={1} opacity={0.2} />
+                <polygon points={wp(170, 88, 29, 0)} fill="none" stroke="#e04020" strokeWidth={1.6} opacity={0.4} />
+                <polygon points={wp(170, 88, 34, 0)} fill="none" stroke="#e04020" strokeWidth={0.8} opacity={0.18} />
               </>
             )}
-
-            {/* "BOSS" label */}
-            <text
-              x="170" y="126"
-              textAnchor="middle"
-              fontFamily="Georgia,serif"
-              fontSize={7.5}
-              fill="#3a2208"
-              letterSpacing={2.5}
-            >
-              BOSS
-            </text>
+            <text x="170" y="124" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#3a2208" letterSpacing={2}>BOSS</text>
           </g>
 
           {/* ── Room nodes ── */}
@@ -450,97 +457,55 @@ export default function TeamQuestBoardPage({ params }: Props) {
             const s = isSecret ? SECRET_NODE_STYLES[state] : NODE_STYLES[state];
             const symbol = nodeSymbol(state, room?.unlockCost ?? 0, isSecret);
             const clickable = canInteract && state !== "locked";
-            const labelY = cy + r + 15;
-            const subY   = cy + r + 25;
+            const labelY = cy + r + 11;
+            const subY   = cy + r + 19;
 
             const LABELS: Record<string, string> = {
-              kitchen:        "KØKKEN",
-              fridge:         "KØLESKAB",
-              terrace:        "TERRASSE",
-              shed:           "SKUR",
-              "coffee-table": "SOFABORD",
+              kitchen: "KØKKEN", fridge: "KØLESKAB", terrace: "TERRASSE",
+              shed: "SKUR", "coffee-table": "SOFABORD",
             };
 
             return (
-              <g
-                key={id}
-                onClick={() => handleNodeClick(id)}
-                style={{ cursor: clickable ? "pointer" : "default" }}
-                opacity={s.opacity}
-              >
-                {/* Touch target */}
+              <g key={id} onClick={() => handleNodeClick(id)} style={{ cursor: clickable ? "pointer" : "default" }} opacity={s.opacity}>
                 <circle cx={cx} cy={cy} r={r + 14} fill="transparent" />
 
-                {/* Static glow rings for active node */}
+                {/* Active glow rings */}
                 {state === "active" && !isSecret && (
                   <>
-                    <polygon points={wp(cx, cy, r + 9, shift)} fill="none" stroke="#e05818" strokeWidth={3.5} opacity={0.5} />
-                    <polygon points={wp(cx, cy, r + 16, shift)} fill="none" stroke="#e05818" strokeWidth={1.5} opacity={0.2} />
+                    <polygon points={wp(cx, cy, r + 8, shift)} fill="none" stroke="#e05818" strokeWidth={3.5} opacity={0.55} />
+                    <polygon points={wp(cx, cy, r + 14, shift)} fill="none" stroke="#e05818" strokeWidth={1.5} opacity={0.22} />
                   </>
                 )}
-
-                {/* Secret glow ring */}
                 {isSecret && state !== "locked" && (
                   <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke="#3ab8c8" strokeWidth={1} opacity={0.4} strokeDasharray="2,3" />
                 )}
-
-                {/* Animated pulse ring */}
+                {/* Pulse ring */}
                 {(state === "active" || state === "can_unlock") && (
-                  <circle cx={cx} cy={cy} r={r + 5} fill="none"
+                  <circle cx={cx} cy={cy} r={r + 4} fill="none"
                     stroke={isSecret ? "#3ab8c8" : state === "active" ? "#e05010" : "#2a9a4a"}
-                    strokeWidth={2.2} opacity={0}
+                    strokeWidth={2} opacity={0}
                   >
-                    <animate attributeName="r" values={`${r + 5};${r + 24};${r + 5}`} dur="2.2s" repeatCount="indefinite" />
+                    <animate attributeName="r" values={`${r+4};${r+20};${r+4}`} dur="2.2s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.85;0;0.85" dur="2.2s" repeatCount="indefinite" />
                   </circle>
                 )}
 
-                {/* Node polygon */}
-                <polygon
-                  points={wp(cx, cy, r, shift)}
-                  fill={s.fill}
-                  stroke={s.stroke}
-                  strokeWidth={s.strokeWidth}
-                />
-
-                {/* Symbol */}
-                <text
-                  x={cx} y={cy + 5}
-                  textAnchor="middle"
-                  fontFamily="Georgia,serif"
-                  fontSize={state === "can_unlock" ? r * 0.72 : r * 0.9}
-                  fill={s.textColor}
-                  fontWeight={state === "active" ? "bold" : "normal"}
+                <polygon points={wp(cx, cy, r, shift)} fill={s.fill} stroke={s.stroke} strokeWidth={s.strokeWidth} />
+                <text x={cx} y={cy + 4} textAnchor="middle" fontFamily="Georgia,serif"
+                  fontSize={state === "can_unlock" ? r * 0.7 : r * 0.85}
+                  fill={s.textColor} fontWeight={state === "active" ? "bold" : "normal"}
                 >
                   {symbol}
                 </text>
-
-                {/* Room label */}
-                <text
-                  x={cx} y={labelY}
-                  textAnchor="middle"
-                  fontFamily="Georgia,serif"
-                  fontSize={7}
-                  fill={isSecret ? "#3ab8c8" : "#3a2208"}
-                  opacity={isSecret ? 0.85 : 1}
-                  letterSpacing={1}
+                <text x={cx} y={labelY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={6.5}
+                  fill={isSecret ? "#3ab8c8" : "#3a2208"} opacity={isSecret ? 0.85 : 1} letterSpacing={0.8}
                 >
                   {LABELS[id] ?? id.toUpperCase()}
                 </text>
-
-                {/* State sub-label */}
-                {state === "done" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill={isSecret ? "#3ab8c8" : "#5a8820"}>
-                    Gennemført
-                  </text>
-                )}
-                {state === "active" && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#e05010" fontWeight="bold">
-                    Aktiv
-                  </text>
-                )}
+                {state === "done" && <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#5a8820"}>Gennemført</text>}
+                {state === "active" && <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill="#e05010" fontWeight="bold">Aktiv</text>}
                 {state === "can_unlock" && room && (
-                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill={isSecret ? "#3ab8c8" : "#2a7a3a"}>
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5} fill={isSecret ? "#3ab8c8" : "#2a7a3a"}>
                     {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Gratis"}
                   </text>
                 )}

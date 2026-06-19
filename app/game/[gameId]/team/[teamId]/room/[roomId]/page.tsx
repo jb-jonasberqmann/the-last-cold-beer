@@ -901,12 +901,15 @@ function StickyNoteArtifact({
             onChange={(e) => onAnswerChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSubmit()}
             placeholder={t("room.answer_placeholder")}
-            className="flex-1 rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-amber-700/40"
+            className="flex-1 rounded px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-amber-700/40"
             style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(180,130,50,0.2)",
               color: "rgba(230,210,165,0.9)",
               fontFamily: "Georgia,serif",
+              /* 16px prevents iOS Safari from auto-zooming on focus */
+              fontSize: "16px",
+              touchAction: "manipulation",
             }}
           />
           <button

@@ -7,6 +7,7 @@ import {
   getTeamClues,
   getAllBossProgress,
   getRecentGameEvents,
+  getUsedBossActionIds,
 } from "@/lib/game/queries";
 
 export async function GET(
@@ -26,12 +27,13 @@ export async function GET(
   ]);
 
   if (teamId) {
-    const [roomProgress, questProgress, clues] = await Promise.all([
+    const [roomProgress, questProgress, clues, usedBossActionIds] = await Promise.all([
       getRoomProgressForTeam(gameId, teamId),
       getQuestProgressForTeam(gameId, teamId),
       getTeamClues(gameId, teamId),
+      getUsedBossActionIds(gameId, teamId),
     ]);
-    return NextResponse.json({ game, teamProgress, roomProgress, questProgress, clues, bossProgress, events });
+    return NextResponse.json({ game, teamProgress, roomProgress, questProgress, clues, bossProgress, events, usedBossActionIds });
   }
 
   return NextResponse.json({ game, teamProgress, bossProgress, events });
