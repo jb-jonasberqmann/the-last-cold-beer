@@ -202,6 +202,28 @@ export const QUESTS: Quest[] = [
     },
   },
 
+  {
+    id: "kitchen-cabin-toast",
+    roomId: "kitchen",
+    type: "physical_challenge",
+    title: "The Grand Toast",
+    description:
+      "Someone must step to the centre of the room, pick up whatever is nearest to hand, and deliver a fully improvised toast. It must name at least two people in the room and end with everyone drinking. The group votes on whether it was worthy.",
+    prompt:
+      "Nominate a toastmaster. They stand, improvise a toast — at least two names, genuine sentiment, a proper finish. Everyone drinks. Group votes: worthy or another round?",
+    order: 4,
+    isRequired: false,
+    hints: [],
+    physicalChallenge: {
+      timerSeconds: 120,
+      startLabel: "Rise for the Toast",
+      activeEmoji: "🥂",
+      bannerText: "The toastmaster is preparing — charge your glasses.",
+      completeLabel: "Toast Complete — Everyone Drink",
+    },
+    rewardText: "The toast was given. The cabin's spirits are higher than they were a moment ago.",
+  },
+
   // ==========================================
   // THE FRIDGE — 3 quests per team
   // ==========================================
@@ -1030,6 +1052,28 @@ export const QUESTS: Quest[] = [
     },
   },
 
+  {
+    id: "terrace-drink-mixer",
+    roomId: "terrace",
+    type: "physical_challenge",
+    title: "The Cabin Bartender",
+    description:
+      "One player must leave the group, go mix a proper drink for the player sitting to their left, and deliver it before the timer runs out. The recipient gets to decide if it meets the cabin's standard of hospitality.",
+    prompt:
+      "Assign one player as bartender. They leave, mix a drink for the player to their left, and return before the buzzer. The recipient rates it publicly: cabin-worthy or not?",
+    order: 3,
+    isRequired: false,
+    hints: [],
+    physicalChallenge: {
+      timerSeconds: 90,
+      startLabel: "Send to the Bar",
+      activeEmoji: "🍹",
+      bannerText: "The bartender is mixing — don't let them see your face.",
+      completeLabel: "Drink Delivered — Rate It",
+    },
+    rewardText: "A drink was mixed and delivered. The cabin's hospitality lives on.",
+  },
+
   // ==========================================
   // THE SHED — 3 quests + 1 new per team
   // ==========================================
@@ -1358,7 +1402,7 @@ export const QUESTS: Quest[] = [
   {
     id: "hammock-observation",
     roomId: "hammock",
-    type: "social_challenge",
+    type: "physical_challenge",
     title: "The Hammock Report",
     description:
       "One person must physically go sit in the hammock for 60 seconds — alone — and return with a single specific observation about the cabin or the people in it that they could only have noticed from that angle. The group decides if the observation is genuinely new information.",
@@ -1367,6 +1411,13 @@ export const QUESTS: Quest[] = [
     order: 1,
     isRequired: true,
     hints: [],
+    physicalChallenge: {
+      timerSeconds: 60,
+      startLabel: "Send to Hammock",
+      activeEmoji: "🏕",
+      bannerText: "Someone is in the hammock — wait for their return.",
+      completeLabel: "Back from Hammock — Report In",
+    },
     rewardText: "New perspective confirmed. The hammock has been sat in properly. The cabin rewards genuine idleness.",
     failureText: "The group has heard this before. The hammock demands more.",
   },

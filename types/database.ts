@@ -116,7 +116,8 @@ export type GameEventType =
   | "offer_paid"
   | "game_started"
   | "chapter_advanced"
-  | "role_assigned"; // strawman / special roles
+  | "role_assigned" // strawman / special roles
+  | "physical_challenge_started"; // team-wide timed physical challenge
 
 export interface DbGameEvent {
   id: string;

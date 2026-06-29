@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { submitQuestAnswer, completeQuest, useHint } from "@/lib/game/actions";
+import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge } from "@/lib/game/actions";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { Button } from "@/components/ui/Button";
 import { ClueCard } from "@/components/game/ClueCard";
 import { RoomSceneFullscreen } from "@/components/game/RoomSceneFullscreen";
 import { getRoom, getQuestsByRoom, getClue } from "@/content/index";
 import type { DbGame, DbQuestProgress, DbTeamClue, DbGameEvent } from "@/types/database";
-import type { TeamId, Quest } from "@/types/content";
+import type { TeamId, Quest, PhysicalChallengeConfig } from "@/types/content";
+import { getQuest } from "@/content/quests";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -32,6 +33,8 @@ export default function RoomPage({ params }: Props) {
   const [tollBanners, setTollBanners] = useState<{ msg: string; key: number }[]>([]);
   const tollKeyRef = useRef(0);
   const seenEventIdsRef = useRef<Set<string>>(new Set());
+  // Active physical challenges: questId → ISO started_at string
+  const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
   const [entered, setEntered] = useState(false);
   const [showCluesPanel, setShowCluesPanel] = useState(false);
 
@@ -91,6 +94,25 @@ export default function RoomPage({ params }: Props) {
     if (seenEventIdsRef.current.size === 0) {
       events.forEach((ev) => seenEventIdsRef.current.add(ev.id));
     }
+
+    // Physical challenge detection — derive from event timestamps (not seenRef),
+    // so refreshing / late-joining still shows the correct countdown.
+    const now = Date.now();
+    const running: Record<string, string> = {};
+    for (const ev of events) {
+      if (ev.event_type === "physical_challenge_started" && ev.team_id === teamId) {
+        const questId = ev.event_data?.quest_id as string | undefined;
+        const startedAt = ev.event_data?.started_at as string | undefined;
+        if (!questId || !startedAt) continue;
+        const quest = getQuest(questId);
+        const timerSec = quest?.physicalChallenge?.timerSeconds ?? 60;
+        const elapsed = (now - new Date(startedAt).getTime()) / 1000;
+        if (elapsed < timerSec) {
+          running[questId] = startedAt;
+        }
+      }
+    }
+    setActiveChallenges(running);
   }, [gameId, teamId, roomId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -589,6 +611,7 @@ export default function RoomPage({ params }: Props) {
                     gameId={gameId}
                     teamId={teamId}
                     isReadOnly={false}
+                    challengeStartedAt={activeChallenges[activeQuest.id] ?? null}
                     onComplete={(clueId) => {
                       triggerHit();
                       if (clueId) setClueBanners((prev) => [...prev, clueId]);
@@ -622,6 +645,7 @@ export default function RoomPage({ params }: Props) {
                         gameId={gameId}
                         teamId={teamId}
                         isReadOnly={false}
+                        challengeStartedAt={activeChallenges[quest.id] ?? null}
                         onComplete={(clueId) => {
                           triggerHit();
                           if (clueId) setClueBanners((prev) => [...prev, clueId]);
@@ -679,7 +703,7 @@ export default function RoomPage({ params }: Props) {
 
 function QuestBlock({
   quest, isComplete, questState, offerDefinition, gameId, teamId,
-  isReadOnly, onComplete, onMiss,
+  isReadOnly, challengeStartedAt, onComplete, onMiss,
 }: {
   quest: Quest;
   isComplete: boolean;
@@ -688,6 +712,7 @@ function QuestBlock({
   gameId: string;
   teamId: TeamId;
   isReadOnly: boolean;
+  challengeStartedAt: string | null;
   onComplete: (clueId?: string) => void;
   onMiss?: () => void;
 }) {
@@ -748,6 +773,22 @@ function QuestBlock({
   };
 
   const handleSlidingPuzzleSolved = async () => {
+    setLoading(true);
+    const result = await completeQuest(gameId, teamId, quest.id);
+    setLoading(false);
+    if (result.success) {
+      onComplete(result.data.clueId);
+    }
+  };
+
+  const handleStartPhysicalChallenge = async () => {
+    setLoading(true);
+    await startPhysicalChallenge(gameId, teamId, quest.id);
+    setLoading(false);
+    // The fetchData cycle will pick up the event and set challengeStartedAt
+  };
+
+  const handleCompletePhysicalChallenge = async () => {
     setLoading(true);
     const result = await completeQuest(gameId, teamId, quest.id);
     setLoading(false);
@@ -855,6 +896,21 @@ function QuestBlock({
     );
   }
 
+  if (quest.type === "physical_challenge" && quest.physicalChallenge) {
+    return (
+      <PhysicalChallengeBlock
+        quest={quest}
+        config={quest.physicalChallenge}
+        isComplete={isComplete}
+        isReadOnly={isReadOnly}
+        loading={loading}
+        challengeStartedAt={challengeStartedAt}
+        onStart={handleStartPhysicalChallenge}
+        onComplete={handleCompletePhysicalChallenge}
+      />
+    );
+  }
+
   return (
     <div
       className="rounded-xl border p-4 space-y-2"
@@ -864,6 +920,106 @@ function QuestBlock({
         {quest.title}
       </h3>
       <p className="text-sm text-stone-300 leading-relaxed">{quest.description}</p>
+    </div>
+  );
+}
+
+// ─── Physical Challenge block ────────────────────────────────
+function PhysicalChallengeBlock({
+  quest, config, isComplete, isReadOnly, loading, challengeStartedAt, onStart, onComplete,
+}: {
+  quest: Quest;
+  config: PhysicalChallengeConfig;
+  isComplete: boolean;
+  isReadOnly: boolean;
+  loading: boolean;
+  challengeStartedAt: string | null;
+  onStart: () => void;
+  onComplete: () => void;
+}) {
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!challengeStartedAt) { setSecondsLeft(null); return; }
+    const tick = () => {
+      const elapsed = (Date.now() - new Date(challengeStartedAt).getTime()) / 1000;
+      const remaining = Math.max(0, config.timerSeconds - elapsed);
+      setSecondsLeft(Math.ceil(remaining));
+    };
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [challengeStartedAt, config.timerSeconds]);
+
+  const isRunning = !!challengeStartedAt && (secondsLeft ?? 0) > 0;
+  const timerDone = !!challengeStartedAt && (secondsLeft ?? 1) === 0;
+  const canComplete = timerDone || isComplete;
+
+  const mins = secondsLeft !== null ? Math.floor(secondsLeft / 60) : 0;
+  const secs = secondsLeft !== null ? secondsLeft % 60 : 0;
+  const timeStr = `${mins > 0 ? `${mins}:` : ""}${String(secs).padStart(2, "0")}`;
+
+  if (isComplete) {
+    return (
+      <div className="rounded-xl px-4 py-4 border border-emerald-800/40 opacity-60" style={{ background: "rgba(6,24,12,0.85)", fontFamily: "Georgia,serif" }}>
+        <div className="text-[9px] uppercase tracking-widest text-emerald-700 mb-1">✓ Done</div>
+        <div className="font-bold text-emerald-500 text-sm">{quest.title}</div>
+        <div className="text-xs text-emerald-800 mt-1">{quest.rewardText ?? "Challenge complete."}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: isRunning ? "rgba(251,191,36,0.4)" : "rgba(180,130,50,0.2)", fontFamily: "Georgia,serif" }}>
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3" style={{ background: "rgba(20,14,4,0.9)" }}>
+        <div className="text-[9px] uppercase tracking-widest mb-1" style={{ color: "rgba(160,110,40,0.55)" }}>
+          {quest.isRequired ? "Required" : "Bonus"} · Physical Challenge
+        </div>
+        <div className="font-bold text-base mb-2" style={{ color: "rgba(245,235,205,0.97)" }}>{quest.title}</div>
+        <p className="text-sm leading-relaxed" style={{ color: "rgba(200,175,130,0.8)" }}>{quest.description}</p>
+      </div>
+
+      {/* Timer / CTA */}
+      <div className="px-4 pb-4 pt-3" style={{ background: isRunning ? "rgba(60,40,6,0.8)" : "rgba(14,10,4,0.7)" }}>
+        {!challengeStartedAt && !isComplete && (
+          <button
+            onClick={onStart}
+            disabled={loading || isReadOnly}
+            className="w-full py-3 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, #7a4800, #c07010)", color: "rgb(255,235,170)" }}
+          >
+            {loading ? "Starting…" : `${config.startLabel} →`}
+          </button>
+        )}
+
+        {isRunning && (
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <div className="text-4xl font-black tabular-nums" style={{ color: "rgb(251,191,36)", textShadow: "0 0 20px rgba(251,191,36,0.5)" }}>
+                {timeStr}
+              </div>
+              <div className="text-[10px] text-amber-700 mt-0.5">remaining</div>
+            </div>
+            <div className="flex-1">
+              <div className="text-xs leading-relaxed" style={{ color: "rgba(220,185,120,0.8)" }}>
+                {config.bannerText}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(timerDone || (!challengeStartedAt && isReadOnly === false)) && !isComplete && challengeStartedAt && (
+          <button
+            onClick={onComplete}
+            disabled={loading || isReadOnly || isRunning}
+            className="w-full py-3 rounded-xl font-bold text-sm mt-3 active:scale-[0.98] transition-transform disabled:opacity-40"
+            style={{ background: canComplete ? "linear-gradient(135deg, #1a4a1a, #2a7a2a)" : "rgba(40,30,10,0.5)", color: canComplete ? "rgb(160,255,160)" : "rgba(120,90,40,0.5)" }}
+          >
+            {loading ? "Completing…" : config.completeLabel}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue } from "@/types/da
 import type { TeamId, Clue } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
 import { getClue } from "@/content/clues";
+import { getQuest } from "@/content/quests";
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -94,10 +95,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [showCaseFile, setShowCaseFile] = useState(false);
   const [teamClues, setTeamClues] = useState<Clue[]>([]);
   const [selectedClue, setSelectedClue] = useState<Clue | null>(null);
+  const [newClueCount, setNewClueCount] = useState(0); // unseen clues since last Case File open
+  const [offerSpent, setOfferSpent] = useState(0); // total offers spent by this team
   const [otherRoomsCompleted, setOtherRoomsCompleted] = useState<number | null>(null);
   const [tollBanners, setTollBanners] = useState<{ msg: string; key: number }[]>([]);
   const tollKeyRef = useRef(0);
   const seenEventIdsRef = useRef<Set<string>>(new Set());
+  const seenClueCountRef = useRef<number | null>(null); // null = not yet initialised
+  // Active physical challenges: questId → ISO started_at
+  const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
 
   // Map scroll — CSS scale makes map larger than screen; native overflow-y scroll
   const mapScrollRef = useRef<HTMLDivElement>(null);
@@ -125,22 +131,51 @@ export default function TeamQuestBoardPage({ params }: Props) {
       .filter((c): c is Clue => !!c);
     setTeamClues(resolved);
 
-    // Detect new offer_paid events → toll banner
+    // Track unseen clues for Case File pulse
+    if (seenClueCountRef.current === null) {
+      // First load — all current clues are "already seen" (no pulse on page open)
+      seenClueCountRef.current = resolved.length;
+    } else {
+      setNewClueCount(Math.max(0, resolved.length - seenClueCountRef.current));
+    }
+
+    // Offer spent → total sips tracker
+    const myTp = (data.teamProgress ?? []).find(
+      (tp: { team_id: string; offer_spent: number }) => tp.team_id === teamId
+    );
+    if (myTp) setOfferSpent(myTp.offer_spent ?? 0);
+
+    // Detect new offer_paid events → toll banner (own team only)
     const events: DbGameEvent[] = data.events ?? [];
     const isFirstLoad = seenEventIdsRef.current.size === 0;
     for (const ev of events) {
       if (!seenEventIdsRef.current.has(ev.id)) {
         seenEventIdsRef.current.add(ev.id);
-        if (!isFirstLoad && ev.event_type === "offer_paid") {
+        if (!isFirstLoad && ev.event_type === "offer_paid" && ev.team_id === teamId) {
           const amount = (ev.event_data?.amount as number) ?? 1;
-          const teamName = ev.team_id === "team-a" ? g.team_a_name : g.team_b_name;
-          const msg = `🍺 ${teamName ?? ev.team_id} paid ${amount} Offer${amount !== 1 ? "s" : ""}`;
+          const msg = `🍺 Your team paid ${amount} Offer${amount !== 1 ? "s" : ""}`;
           const key = ++tollKeyRef.current;
           setTollBanners((prev) => [...prev, { msg, key }]);
           setTimeout(() => setTollBanners((prev) => prev.filter((b) => b.key !== key)), 4500);
         }
       }
     }
+
+    // Physical challenge detection (timestamp-based, survives refreshes)
+    const nowMs = Date.now();
+    const running: Record<string, string> = {};
+    for (const ev of events) {
+      if (ev.event_type === "physical_challenge_started" && ev.team_id === teamId) {
+        const questId = ev.event_data?.quest_id as string | undefined;
+        const startedAt = ev.event_data?.started_at as string | undefined;
+        if (!questId || !startedAt) continue;
+        const quest = getQuest(questId);
+        const timerSec = quest?.physicalChallenge?.timerSeconds ?? 60;
+        const elapsed = (nowMs - new Date(startedAt).getTime()) / 1000;
+        if (elapsed < timerSec) running[questId] = startedAt;
+      }
+    }
+    setActiveChallenges(running);
 
     // Fetch other team's progress count (fire-and-forget, best effort)
     const otherTeam = teamId === "team-a" ? "team-b" : "team-a";
@@ -320,6 +355,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const completedRooms = CH1_NODES.filter(n => !n.isSecret && getRoomStatus(n.id) === "complete").length;
   const totalMainRooms = CH1_NODES.filter(n => !n.isSecret).length;
   const bossUnlockable = completedRooms >= totalMainRooms;
+
+  // Total sips drunk — offerSpent × sips-per-offer (from offer_definition e.g. "1 sip")
+  const sipMatch = game.offer_definition.trim().match(/^(\d+)/);
+  const sipsPerOffer = sipMatch ? parseInt(sipMatch[1], 10) : 1;
+  const totalSipsDrunk = offerSpent * sipsPerOffer;
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: "#0a0804" }}>
@@ -551,24 +591,60 @@ export default function TeamQuestBoardPage({ params }: Props) {
             </span>
           </div>
 
+          {/* Sip counter */}
+          {totalSipsDrunk > 0 && (
+            <div
+              className="flex items-center gap-1 h-8 px-2.5 rounded-full"
+              style={{
+                background: "rgba(0,0,0,0.45)",
+                border: "1px solid rgba(180,130,50,0.15)",
+                fontFamily: "Georgia,serif",
+              }}
+              title={`${totalSipsDrunk} sip${totalSipsDrunk !== 1 ? "s" : ""} drunk so far`}
+            >
+              <span style={{ fontSize: "12px" }}>🍺</span>
+              <span
+                className="text-[11px] font-bold"
+                style={{ color: "rgba(180,130,50,0.75)" }}
+              >
+                {totalSipsDrunk}
+              </span>
+            </div>
+          )}
+
           {/* Case File button */}
           <button
-            onClick={() => setShowCaseFile(true)}
-            className="flex items-center gap-1.5 h-8 px-2.5 rounded-full active:scale-95 transition-transform relative"
+            onClick={() => {
+              setShowCaseFile(true);
+              // Mark all current clues as seen
+              seenClueCountRef.current = teamClues.length;
+              setNewClueCount(0);
+            }}
+            className={`flex items-center gap-1.5 h-8 px-2.5 rounded-full active:scale-95 transition-transform relative ${newClueCount > 0 ? "animate-pulse-glow" : ""}`}
             style={{
-              background: "rgba(0,0,0,0.45)",
-              border: "1px solid rgba(180,130,50,0.2)",
-              color: teamClues.length > 0 ? "rgba(251,191,36,0.85)" : "rgba(120,90,30,0.45)",
+              background: newClueCount > 0 ? "rgba(120,80,10,0.6)" : "rgba(0,0,0,0.45)",
+              border: `1px solid ${newClueCount > 0 ? "rgba(251,191,36,0.55)" : "rgba(180,130,50,0.2)"}`,
+              color: teamClues.length > 0 ? "rgba(251,191,36,0.9)" : "rgba(120,90,30,0.45)",
               fontSize: "13px",
+              boxShadow: newClueCount > 0 ? "0 0 12px rgba(251,191,36,0.35)" : "none",
             }}
           >
             🗂
             {teamClues.length > 0 && (
               <span
                 className="text-[10px] font-bold"
-                style={{ color: "rgba(251,191,36,0.85)", fontFamily: "Georgia,serif" }}
+                style={{ color: newClueCount > 0 ? "rgba(255,220,80,0.95)" : "rgba(251,191,36,0.75)", fontFamily: "Georgia,serif" }}
               >
                 {teamClues.length}
+              </span>
+            )}
+            {/* New clue dot */}
+            {newClueCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black"
+                style={{ background: "rgb(251,191,36)", color: "#1a0e00" }}
+              >
+                {newClueCount}
               </span>
             )}
           </button>
@@ -886,6 +962,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
         </div>
       )}
 
+      {/* ── Physical challenge countdown banners ── */}
+      {Object.entries(activeChallenges).map(([questId, startedAt]) => (
+        <PhysicalChallengeBanner key={questId} questId={questId} startedAt={startedAt} />
+      ))}
+
       {/* ── Toll banners ── */}
       <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex flex-col gap-1 pt-[env(safe-area-inset-top,0px)]">
         {tollBanners.map((b) => (
@@ -1037,6 +1118,62 @@ function StatChip({
       >
         {label}
       </span>
+    </div>
+  );
+}
+
+// ─── Physical Challenge countdown banner (shown on quest board) ──────────────
+function PhysicalChallengeBanner({ questId, startedAt }: { questId: string; startedAt: string }) {
+  const quest = getQuest(questId);
+  const config = quest?.physicalChallenge;
+  const [secondsLeft, setSecondsLeft] = useState(config?.timerSeconds ?? 60);
+
+  useEffect(() => {
+    const tick = () => {
+      const elapsed = (Date.now() - new Date(startedAt).getTime()) / 1000;
+      setSecondsLeft(Math.max(0, Math.ceil((config?.timerSeconds ?? 60) - elapsed)));
+    };
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [startedAt, config?.timerSeconds]);
+
+  if (!config) return null;
+
+  const mins = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  const timeStr = `${mins > 0 ? `${mins}:` : ""}${String(secs).padStart(2, "0")}`;
+
+  return (
+    <div
+      className="fixed top-0 left-0 right-0 z-50 animate-banner-drop"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
+      <div
+        className="mx-3 mt-2 rounded-xl px-4 py-3 flex items-center gap-3"
+        style={{
+          background: "rgba(60,40,4,0.97)",
+          border: "1px solid rgba(251,191,36,0.45)",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.7)",
+        }}
+      >
+        <span className="text-2xl flex-shrink-0">{config.activeEmoji}</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold truncate" style={{ color: "rgb(251,191,36)", fontFamily: "Georgia,serif" }}>
+            {config.bannerText}
+          </div>
+          <div className="text-[10px] mt-0.5" style={{ color: "rgba(200,160,60,0.6)", fontFamily: "Georgia,serif" }}>
+            {quest?.title}
+          </div>
+        </div>
+        <div
+          className="text-2xl font-black tabular-nums flex-shrink-0"
+          style={{ color: secondsLeft <= 10 ? "rgb(255,100,60)" : "rgb(251,191,36)", fontFamily: "Georgia,serif" }}
+        >
+          {timeStr}
+        </div>
+      </div>
     </div>
   );
 }

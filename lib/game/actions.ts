@@ -816,3 +816,20 @@ async function _checkAndCompleteRoom(gameId: string, teamId: TeamId, roomId: str
     }
   }
 }
+
+// ── Physical challenge broadcast ──────────────────────────────────────────────
+// Inserts a game_event so all polling team members see the countdown timer.
+export async function startPhysicalChallenge(
+  gameId: string,
+  teamId: TeamId,
+  questId: string
+): Promise<ActionResult<Record<string, never>>> {
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (
+      ${gameId}, ${teamId}, 'physical_challenge_started',
+      ${JSON.stringify({ quest_id: questId, started_at: new Date().toISOString() })}::jsonb
+    )
+  `;
+  return { success: true, data: {} };
+}

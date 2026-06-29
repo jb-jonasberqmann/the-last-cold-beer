@@ -76,7 +76,8 @@ export type QuestType =
   | "unlock" // pay Offer to unlock something
   | "clue_check" // requires a specific previously found clue
   | "boss_phase" // used inside boss encounters
-  | "sliding_puzzle"; // interactive tile-sliding puzzle
+  | "sliding_puzzle" // interactive tile-sliding puzzle
+  | "physical_challenge"; // real-world timed activity broadcast to all players
 
 export interface Quest {
   id: string;
@@ -92,6 +93,7 @@ export interface Quest {
   answer?: QuestAnswer; // undefined for social challenges
   choices?: QuestChoice[]; // for type === 'choice'
   slidingPuzzle?: SlidingPuzzleConfig; // for type === 'sliding_puzzle'
+  physicalChallenge?: PhysicalChallengeConfig; // for type === 'physical_challenge'
   offerCost?: number; // for type === 'unlock' — cost to resolve
   rewardClueId?: string; // clue granted on completion
   rewardText?: string; // flavor text shown on success
@@ -119,6 +121,14 @@ export interface SlidingPuzzleConfig {
   size: 3 | 4; // 3×3 (8-puzzle) or 4×4 (15-puzzle)
   label: string; // shown above the grid e.g. "Arrange the tools"
   solvedText: string; // flavor text shown when solved
+}
+
+export interface PhysicalChallengeConfig {
+  timerSeconds: number; // how long the challenge runs
+  startLabel: string; // button label to kick off the challenge e.g. "Send to Hammock"
+  activeEmoji: string; // emoji shown in the running banner e.g. "🏕"
+  bannerText: string; // short text shown in team-wide countdown banner e.g. "Someone is in the hammock"
+  completeLabel: string; // "Back from Hammock — Report In"
 }
 
 export interface QuestChoice {
