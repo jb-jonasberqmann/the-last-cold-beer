@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { dealBossDamage, applyBossDamage } from "@/lib/game/actions";
+import { formatOfferCost } from "@/lib/game/formatOffer";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
@@ -666,7 +667,7 @@ export default function BossFightPage({ params }: Props) {
 
                       {/* Offer cost badge */}
                       {action.offerCost && !needsClue && (
-                        <div className="text-[10px] text-amber-700 mb-1.5">🍺 {action.offerCost}</div>
+                        <div className="text-[10px] text-amber-700 mb-1.5">🍺 {formatOfferCost(action.offerCost, game.offer_definition)}</div>
                       )}
 
                       {/* ── Action area ── */}
@@ -727,7 +728,7 @@ export default function BossFightPage({ params }: Props) {
                           className="w-full py-2 text-xs font-bold rounded-lg text-stone-900 disabled:opacity-50"
                           style={{ background: "linear-gradient(135deg, #c88010, #f0b020)", fontFamily: "Georgia, serif" }}
                         >
-                          {loading === action.id ? "…" : `🍺 Pay ${action.offerCost} — ${action.damage} damage`}
+                          {loading === action.id ? "…" : `🍺 Pay ${formatOfferCost(action.offerCost!, game.offer_definition)} — ${action.damage} damage`}
                         </button>
                       ) : action.type === "clue_check" ? (
                         <button

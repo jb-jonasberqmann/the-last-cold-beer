@@ -17,19 +17,8 @@ interface Props {
 
 type CombatState = "idle" | "hit" | "miss";
 
-// Format offer cost: "2 Offers (2 sips)" etc.
-function formatOfferCost(offerCost: number, offerDefinition: string): string {
-  const match = offerDefinition.trim().match(/^(\d+)\s+(.+)$/);
-  const offerLabel = `${offerCost} Offer${offerCost !== 1 ? "s" : ""}`;
-  if (match) {
-    const unitCount = parseInt(match[1], 10);
-    const unit = match[2];
-    const total = offerCost * unitCount;
-    const unitPlural = total !== 1 && !unit.endsWith("s") ? unit + "s" : unit;
-    return `${offerLabel} (${total} ${unitPlural})`;
-  }
-  return `${offerLabel} (${offerCost}× ${offerDefinition})`;
-}
+import { formatOfferCost } from "@/lib/game/formatOffer";
+import SlidingPuzzleQuest from "@/components/quests/SlidingPuzzleQuest";
 
 export default function RoomPage({ params }: Props) {
   const { gameId, teamId, roomId } = params;
@@ -758,6 +747,15 @@ function QuestBlock({
     }
   };
 
+  const handleSlidingPuzzleSolved = async () => {
+    setLoading(true);
+    const result = await completeQuest(gameId, teamId, quest.id);
+    setLoading(false);
+    if (result.success) {
+      onComplete(result.data.clueId);
+    }
+  };
+
   const handleUseHint = async (hintOrder: number) => {
     setLoading(true);
     const result = await useHint(gameId, teamId, quest.id, hintOrder);
@@ -822,6 +820,38 @@ function QuestBlock({
         onComplete={handleUseSocial}
         onSkip={() => setSkipped(true)}
       />
+    );
+  }
+
+  if (quest.type === "sliding_puzzle" && quest.slidingPuzzle) {
+    return (
+      <div
+        className={cn("rounded-xl border p-4 space-y-3 transition-all duration-300", isComplete && "opacity-55")}
+        style={{ background: "rgba(20,14,4,0.85)", borderColor: "rgba(180,130,50,0.25)", fontFamily: "Georgia,serif" }}
+      >
+        <div className="flex items-center gap-1.5">
+          {isComplete && <span style={{ color: "rgba(140,100,40,0.8)", fontSize: "11px" }}>✓</span>}
+          <span
+            className="text-[10px] uppercase tracking-[0.24em]"
+            style={{ color: isComplete ? "rgba(120,80,20,0.55)" : "rgba(160,110,40,0.6)" }}
+          >
+            {isComplete ? "✓ Done" : quest.isRequired ? "Required" : "Bonus"}
+          </span>
+        </div>
+        <h3
+          className="font-bold leading-tight"
+          style={{ fontSize: "1.1rem", color: isComplete ? "rgba(160,120,50,0.65)" : "rgba(245,235,205,0.97)" }}
+        >
+          {quest.title}
+        </h3>
+        <p className="text-sm text-stone-400 leading-relaxed">{quest.description}</p>
+        <SlidingPuzzleQuest
+          config={quest.slidingPuzzle}
+          isComplete={isComplete}
+          isReadOnly={isReadOnly}
+          onComplete={handleSlidingPuzzleSolved}
+        />
+      </div>
     );
   }
 

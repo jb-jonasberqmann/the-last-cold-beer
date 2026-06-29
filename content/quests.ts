@@ -1320,24 +1320,20 @@ export const QUESTS: Quest[] = [
   {
     id: "toolbox-missing-item",
     roomId: "toolbox",
-    type: "puzzle",
-    title: "The Missing Tools",
+    type: "sliding_puzzle",
+    title: "Rearrange the Tools",
     description:
-      "The toolbox has six labeled compartments: HAMMER, SCREWDRIVER, WRENCH, SAW, DRILL, LEVEL. Four are occupied. Two are empty — but the tape outlines show exactly what was there. A note says: 'The missing tools are the answer. Count them.' How many compartments are empty?",
-    prompt:
-      "Six compartments. Four tools. Two empty outlines. The note says count the missing ones. What is the number?",
+      "Someone mixed up the tools in the tray. Eight numbered tool-slots, scrambled beyond recognition. Sort them back into order before anyone needs a wrench in a hurry.",
+    prompt: "Slide the tiles into order — 1 through 8, left-to-right, top-to-bottom. The bottom-right slot stays empty.",
     order: 1,
     isRequired: true,
-    answer: { correct: ["2", "two"] },
-    hints: [
-      {
-        order: 1,
-        offerCost: 1,
-        text: "Six total slots. Four have tools. Subtract.",
-      },
-    ],
-    rewardText: "Correct. Two tools missing. The toolbox gives up its secret: someone borrowed them and never returned them. A classic cabin crime.",
-    failureText: "Count again. Six compartments, four occupied.",
+    hints: [],
+    slidingPuzzle: {
+      size: 3,
+      label: "Sort the tool slots",
+      solvedText: "The tools are back in order. Whoever scrambled them owes the group a round.",
+    },
+    rewardText: "Order restored. The toolbox clicks shut with satisfaction.",
   },
   {
     id: "toolbox-social",
@@ -1388,6 +1384,24 @@ export const QUESTS: Quest[] = [
     hints: [],
     rewardText: "The anchor is named. The hammock approves.",
     failureText: "The group is split. The hammock is disappointed.",
+  },
+  {
+    id: "hammock-knot-puzzle",
+    roomId: "hammock",
+    type: "sliding_puzzle",
+    title: "Untangle the Knots",
+    description:
+      "The hammock ropes were retied by someone who clearly didn't know their knots. The numbered rope segments are in chaos. Sort them back before someone falls out mid-afternoon nap.",
+    prompt: "Slide the rope segments into order — 1 through 8, correct position. The gap goes last.",
+    order: 3,
+    isRequired: false,
+    hints: [],
+    slidingPuzzle: {
+      size: 3,
+      label: "Sort the rope segments",
+      solvedText: "The knots are right. The hammock is ready for a well-earned rest.",
+    },
+    rewardText: "The ropes are sorted. The hammock sways approvingly.",
   },
 ];
 

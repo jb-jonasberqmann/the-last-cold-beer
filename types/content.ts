@@ -75,7 +75,8 @@ export type QuestType =
   | "social_challenge" // judged by the group
   | "unlock" // pay Offer to unlock something
   | "clue_check" // requires a specific previously found clue
-  | "boss_phase"; // used inside boss encounters
+  | "boss_phase" // used inside boss encounters
+  | "sliding_puzzle"; // interactive tile-sliding puzzle
 
 export interface Quest {
   id: string;
@@ -90,6 +91,7 @@ export interface Quest {
   hints: Hint[];
   answer?: QuestAnswer; // undefined for social challenges
   choices?: QuestChoice[]; // for type === 'choice'
+  slidingPuzzle?: SlidingPuzzleConfig; // for type === 'sliding_puzzle'
   offerCost?: number; // for type === 'unlock' — cost to resolve
   rewardClueId?: string; // clue granted on completion
   rewardText?: string; // flavor text shown on success
@@ -111,6 +113,12 @@ export interface QuestDa {
 export interface QuestAnswer {
   correct: string | string[]; // accepted answers (case-insensitive)
   normalized?: boolean; // if true, strip spaces/punctuation before comparing
+}
+
+export interface SlidingPuzzleConfig {
+  size: 3 | 4; // 3×3 (8-puzzle) or 4×4 (15-puzzle)
+  label: string; // shown above the grid e.g. "Arrange the tools"
+  solvedText: string; // flavor text shown when solved
 }
 
 export interface QuestChoice {
