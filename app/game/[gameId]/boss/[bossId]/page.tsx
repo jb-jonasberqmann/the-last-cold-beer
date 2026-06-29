@@ -217,13 +217,16 @@ export default function BossFightPage({ params }: Props) {
 
   const handleFreeAction = async () => {
     setLoading("free-action");
-    const result = await dealBossDamage(gameId, teamId, bossId, "cooler-p1-offer-boost", "", true);
+    const result = await dealBossDamage(gameId, teamId, bossId, "cooler-offer-boost", "", true);
     setLoading(null);
-    try { localStorage.setItem(freeActionUsedKey, "1"); } catch {}
-    setFreeActionUsed(true);
-    if (result.success) {
-      setFeedback({ actionId: "free-action", text: `🎯 Free action! ${result.data.damage > 0 ? `${result.data.damage} damage.` : ""} ${result.data.rewardText ?? ""}`, success: true });
+    if (result.success && result.data.damage > 0) {
+      try { localStorage.setItem(freeActionUsedKey, "1"); } catch {}
+      setFreeActionUsed(true);
+      setFeedback({ actionId: "free-action", text: `🎯 Coffee Table Bonus! ${result.data.damage} damage dealt. ${result.data.rewardText ?? ""}`, success: true });
       fetchData();
+    } else {
+      const msg = result.success ? (result.data.failureText ?? "No damage dealt.") : (result.error ?? "Something went wrong.");
+      setFeedback({ actionId: "free-action", text: msg, success: false });
     }
   };
 
@@ -269,29 +272,30 @@ export default function BossFightPage({ params }: Props) {
         const result = await applyBossDamage(gameId, teamId, bossId, wagered, bossDamage);
         if (result.success) {
           setGambleResult({ won: true, wagered, damage: bossDamage });
-          setTimeout(() => setGambleResult(null), 4000);
+          setTimeout(() => setGambleResult(null), 5000);
           setFeedback({
             actionId: "drunk-gamble",
             text: result.data.defeated
               ? `🍺 The boss is completely drunk! ${boss.defeatText}`
-              : `🍺 The boss drinks ${bossDamage} sips! (${wagered}×3) HP: ${result.data.newHp}`,
+              : `🍺 Boss drinks ${bossDamage} sips (${wagered}×3)! HP: ${result.data.newHp}`,
             success: true,
           });
           fetchData();
         } else {
-          setFeedback({ actionId: "drunk-gamble", text: result.error ?? "Something went wrong.", success: false });
+          // Server error — refund the sips
+          const refunded = sipsWagered; // already incremented above
+          const refundedWagered = refunded - wagered;
+          setSipsWagered(refundedWagered);
+          try { localStorage.setItem(sipsWageredKey, String(refundedWagered)); } catch {}
+          setFeedback({ actionId: "drunk-gamble", text: result.error ?? "Gamble failed — sips refunded.", success: false });
         }
       } else {
-        // Boss resists — team drinks the wagered amount
+        // Boss resists — team must drink the wagered amount IRL
         setResistAnim(true);
         setGambleResult({ won: false, wagered, damage: 0 });
-        setTimeout(() => { setResistAnim(false); setGambleResult(null); }, 3500);
-        setFeedback({
-          actionId: "drunk-gamble",
-          text: `💪 The boss resists! Your team drinks ${wagered} sip${wagered !== 1 ? "s" : ""}.`,
-          success: false,
-        });
+        setTimeout(() => { setResistAnim(false); setGambleResult(null); }, 5000);
       }
+      fetchData(); // always refresh HP/state
     } finally {
       setLoading(null);
     }
@@ -612,7 +616,12 @@ export default function BossFightPage({ params }: Props) {
 
               {/* ── 2-column action grid ── */}
               <div className="grid grid-cols-2 gap-2">
-                {phase.actions.map((action) => {
+                {phase.actions.filter((action) => {
+                  // Hide the opposing team's puzzles/clue-checks
+                  if (action.id.includes("-team-a") && teamId !== "team-a") return false;
+                  if (action.id.includes("-team-b") && teamId !== "team-b") return false;
+                  return true;
+                }).map((action) => {
                   const isUsedPuzzle  = action.type === "puzzle" && isActionUsed(action.id);
                   const isClueApplied = action.type === "clue_check" && isActionUsed(action.id);
                   const needsClue     = action.type === "clue_check" && !!action.requiredClueId && !hasClue(action.requiredClueId) && !isClueApplied;
@@ -920,40 +929,57 @@ export default function BossFightPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Gamble result overlay ── */}
+      {/* ── Gamble result overlay — tap to dismiss ── */}
       {gambleResult && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
-          style={{ animation: "banner-drop 0.42s cubic-bezier(0.22,1,0.36,1) both" }}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+          style={{
+            background: gambleResult.won
+              ? "rgba(0,40,0,0.92)"
+              : "rgba(60,0,0,0.92)",
+            backdropFilter: "blur(8px)",
+            animation: "room-enter 0.35s cubic-bezier(0.22,1,0.36,1) both",
+          }}
+          onClick={() => setGambleResult(null)}
         >
+          <div className="text-8xl mb-4">{gambleResult.won ? "🍺" : "💪"}</div>
           <div
-            className="mx-4 rounded-2xl px-6 py-8 text-center shadow-2xl"
+            className="text-4xl font-black tracking-widest mb-3 text-center px-4"
             style={{
-              background: gambleResult.won
-                ? "linear-gradient(160deg, rgba(20,60,10,0.97), rgba(40,100,10,0.97))"
-                : "linear-gradient(160deg, rgba(80,10,10,0.97), rgba(140,20,20,0.97))",
-              border: `2px solid ${gambleResult.won ? "rgba(100,220,60,0.6)" : "rgba(220,60,60,0.6)"}`,
-              backdropFilter: "blur(12px)",
+              color: gambleResult.won ? "rgb(160,255,60)" : "rgb(255,100,100)",
+              fontFamily: "Georgia,serif",
+              textShadow: gambleResult.won
+                ? "0 0 30px rgba(100,255,40,0.7)"
+                : "0 0 30px rgba(255,60,60,0.7)",
             }}
           >
-            <div className="text-5xl mb-3">{gambleResult.won ? "🍺" : "💪"}</div>
-            <div
-              className="text-2xl font-black tracking-wide mb-2"
-              style={{
-                color: gambleResult.won ? "rgb(180,255,80)" : "rgb(255,120,120)",
-                fontFamily: "Georgia,serif",
-                textShadow: gambleResult.won
-                  ? "0 0 20px rgba(120,255,40,0.6)"
-                  : "0 0 20px rgba(255,60,60,0.6)",
-              }}
-            >
-              {gambleResult.won ? "BOSS DRINKS!" : "BOSS RESISTS!"}
+            {gambleResult.won ? "BOSS DRINKS!" : "BOSS RESISTS!"}
+          </div>
+          {gambleResult.won ? (
+            <div className="text-xl text-green-200 font-bold" style={{ fontFamily: "Georgia,serif" }}>
+              {gambleResult.damage} damage dealt ({gambleResult.wagered}×3)
             </div>
-            <div className="text-sm" style={{ color: "rgba(255,255,255,0.7)", fontFamily: "Georgia,serif" }}>
-              {gambleResult.won
-                ? `${gambleResult.damage} damage dealt (${gambleResult.wagered}×3)`
-                : `Your team drinks ${gambleResult.wagered} sip${gambleResult.wagered !== 1 ? "s" : ""}`}
-            </div>
+          ) : (
+            <>
+              <div
+                className="text-2xl font-black text-red-200 text-center mb-2"
+                style={{ fontFamily: "Georgia,serif" }}
+              >
+                YOUR TEAM DRINKS
+              </div>
+              <div
+                className="text-6xl font-black text-red-400"
+                style={{ fontFamily: "Georgia,serif", textShadow: "0 0 20px rgba(255,60,60,0.8)" }}
+              >
+                {gambleResult.wagered}
+              </div>
+              <div className="text-xl text-red-300 mt-1" style={{ fontFamily: "Georgia,serif" }}>
+                sip{gambleResult.wagered !== 1 ? "s" : ""} — right now
+              </div>
+            </>
+          )}
+          <div className="mt-8 text-xs text-white/30" style={{ fontFamily: "Georgia,serif" }}>
+            tap to dismiss
           </div>
         </div>
       )}

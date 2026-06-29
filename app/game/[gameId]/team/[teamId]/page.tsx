@@ -34,6 +34,8 @@ const CH1_NODES = [
   { id: "terrace",      cx: 170, cy: 267, r: 10, shift: 6, isSecret: false },
   { id: "shed",         cx: 170, cy: 185, r: 10, shift: 3, isSecret: false },
   { id: "coffee-table", cx: 215, cy: 395, r:  9, shift: 1, isSecret: true  },
+  { id: "toolbox",      cx: 125, cy: 310, r:  8, shift: 5, isSecret: false },
+  { id: "hammock",      cx: 215, cy: 225, r:  8, shift: 7, isSecret: false },
 ] as const;
 
 const CH1_PATHS = [
@@ -42,6 +44,8 @@ const CH1_PATHS = [
   { from: "terrace",      to: "shed",           d: "M170,254 L170,198",                         secret: false },
   { from: "shed",         to: "boss",           d: "M170,172 L170,132",                         secret: false },
   { from: "kitchen",      to: "coffee-table",   d: "M181,432 C196,422 207,411 204,396",         secret: true  },
+  { from: "fridge",       to: "toolbox",        d: "M158,348 C142,338 130,328 127,318",         secret: false },
+  { from: "terrace",      to: "hammock",        d: "M181,263 C196,254 207,244 204,232",         secret: false },
 ];
 
 // ─── Node visual states ─────────────────────────────────────────────────────
@@ -54,6 +58,16 @@ const NODE_STYLES: Record<NodeState, {
   active:     { fill: "#c03a14", stroke: "#e04a18", strokeWidth: 2.8, opacity: 1,    textColor: "#fff0e0" },
   can_unlock: { fill: "#c8a030", stroke: "#3a9a4a", strokeWidth: 2.0, opacity: 1,    textColor: "#1a4a1a" },
   locked:     { fill: "#b89830", stroke: "#7a5818", strokeWidth: 1.2, opacity: 0.38, textColor: "#5a3808" },
+};
+
+// Optional side-quest nodes (teal-ish, less prominent than main path)
+const OPTIONAL_NODE_STYLES: Record<NodeState, {
+  fill: string; stroke: string; strokeWidth: number; opacity: number; textColor: string;
+}> = {
+  done:       { fill: "#1a4a2a", stroke: "#3a9a5a", strokeWidth: 1.6, opacity: 1,    textColor: "#a0f0b8" },
+  active:     { fill: "#1e5a36", stroke: "#3aba6a", strokeWidth: 2.2, opacity: 1,    textColor: "#c0ffd8" },
+  can_unlock: { fill: "#143820", stroke: "#3a8a50", strokeWidth: 1.8, opacity: 1,    textColor: "#60c880" },
+  locked:     { fill: "#1a2a1a", stroke: "#3a6840", strokeWidth: 1.0, opacity: 0.45, textColor: "#3a5840" },
 };
 
 const SECRET_NODE_STYLES: Record<NodeState, {
@@ -395,7 +409,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
             const LABELS: Record<string, string> = {
               kitchen: "KITCHEN", fridge: "FRIDGE", terrace: "TERRACE",
               shed: "SHED", "coffee-table": "COFFEE TABLE",
+              toolbox: "TOOLBOX", hammock: "HAMMOCK",
             };
+
+            const isOptional = room?.isOptional && !isSecret;
+            const labelColor = isSecret ? "#3ab8c8" : isOptional ? "#7ad890" : "#d4a832";
 
             return (
               <g key={id} onClick={() => handleNodeClick(id)} style={{ cursor: clickable ? "pointer" : "default" }} opacity={opacity}>
@@ -404,17 +422,21 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
                 {/* Pulse for active state */}
                 {state === "active" && !isSecret && (
-                  <circle cx={cx} cy={cy} r={17} fill="none" stroke="#f06018" strokeWidth={2.5} opacity={0}>
+                  <circle cx={cx} cy={cy} r={17} fill="none" stroke={isOptional ? "#3aba6a" : "#f06018"} strokeWidth={2.5} opacity={0}>
                     <animate attributeName="r"       values="17;44;17"   dur="2.5s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.9;0;0.9"  dur="2.5s" repeatCount="indefinite" />
                   </circle>
                 )}
                 {/* Pulse for can_unlock */}
                 {state === "can_unlock" && (
-                  <circle cx={cx} cy={cy} r={12} fill="none" stroke="#2a9a4a" strokeWidth={1.8} opacity={0}>
+                  <circle cx={cx} cy={cy} r={12} fill="none" stroke={isOptional ? "#3aba6a" : "#2a9a4a"} strokeWidth={1.8} opacity={0}>
                     <animate attributeName="r"       values="12;28;12"    dur="2.5s" repeatCount="indefinite" />
                     <animate attributeName="opacity" values="0.85;0;0.85" dur="2.5s" repeatCount="indefinite" />
                   </circle>
+                )}
+                {/* Optional dashed ring */}
+                {isOptional && state !== "locked" && (
+                  <circle cx={cx} cy={cy} r={r + 3} fill="none" stroke="#3aba6a" strokeWidth={0.7} opacity={0.4} strokeDasharray="2,3" />
                 )}
                 {/* Secret dashed ring */}
                 {isSecret && state !== "locked" && (
@@ -426,11 +448,17 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
                 {/* Label */}
                 <text x={cx} y={labelY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={6}
-                  fill={isSecret ? "#3ab8c8" : "#d4a832"} filter="url(#titleShadow)"
-                  opacity={isSecret ? 0.9 : 0.95} letterSpacing={0.6}
+                  fill={labelColor} filter="url(#titleShadow)"
+                  opacity={0.92} letterSpacing={0.6}
                 >
                   {LABELS[id] ?? id.toUpperCase()}
                 </text>
+                {isOptional && state === "locked" && (
+                  <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4}
+                    fill="#3a7a4a" filter="url(#titleShadow)" opacity={0.7}>
+                    SIDE QUEST
+                  </text>
+                )}
                 {state === "done" && (
                   <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
                     fill="#6aee50" filter="url(#titleShadow)" opacity={0.85}>
@@ -439,13 +467,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 )}
                 {state === "active" && (
                   <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5}
-                    fill="#f07030" fontWeight="bold" filter="url(#titleShadow)">
+                    fill={isOptional ? "#60ee80" : "#f07030"} fontWeight="bold" filter="url(#titleShadow)">
                     Active
                   </text>
                 )}
                 {state === "can_unlock" && room && (
                   <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
-                    fill={isSecret ? "#3ab8c8" : "#2aba4a"} filter="url(#titleShadow)">
+                    fill={isSecret ? "#3ab8c8" : isOptional ? "#3aba6a" : "#2aba4a"} filter="url(#titleShadow)">
                     {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Free"}
                   </text>
                 )}

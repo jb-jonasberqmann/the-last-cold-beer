@@ -168,6 +168,60 @@ export const ROOMS: Room[] = [
   },
 
   // ==========================================
+  // CHAPTER 1 SIDE QUESTS — optional branches
+  // ==========================================
+  {
+    id: "toolbox",
+    chapterId: "chapter-1",
+    title: "The Toolbox",
+    type: "mystery_room",
+    look: {
+      icon: "🔩",
+      theme: "rust-dark",
+      atmosphere:
+        "A dented metal toolbox sits on the workbench, padlock busted open years ago. Inside: six compartments. Only four have anything in them. The other two have sticky tape outlines where something used to be.",
+      backgroundStyle: "rustic-shed",
+      colorFrom: "from-stone-900",
+      colorTo: "to-zinc-900",
+    },
+    description:
+      "A side investigation — one person can handle this alone while others push forward. The toolbox has a note taped to the lid: 'The missing tools are the answer.' Figure out what's missing.",
+    lockedDescription:
+      "The toolbox. Something is missing from it. Unlock the fridge first.",
+    unlockCost: 0,
+    unlockRequires: ["fridge"],
+    questIds: ["toolbox-missing-item", "toolbox-social"],
+    rewardClueIds: [],
+    isOptional: true,
+    order: 3,
+  },
+  {
+    id: "hammock",
+    chapterId: "chapter-1",
+    title: "The Hammock Spot",
+    type: "mystery_room",
+    look: {
+      icon: "🌿",
+      theme: "forest-dark",
+      atmosphere:
+        "A hammock between two pines, visible from the terrace. One side has been tied tighter than the other — as if someone heavier always sat on that side. A bottle cap rests in the fabric.",
+      backgroundStyle: "pine-dark",
+      colorFrom: "from-green-950",
+      colorTo: "to-teal-950",
+    },
+    description:
+      "An optional detour — one person can investigate while the team advances. The hammock holds a clue about who really runs the cabin. Or maybe it\'s just a hammock. Investigate.',",
+    lockedDescription:
+      "The hammock. You can see it from the terrace. Unlock the terrace first.",
+    unlockCost: 0,
+    unlockRequires: ["terrace"],
+    questIds: ["hammock-observation", "hammock-social"],
+    rewardClueIds: [],
+    isOptional: true,
+    order: 4,
+  },
+
+  // ==========================================
   // CHAPTER 2 ROOMS (stubs — content TBD)
   // ==========================================
   {

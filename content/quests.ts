@@ -1313,6 +1313,82 @@ export const QUESTS: Quest[] = [
       rewardText: "Genstanden huskes. Skuret skælver en smule. Eller det er bare vinden.",
     },
   },
+  // ==========================================
+  // TOOLBOX — optional side quest (branch off fridge)
+  // No forTeam — both teams can do it independently
+  // ==========================================
+  {
+    id: "toolbox-missing-item",
+    roomId: "toolbox",
+    type: "puzzle",
+    title: "The Missing Tools",
+    description:
+      "The toolbox has six labeled compartments: HAMMER, SCREWDRIVER, WRENCH, SAW, DRILL, LEVEL. Four are occupied. Two are empty — but the tape outlines show exactly what was there. A note says: 'The missing tools are the answer. Count them.' How many compartments are empty?",
+    prompt:
+      "Six compartments. Four tools. Two empty outlines. The note says count the missing ones. What is the number?",
+    order: 1,
+    isRequired: true,
+    answer: { correct: ["2", "two"] },
+    hints: [
+      {
+        order: 1,
+        offerCost: 1,
+        text: "Six total slots. Four have tools. Subtract.",
+      },
+    ],
+    rewardText: "Correct. Two tools missing. The toolbox gives up its secret: someone borrowed them and never returned them. A classic cabin crime.",
+    failureText: "Count again. Six compartments, four occupied.",
+  },
+  {
+    id: "toolbox-social",
+    roomId: "toolbox",
+    type: "social_challenge",
+    title: "The Blame Round",
+    description:
+      "Somebody took the missing tools and never returned them. The group must name the most likely culprit — someone present or someone who has visited the cabin before. Deliver the verdict with a full sentence of reasoning. The group votes.",
+    prompt:
+      "Name the tool thief. One sentence. The group votes by applause on whether the accusation feels fair.",
+    order: 2,
+    isRequired: false,
+    hints: [],
+    rewardText: "The accused has been named. Whether guilty or not — the cabin knows.",
+    failureText: "No consensus reached. The tools remain unclaimed.",
+  },
+
+  // ==========================================
+  // HAMMOCK — optional side quest (branch off terrace)
+  // No forTeam — both teams can do it independently
+  // ==========================================
+  {
+    id: "hammock-observation",
+    roomId: "hammock",
+    type: "social_challenge",
+    title: "The Hammock Report",
+    description:
+      "One person must physically go sit in the hammock for 60 seconds — alone — and return with a single specific observation about the cabin or the people in it that they could only have noticed from that angle. The group decides if the observation is genuinely new information.",
+    prompt:
+      "Send one team member to the hammock. They sit for 60 seconds, return, and deliver one observation. The group votes: new information, or did we already know that?",
+    order: 1,
+    isRequired: true,
+    hints: [],
+    rewardText: "New perspective confirmed. The hammock has been sat in properly. The cabin rewards genuine idleness.",
+    failureText: "The group has heard this before. The hammock demands more.",
+  },
+  {
+    id: "hammock-social",
+    roomId: "hammock",
+    type: "social_challenge",
+    title: "The Hammock Verdict",
+    description:
+      "The hammock is tied tighter on one side — evidence that someone heavier always sits there. The group must vote on who has the most gravitational pull in the friend group. Not weight — influence. The one who always ends up setting the plan. Name them.",
+    prompt:
+      "Group vote: who is the hammock anchor? Name one person, one sentence of justification. Unanimous vote required.",
+    order: 2,
+    isRequired: false,
+    hints: [],
+    rewardText: "The anchor is named. The hammock approves.",
+    failureText: "The group is split. The hammock is disappointed.",
+  },
 ];
 
 export function getQuest(id: string): Quest | undefined {
