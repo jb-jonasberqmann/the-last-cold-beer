@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { unlockRoom } from "@/lib/game/actions";
-import type { DbGame, DbRoomProgress, DbGameEvent } from "@/types/database";
-import type { TeamId } from "@/types/content";
+import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue } from "@/types/database";
+import type { TeamId, Clue } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
+import { getClue } from "@/content/clues";
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -90,6 +91,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [unlocking, setUnlocking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [showPanel, setShowPanel] = useState(false);
+  const [showCaseFile, setShowCaseFile] = useState(false);
+  const [teamClues, setTeamClues] = useState<Clue[]>([]);
+  const [selectedClue, setSelectedClue] = useState<Clue | null>(null);
   const [otherRoomsCompleted, setOtherRoomsCompleted] = useState<number | null>(null);
   const [tollBanners, setTollBanners] = useState<{ msg: string; key: number }[]>([]);
   const tollKeyRef = useRef(0);
@@ -100,6 +104,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const roomProgressRef = useRef<DbRoomProgress[]>([]);
   // Whether this session has already played the intro sweep
   const introPlayedRef = useRef(false);
+  // Whether we've already performed the return-visit scroll (so it only fires once)
+  const returnScrolledRef = useRef(false);
 
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
@@ -111,6 +117,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
     const rp = data.roomProgress ?? [];
     setRoomProgress(rp);
     roomProgressRef.current = rp;
+
+    // Resolve team clues to full Clue objects
+    const dbClues: DbTeamClue[] = data.clues ?? [];
+    const resolved = dbClues
+      .map((c) => getClue(c.clue_id))
+      .filter((c): c is Clue => !!c);
+    setTeamClues(resolved);
 
     // Detect new offer_paid events → toll banner
     const events: DbGameEvent[] = data.events ?? [];
@@ -148,39 +161,23 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Scroll logic: first visit → stall at top then sweep down; return visits → jump to active node.
+  // ── Scroll logic ──────────────────────────────────────────────────────────────
+  // First visit: stall at top, then sweep down to the kitchen area.
+  // Return visits: once roomProgress has loaded, jump to the active node.
   // "First visit" = no sessionStorage flag for this game+team combo.
+
+  const introKey = `quest-board-intro-${gameId}-${teamId}`;
+
+  // Effect 1 — first-visit sweep (runs once on mount, only if intro not yet seen)
   useEffect(() => {
-    const introKey = `quest-board-intro-${gameId}-${teamId}`;
-    const hasSeenIntro = typeof sessionStorage !== "undefined" && !!sessionStorage.getItem(introKey);
-
-    let rafId: number;
-
-    if (hasSeenIntro) {
-      // Return visit: wait briefly for data then scroll to active node
+    if (typeof sessionStorage === "undefined") return;
+    if (sessionStorage.getItem(introKey)) {
+      // Already seen — mark so effect 2 knows to scroll instead of sweep
       introPlayedRef.current = true;
-      const timeoutId = setTimeout(() => {
-        const container = mapScrollRef.current;
-        if (!container) return;
-        // Active node is the first non-complete room or last completed
-        const activeNode = CH1_NODES.find((n) => {
-          const rp = roomProgressRef.current.find((r) => r.room_id === n.id);
-          return !rp || rp.status === "unlocked" || rp.status === "active";
-        }) ?? CH1_NODES[0];
-
-        // Convert SVG cy coord → scroll position
-        // SVG height = 520 units at 2.2× scale on 100vw → px per SVG unit = (vw * 2.2) / 340
-        const vw = window.innerWidth;
-        const pxPerUnit = (vw * 2.2) / 340;
-        // We want the node to be in the center of the viewport
-        const nodePx = activeNode.cy * pxPerUnit;
-        const targetScroll = nodePx - window.innerHeight * 0.45;
-        container.scrollTop = Math.max(0, targetScroll);
-      }, 200);
-      return () => clearTimeout(timeoutId);
+      return;
     }
 
-    // First visit: stall at top, then sweep to bottom (room list end = kitchen area)
+    let rafId: number;
     const stallMs = 1500;
     const swooshMs = 800;
 
@@ -188,7 +185,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
       const container = mapScrollRef.current;
       if (!container) return;
 
-      if (typeof sessionStorage !== "undefined") sessionStorage.setItem(introKey, "1");
+      sessionStorage.setItem(introKey, "1");
       introPlayedRef.current = true;
 
       const startPos = container.scrollTop;
@@ -212,6 +209,33 @@ export default function TeamQuestBoardPage({ params }: Props) {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Effect 2 — return-visit scroll to active node.
+  // Fires whenever roomProgress changes; only acts once (returnScrolledRef guard) and only on return visits.
+  useEffect(() => {
+    if (!introPlayedRef.current) return; // first visit — the sweep handles it
+    if (returnScrolledRef.current) return; // already scrolled this session
+    if (roomProgress.length === 0) return; // data not loaded yet
+
+    returnScrolledRef.current = true;
+
+    const container = mapScrollRef.current;
+    if (!container) return;
+
+    // Find the first non-complete node (active/unlocked/locked-but-visible), fall back to last node
+    const activeNode =
+      CH1_NODES.find((n) => {
+        const rp = roomProgress.find((r) => r.room_id === n.id);
+        return !rp || rp.status === "unlocked" || rp.status === "active";
+      }) ?? CH1_NODES[CH1_NODES.length - 1];
+
+    // SVG viewBox width = 340 units, rendered at 2.2× viewport width
+    const vw = window.innerWidth;
+    const pxPerUnit = (vw * 2.2) / 340;
+    const nodePx = activeNode.cy * pxPerUnit;
+    const targetScroll = nodePx - window.innerHeight * 0.45;
+    container.scrollTop = Math.max(0, targetScroll);
+  }, [roomProgress]);
 
   const canInteract = !session?.isHost;
 
@@ -527,6 +551,28 @@ export default function TeamQuestBoardPage({ params }: Props) {
             </span>
           </div>
 
+          {/* Case File button */}
+          <button
+            onClick={() => setShowCaseFile(true)}
+            className="flex items-center gap-1.5 h-8 px-2.5 rounded-full active:scale-95 transition-transform relative"
+            style={{
+              background: "rgba(0,0,0,0.45)",
+              border: "1px solid rgba(180,130,50,0.2)",
+              color: teamClues.length > 0 ? "rgba(251,191,36,0.85)" : "rgba(120,90,30,0.45)",
+              fontSize: "13px",
+            }}
+          >
+            🗂
+            {teamClues.length > 0 && (
+              <span
+                className="text-[10px] font-bold"
+                style={{ color: "rgba(251,191,36,0.85)", fontFamily: "Georgia,serif" }}
+              >
+                {teamClues.length}
+              </span>
+            )}
+          </button>
+
           {/* Control panel button */}
           <button
             onClick={() => setShowPanel(true)}
@@ -723,6 +769,120 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Case File drawer ── */}
+      {showCaseFile && (
+        <div
+          className="absolute inset-0 z-40"
+          style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
+          onClick={() => { setShowCaseFile(false); setSelectedClue(null); }}
+        >
+          {/* Clue detail modal */}
+          {selectedClue ? (
+            <div
+              className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl p-5 animate-quest-fade"
+              style={{
+                background: "rgba(14,10,4,0.98)",
+                border: "1px solid rgba(180,130,50,0.35)",
+                backdropFilter: "blur(20px)",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.8)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{selectedClue.icon}</span>
+                  <div>
+                    <div className="text-[9px] uppercase tracking-[0.25em] mb-0.5" style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}>
+                      {selectedClue.isKeyClue ? "Key Clue" : "Clue"}
+                    </div>
+                    <div className="font-bold text-base" style={{ color: "rgba(245,225,170,0.97)", fontFamily: "Georgia,serif" }}>
+                      {selectedClue.title}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedClue(null)}
+                  className="text-lg leading-none"
+                  style={{ color: "rgba(180,130,50,0.4)" }}
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-sm leading-relaxed mb-3" style={{ color: "rgba(220,200,155,0.85)", fontFamily: "Georgia,serif" }}>
+                {selectedClue.description}
+              </p>
+              <p className="text-xs italic" style={{ color: "rgba(140,100,40,0.6)", fontFamily: "Georgia,serif" }}>
+                {selectedClue.flavor}
+              </p>
+            </div>
+          ) : (
+            /* Clue list sheet */
+            <div
+              className="absolute bottom-0 left-0 right-0 animate-sheet-up rounded-t-2xl"
+              style={{
+                background: "rgba(10,8,4,0.98)",
+                backdropFilter: "blur(20px)",
+                borderTop: "1px solid rgba(180,130,50,0.22)",
+                paddingBottom: "env(safe-area-inset-bottom, 0px)",
+                maxHeight: "75vh",
+                overflowY: "auto",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-2.5 pb-1">
+                <div className="w-8 h-[3px] rounded-full" style={{ background: "rgba(180,130,50,0.22)" }} />
+              </div>
+              <div className="px-4 pb-8 pt-1">
+                <div className="text-[9px] uppercase tracking-[0.25em] mb-4" style={{ color: "rgba(180,130,50,0.35)", fontFamily: "Georgia,serif" }}>
+                  Case File
+                </div>
+
+                {teamClues.length === 0 ? (
+                  <div className="text-center py-8" style={{ color: "rgba(120,90,40,0.5)", fontFamily: "Georgia,serif", fontSize: "13px" }}>
+                    <div className="text-3xl mb-3">🗂</div>
+                    No clues found yet. Explore rooms to uncover evidence.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {teamClues.map((clue) => (
+                      <button
+                        key={clue.id}
+                        onClick={() => setSelectedClue(clue)}
+                        className="w-full text-left rounded-xl px-3 py-3 active:scale-[0.98] transition-transform"
+                        style={{
+                          background: clue.isKeyClue ? "rgba(80,55,10,0.3)" : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${clue.isKeyClue ? "rgba(220,160,40,0.35)" : "rgba(180,130,50,0.12)"}`,
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl flex-shrink-0">{clue.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold truncate" style={{ color: "rgba(245,225,170,0.92)", fontFamily: "Georgia,serif" }}>
+                                {clue.title}
+                              </span>
+                              {clue.isKeyClue && (
+                                <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(251,191,36,0.6)", fontFamily: "Georgia,serif" }}>
+                                  Key
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(160,120,60,0.6)", fontFamily: "Georgia,serif" }}>
+                              {clue.flavor}
+                            </p>
+                          </div>
+                          <span className="text-xs flex-shrink-0" style={{ color: "rgba(120,90,30,0.4)" }}>›</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

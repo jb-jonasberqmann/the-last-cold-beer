@@ -548,8 +548,8 @@ export default function RoomPage({ params }: Props) {
           <div
             className="rounded-t-2xl"
             style={{
-              background: "rgba(8,6,4,0.78)",
-              backdropFilter: "blur(20px)",
+              background: "rgba(8,6,4,0.55)",
+              backdropFilter: "blur(24px)",
               borderTop: "1px solid rgba(180,130,50,0.18)",
               borderLeft: "1px solid rgba(180,130,50,0.08)",
               borderRight: "1px solid rgba(180,130,50,0.08)",

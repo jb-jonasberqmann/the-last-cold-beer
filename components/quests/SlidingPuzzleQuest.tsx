@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { SlidingPuzzleConfig } from "@/types/content";
 
 interface Props {
@@ -12,8 +12,9 @@ interface Props {
 
 // ── Puzzle logic ──────────────────────────────────────────────────────────────
 
+const GAP = 5; // px gap between tiles
+
 function buildSolved(size: number): number[] {
-  // [1, 2, 3, ..., n*n-1, 0]  — 0 is the blank
   const total = size * size;
   return Array.from({ length: total }, (_, i) => (i === total - 1 ? 0 : i + 1));
 }
@@ -29,10 +30,8 @@ function countInversions(tiles: number[]): number {
 
 function isSolvable(tiles: number[], size: number): boolean {
   if (size % 2 === 1) {
-    // Odd grid: solvable iff even inversions
     return countInversions(tiles) % 2 === 0;
   } else {
-    // Even grid: solvable depends on blank row from bottom
     const blankRow = Math.floor(tiles.indexOf(0) / size);
     const blankFromBottom = size - blankRow;
     const inv = countInversions(tiles);
@@ -58,15 +57,15 @@ function isSolved(tiles: number[], size: number): boolean {
   return tiles.every((t, i) => t === solved[i]);
 }
 
-function getMovableTiles(tiles: number[], size: number): number[] {
+function getMovableIndices(tiles: number[], size: number): number[] {
   const blankIdx = tiles.indexOf(0);
   const bRow = Math.floor(blankIdx / size);
   const bCol = blankIdx % size;
   const movable: number[] = [];
-  if (bRow > 0) movable.push(blankIdx - size); // above
-  if (bRow < size - 1) movable.push(blankIdx + size); // below
-  if (bCol > 0) movable.push(blankIdx - 1); // left
-  if (bCol < size - 1) movable.push(blankIdx + 1); // right
+  if (bRow > 0) movable.push(blankIdx - size);
+  if (bRow < size - 1) movable.push(blankIdx + size);
+  if (bCol > 0) movable.push(blankIdx - 1);
+  if (bCol < size - 1) movable.push(blankIdx + 1);
   return movable;
 }
 
@@ -74,42 +73,74 @@ function getMovableTiles(tiles: number[], size: number): number[] {
 
 export default function SlidingPuzzleQuest({ config, isComplete, isReadOnly, onComplete }: Props) {
   const { size, label, solvedText } = config;
-  const total = size * size;
 
   const [tiles, setTiles] = useState<number[]>(() => shuffleTiles(size));
   const [moves, setMoves] = useState(0);
   const [justSolved, setJustSolved] = useState(false);
-  const [flash, setFlash] = useState<number | null>(null); // tile index that was just tapped
 
-  const movableTiles = getMovableTiles(tiles, size);
+  // Touch tracking for swipe support
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const handleTap = useCallback((idx: number) => {
+  // Cell size: fill most of the card width.
+  // The quest card is roughly min(100vw - 48px, 440px). Use 88px cells for 3×3, 66px for 4×4.
+  const cellPx = size === 3 ? 88 : 66;
+  const gridPx = cellPx * size + GAP * (size - 1);
+
+  const movableIndices = getMovableIndices(tiles, size);
+
+  const slideTile = useCallback((idx: number) => {
     if (isReadOnly || isComplete || justSolved) return;
-    if (!movableTiles.includes(idx)) return;
+    if (!getMovableIndices(tiles, size).includes(idx)) return;
 
     const blankIdx = tiles.indexOf(0);
     const next = [...tiles];
     [next[idx], next[blankIdx]] = [next[blankIdx], next[idx]];
-    setFlash(idx);
-    setTimeout(() => setFlash(null), 150);
     setTiles(next);
     setMoves((m) => m + 1);
 
     if (isSolved(next, size)) {
       setJustSolved(true);
-      setTimeout(() => onComplete(), 800);
+      setTimeout(() => onComplete(), 900);
     }
-  }, [tiles, movableTiles, isComplete, isReadOnly, justSolved, onComplete, size]);
+  }, [tiles, isComplete, isReadOnly, justSolved, onComplete, size]);
+
+  // Swipe handler: swipe direction → slide tile opposite to blank
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return; // too small — treat as tap
+
+    const blankIdx = tiles.indexOf(0);
+    const bRow = Math.floor(blankIdx / size);
+    const bCol = blankIdx % size;
+
+    // Swipe RIGHT → tile to the LEFT of blank slides right
+    // Swipe LEFT  → tile to the RIGHT of blank slides left
+    // Swipe DOWN  → tile ABOVE blank slides down
+    // Swipe UP    → tile BELOW blank slides up
+    let targetIdx = -1;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      if (dx > 0 && bCol > 0) targetIdx = blankIdx - 1;
+      else if (dx < 0 && bCol < size - 1) targetIdx = blankIdx + 1;
+    } else {
+      if (dy > 0 && bRow > 0) targetIdx = blankIdx - size;
+      else if (dy < 0 && bRow < size - 1) targetIdx = blankIdx + size;
+    }
+
+    if (targetIdx !== -1) slideTile(targetIdx);
+  };
 
   const handleReset = () => {
     setTiles(shuffleTiles(size));
     setMoves(0);
     setJustSolved(false);
   };
-
-  // Cell size based on screen — we use a fixed-width container
-  const cellPx = size === 3 ? 84 : 64;
-  const gridPx = cellPx * size + (size - 1) * 4; // gap of 4px between tiles
 
   if (isComplete) {
     return (
@@ -125,77 +156,112 @@ export default function SlidingPuzzleQuest({ config, isComplete, isReadOnly, onC
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3 select-none">
       {/* Label + move counter */}
       <div className="w-full flex items-center justify-between px-1">
         <span className="text-[11px] uppercase tracking-widest text-amber-700/70" style={{ fontFamily: "Georgia,serif" }}>
           {label}
         </span>
-        <span className="text-[11px] text-stone-600" style={{ fontFamily: "Georgia,serif" }}>
+        <span className="text-[11px] text-stone-500" style={{ fontFamily: "Georgia,serif" }}>
           {moves} move{moves !== 1 ? "s" : ""}
         </span>
       </div>
 
-      {/* Grid */}
+      {/* Puzzle grid — uses absolute positioning so CSS transitions animate the slide */}
       <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${size}, ${cellPx}px)`,
-          gap: "4px",
+          position: "relative",
           width: gridPx,
+          height: gridPx,
+          touchAction: "none", // prevent page scroll while swiping puzzle
         }}
       >
-        {tiles.map((tile, idx) => {
-          const isBlank = tile === 0;
-          const isMovable = movableTiles.includes(idx);
-          const isFlashing = flash === idx;
+        {/* Render tile VALUES as keys — React keeps DOM nodes alive across swaps → CSS transition fires */}
+        {Array.from({ length: size * size - 1 }, (_, i) => i + 1).map((value) => {
+          const idx = tiles.indexOf(value);
+          const row = Math.floor(idx / size);
+          const col = idx % size;
+          const isMovable = movableIndices.includes(idx);
 
           return (
             <button
-              key={idx}
-              onClick={() => handleTap(idx)}
-              disabled={isBlank || !isMovable || isReadOnly}
+              key={value}
+              onPointerDown={(e) => {
+                // Prevent default so browser doesn't also fire click on long-press
+                e.currentTarget.releasePointerCapture(e.pointerId);
+              }}
+              onClick={() => slideTile(idx)}
               style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
                 width: cellPx,
                 height: cellPx,
-                borderRadius: 8,
-                border: isBlank
-                  ? "1px dashed rgba(80,60,20,0.2)"
-                  : isMovable
-                  ? "1px solid rgba(220,160,40,0.6)"
-                  : "1px solid rgba(80,60,20,0.35)",
-                background: isBlank
-                  ? "rgba(10,8,4,0.3)"
-                  : isFlashing
-                  ? "rgba(200,140,20,0.5)"
-                  : isMovable
-                  ? "rgba(60,40,8,0.9)"
-                  : "rgba(28,20,6,0.85)",
-                color: isMovable ? "rgb(251,191,36)" : "rgba(180,130,50,0.55)",
-                fontSize: size === 3 ? 28 : 22,
+                borderRadius: 10,
+                // The slide animation — transform changes when idx changes, CSS transitions it
+                transform: `translate(${col * (cellPx + GAP)}px, ${row * (cellPx + GAP)}px)`,
+                transition: "transform 140ms cubic-bezier(0.25,0.46,0.45,0.94)",
+                border: isMovable
+                  ? "1.5px solid rgba(220,160,40,0.75)"
+                  : "1.5px solid rgba(80,60,20,0.3)",
+                background: isMovable
+                  ? "rgba(55,38,6,0.95)"
+                  : "rgba(24,18,4,0.88)",
+                color: isMovable ? "rgb(251,191,36)" : "rgba(160,120,50,0.5)",
+                fontSize: size === 3 ? 30 : 22,
                 fontWeight: "bold",
                 fontFamily: "Georgia,serif",
-                cursor: isBlank || !isMovable ? "default" : "pointer",
-                transition: "background 0.12s, transform 0.08s",
-                transform: isFlashing ? "scale(0.93)" : "scale(1)",
-                boxShadow: isMovable && !isBlank ? "0 2px 8px rgba(0,0,0,0.5)" : "none",
+                cursor: isMovable ? "pointer" : "default",
+                boxShadow: isMovable
+                  ? "0 3px 10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,200,60,0.12)"
+                  : "0 1px 4px rgba(0,0,0,0.4)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                userSelect: "none",
+                WebkitUserSelect: "none",
               }}
             >
-              {isBlank ? "" : tile}
+              {value}
             </button>
           );
         })}
+
+        {/* Blank slot (visual only) */}
+        {(() => {
+          const blankIdx = tiles.indexOf(0);
+          const row = Math.floor(blankIdx / size);
+          const col = blankIdx % size;
+          return (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: cellPx,
+                height: cellPx,
+                borderRadius: 10,
+                transform: `translate(${col * (cellPx + GAP)}px, ${row * (cellPx + GAP)}px)`,
+                border: "1.5px dashed rgba(80,55,10,0.18)",
+                background: "rgba(8,6,2,0.35)",
+                pointerEvents: "none",
+              }}
+            />
+          );
+        })()}
       </div>
 
-      {/* Instructions + reset */}
-      <div className="w-full flex items-center justify-between px-1 mt-1">
+      {/* Hint + reset */}
+      <div className="w-full flex items-center justify-between px-1 mt-0.5">
         <span className="text-[10px] text-stone-700 italic" style={{ fontFamily: "Georgia,serif" }}>
-          Tap a highlighted tile to slide it
+          Tap or swipe to slide
         </span>
         <button
           onClick={handleReset}
-          className="text-[10px] text-stone-600 hover:text-amber-700 transition-colors"
-          style={{ fontFamily: "Georgia,serif" }}
+          className="text-[10px] text-stone-600 active:text-amber-600 transition-colors"
+          style={{ fontFamily: "Georgia,serif", padding: "4px 0" }}
         >
           ↺ Reshuffle
         </button>
@@ -203,7 +269,7 @@ export default function SlidingPuzzleQuest({ config, isComplete, isReadOnly, onC
 
       {justSolved && (
         <div
-          className="w-full rounded-xl px-4 py-3 text-center border border-emerald-700/50 animate-quest-fade"
+          className="w-full rounded-xl px-4 py-3 text-center border border-emerald-700/50"
           style={{ background: "rgba(6,30,14,0.95)", fontFamily: "Georgia,serif" }}
         >
           <div className="text-emerald-400 font-bold text-sm">✓ Solved! Recording…</div>

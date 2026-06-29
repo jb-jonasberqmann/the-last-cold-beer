@@ -64,7 +64,8 @@ export default function BossFightPage({ params }: Props) {
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
   const [resistAnim, setResistAnim] = useState(false); // boss resist animation
-  const [gambleResult, setGambleResult] = useState<{ won: boolean; wagered: number; damage: number } | null>(null);
+  const [gambleResult, setGambleResult] = useState<{ won: boolean; wagered: number; damage: number; newHp?: number } | null>(null);
+  const [hpFlash, setHpFlash] = useState(false); // triggers hit-flash on HP bar
 
   // Track sips already wagered so the pool shrinks with each gamble
   const sipsWageredKey = `boss_sips_wagered_${gameId}_${teamId}_${bossId}`;
@@ -272,7 +273,9 @@ export default function BossFightPage({ params }: Props) {
         // Boss drinks — takes wagered × 3 damage
         const result = await applyBossDamage(gameId, teamId, bossId, wagered, bossDamage);
         if (result.success) {
-          setGambleResult({ won: true, wagered, damage: bossDamage });
+          setGambleResult({ won: true, wagered, damage: bossDamage, newHp: result.data.newHp });
+          setHpFlash(true);
+          setTimeout(() => setHpFlash(false), 600);
           setTimeout(() => setGambleResult(null), 5000);
           setFeedback({
             actionId: "drunk-gamble",
@@ -281,7 +284,7 @@ export default function BossFightPage({ params }: Props) {
               : `🍺 Boss drinks ${bossDamage} sips (${wagered}×3)! HP: ${result.data.newHp}`,
             success: true,
           });
-          fetchData();
+          await fetchData();
         } else {
           // Server error — refund the sips
           const refunded = sipsWagered; // already incremented above
@@ -491,12 +494,20 @@ export default function BossFightPage({ params }: Props) {
             </span>
           )}
         </div>
-        <div className="h-[10px] rounded-full overflow-hidden bg-stone-900">
+        <div
+          className="h-[10px] rounded-full overflow-hidden"
+          style={{
+            background: hpFlash ? "rgba(255,80,40,0.6)" : "rgb(28,25,23)",
+            transition: "background 0.15s",
+          }}
+        >
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
               width: `${hpPercent}%`,
-              background: hpPercent > 50
+              background: hpFlash
+                ? "linear-gradient(90deg, #ff4020, #ff8040)"
+                : hpPercent > 50
                 ? "linear-gradient(90deg, #c4880a, #f0b020)"
                 : hpPercent > 25
                 ? "linear-gradient(90deg, #a05808, #d08010)"
@@ -957,8 +968,16 @@ export default function BossFightPage({ params }: Props) {
             {gambleResult.won ? "BOSS DRINKS!" : "BOSS RESISTS!"}
           </div>
           {gambleResult.won ? (
-            <div className="text-xl text-green-200 font-bold" style={{ fontFamily: "Georgia,serif" }}>
-              {gambleResult.damage} damage dealt ({gambleResult.wagered}×3)
+            <div className="text-center" style={{ fontFamily: "Georgia,serif" }}>
+              <div className="text-xl text-green-200 font-bold mb-1">
+                −{gambleResult.damage} HP ({gambleResult.wagered}×3)
+              </div>
+              {gambleResult.newHp !== undefined && (
+                <div className="text-sm text-green-400/70">
+                  Boss HP now: <span className="font-bold text-green-300">{gambleResult.newHp}</span>
+                  {" / "}{boss.maxHp}
+                </div>
+              )}
             </div>
           ) : (
             <>
