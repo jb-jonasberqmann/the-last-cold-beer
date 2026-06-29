@@ -156,7 +156,7 @@ body {
   animation: sheet-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Clue pop notification (top-right) */
+/* Clue pop notification (top-right — kept for compatibility) */
 @keyframes clue-pop {
   0%   { opacity: 0; transform: translateX(60px) scale(0.8); }
   60%  { opacity: 1; transform: translateX(-4px) scale(1.05); }
@@ -164,6 +164,16 @@ body {
 }
 .animate-clue-pop {
   animation: clue-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Full-width banner drops from top */
+@keyframes banner-drop {
+  0%   { opacity: 0; transform: translateY(-110%); }
+  60%  { opacity: 1; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-banner-drop {
+  animation: banner-drop 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* New quest fades in inside sheet */

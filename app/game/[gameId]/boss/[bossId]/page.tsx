@@ -63,10 +63,19 @@ export default function BossFightPage({ params }: Props) {
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
   const [resistAnim, setResistAnim] = useState(false); // boss resist animation
-  // Keep drunkSips in range [1, offerSpent] whenever offerSpent loads/changes
+  const [gambleResult, setGambleResult] = useState<{ won: boolean; wagered: number; damage: number } | null>(null);
+
+  // Track sips already wagered so the pool shrinks with each gamble
+  const sipsWageredKey = `boss_sips_wagered_${gameId}_${teamId}_${bossId}`;
+  const [sipsWagered, setSipsWagered] = useState(() => {
+    try { return parseInt(localStorage.getItem(sipsWageredKey) ?? "0", 10) || 0; } catch { return 0; }
+  });
+  const availableForGamble = Math.max(0, offerSpent - sipsWagered);
+
+  // Keep drunkSips in range [1, availableForGamble] whenever pool changes
   useEffect(() => {
-    if (offerSpent > 0) setDrunkSips((prev) => Math.min(prev, offerSpent));
-  }, [offerSpent]);
+    if (availableForGamble > 0) setDrunkSips((prev) => Math.min(prev, availableForGamble));
+  }, [availableForGamble]);
 
   // Free action (secret room advantage)
   const freeActionUsedKey = `boss_free_action_used_${gameId}_${teamId}_${bossId}`;
@@ -183,7 +192,7 @@ export default function BossFightPage({ params }: Props) {
   const canInteract = !session?.isHost;
 
   const hasClue       = (clueId: string) => teamClues.some((tc) => tc.clue_id === clueId);
-  const isPuzzleUsed  = (actionId: string) => usedBossActionIds.includes(actionId);
+  const isActionUsed  = (actionId: string) => usedBossActionIds.includes(actionId);
   const bossImage     = BOSS_ARTWORK[bossId] ?? null;
 
   const hasBossFreeAction = roomProgress.some(
@@ -247,6 +256,11 @@ export default function BossFightPage({ params }: Props) {
     setDrunkModal(false);
     setActiveTab("fight");
 
+    // Always deduct from the sip pool regardless of outcome
+    const newWagered = sipsWagered + wagered;
+    setSipsWagered(newWagered);
+    try { localStorage.setItem(sipsWageredKey, String(newWagered)); } catch {}
+
     const isSuccessful = Math.random() < 0.5;
 
     try {
@@ -254,24 +268,27 @@ export default function BossFightPage({ params }: Props) {
         // Boss drinks — takes wagered × 3 damage
         const result = await applyBossDamage(gameId, teamId, bossId, wagered, bossDamage);
         if (result.success) {
+          setGambleResult({ won: true, wagered, damage: bossDamage });
+          setTimeout(() => setGambleResult(null), 4000);
           setFeedback({
             actionId: "drunk-gamble",
             text: result.data.defeated
-              ? `🍺 Bossen er totalt fuld! ${boss.defeatText}`
-              : `🍺 Bossen drikker ${bossDamage} slurke! (${wagered}×3) HP: ${result.data.newHp}`,
+              ? `🍺 The boss is completely drunk! ${boss.defeatText}`
+              : `🍺 The boss drinks ${bossDamage} sips! (${wagered}×3) HP: ${result.data.newHp}`,
             success: true,
           });
           fetchData();
         } else {
-          setFeedback({ actionId: "drunk-gamble", text: result.error ?? "Noget gik galt.", success: false });
+          setFeedback({ actionId: "drunk-gamble", text: result.error ?? "Something went wrong.", success: false });
         }
       } else {
-        // Boss resists — team drinks only the wagered amount (not ×3)
+        // Boss resists — team drinks the wagered amount
         setResistAnim(true);
-        setTimeout(() => setResistAnim(false), 1800);
+        setGambleResult({ won: false, wagered, damage: 0 });
+        setTimeout(() => { setResistAnim(false); setGambleResult(null); }, 3500);
         setFeedback({
           actionId: "drunk-gamble",
-          text: `💪 Bossen modstår! Holdet drikker ${wagered} ${wagered === 1 ? "slurk" : "slurke"} selv.`,
+          text: `💪 The boss resists! Your team drinks ${wagered} sip${wagered !== 1 ? "s" : ""}.`,
           success: false,
         });
       }
@@ -381,7 +398,7 @@ export default function BossFightPage({ params }: Props) {
               className="relative z-10 text-2xl font-black tracking-widest text-green-200 drop-shadow-lg select-none"
               style={{ fontFamily: "Georgia,serif", textShadow: "0 0 20px rgba(80,255,80,0.8)" }}
             >
-              💪 MODSTÅR!
+              💪 RESISTS!
             </span>
           </div>
         )}
@@ -573,7 +590,7 @@ export default function BossFightPage({ params }: Props) {
                 >
                   <div className="w-9 h-9 rounded-lg bg-stone-800/80 flex items-center justify-center text-lg flex-shrink-0">🎯</div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-cyan-400">Sofabord-fordel</div>
+                    <div className="text-sm font-bold text-cyan-400">Coffee Table Bonus</div>
                     <div className="text-xs text-stone-500 mt-0.5">
                       {freeActionUsed ? "Used this fight" : "Free action — no Offer cost"}
                     </div>
@@ -596,9 +613,10 @@ export default function BossFightPage({ params }: Props) {
               {/* ── 2-column action grid ── */}
               <div className="grid grid-cols-2 gap-2">
                 {phase.actions.map((action) => {
-                  const isUsedPuzzle  = action.type === "puzzle" && isPuzzleUsed(action.id);
-                  const needsClue     = action.type === "clue_check" && !!action.requiredClueId && !hasClue(action.requiredClueId);
-                  const isAutoApplied = autoApplied.current.has(action.id);
+                  const isUsedPuzzle  = action.type === "puzzle" && isActionUsed(action.id);
+                  const isClueApplied = action.type === "clue_check" && isActionUsed(action.id);
+                  const needsClue     = action.type === "clue_check" && !!action.requiredClueId && !hasClue(action.requiredClueId) && !isClueApplied;
+                  const isAutoApplied = isClueApplied || autoApplied.current.has(action.id);
                   const isExpanded    = activeActionId === action.id;
                   const clueHint      = PUZZLE_CLUE_HINTS[action.id] ?? null;
                   const isDimmed      = isUsedPuzzle || needsClue || isAutoApplied;
@@ -853,11 +871,11 @@ export default function BossFightPage({ params }: Props) {
             </div>
 
             <h3 className="text-lg font-bold text-amber-300 text-center mb-1">
-              🍺 Beruse Bossen
+              🍺 Make the Boss Drink
             </h3>
             <p className="text-xs text-stone-500 text-center mb-5 leading-relaxed">
-              50/50 — bossen tager <span className="text-amber-400 font-bold">{drunkSips * 3} skade</span> ({drunkSips}×3)
-              <br />eller holdet drikker <span className="text-red-400 font-bold">{drunkSips} {drunkSips === 1 ? "slurk" : "slurke"}</span> selv.
+              50/50 — boss takes <span className="text-amber-400 font-bold">{drunkSips * 3} damage</span> ({drunkSips}×3)
+              <br />or your team drinks <span className="text-red-400 font-bold">{drunkSips} sip{drunkSips !== 1 ? "s" : ""}</span> themselves.
             </p>
 
             {/* Sip picker */}
@@ -870,12 +888,12 @@ export default function BossFightPage({ params }: Props) {
               >−</button>
               <div className="text-center min-w-[48px]">
                 <div className="text-4xl font-bold text-amber-200">{drunkSips}</div>
-                <div className="text-[10px] text-stone-600 mt-0.5">{drunkSips === 1 ? "slurk" : "slurke"}</div>
-                <div className="text-[9px] text-amber-900 mt-1">max {offerSpent}</div>
+                <div className="text-[10px] text-stone-600 mt-0.5">sip{drunkSips !== 1 ? "s" : ""}</div>
+                <div className="text-[9px] text-amber-900 mt-1">{availableForGamble} available</div>
               </div>
               <button
-                onClick={() => setDrunkSips(Math.min(offerSpent, drunkSips + 1))}
-                disabled={drunkSips >= offerSpent}
+                onClick={() => setDrunkSips(Math.min(availableForGamble, drunkSips + 1))}
+                disabled={drunkSips >= availableForGamble}
                 className="w-11 h-11 rounded-full text-amber-400 text-2xl font-bold border border-amber-800/40 flex items-center justify-center disabled:opacity-30"
                 style={{ background: "rgba(20,12,4,0.9)" }}
               >+</button>
@@ -887,16 +905,54 @@ export default function BossFightPage({ params }: Props) {
                 className="flex-1 py-3 rounded-xl border border-stone-700/40 text-stone-400 text-sm font-bold"
                 style={{ background: "rgba(12,8,4,0.9)" }}
               >
-                Annuller
+                Cancel
               </button>
               <button
                 onClick={handleDrunkGamble}
-                disabled={!!loading}
+                disabled={!!loading || availableForGamble === 0}
                 className="flex-1 py-3 rounded-xl text-stone-900 font-bold text-sm disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #c88010, #f0b020)" }}
               >
-                {loading === "drunk-gamble" ? "…" : "🎲 Satse!"}
+                {loading === "drunk-gamble" ? "…" : "🎲 Gamble!"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Gamble result overlay ── */}
+      {gambleResult && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          style={{ animation: "banner-drop 0.42s cubic-bezier(0.22,1,0.36,1) both" }}
+        >
+          <div
+            className="mx-4 rounded-2xl px-6 py-8 text-center shadow-2xl"
+            style={{
+              background: gambleResult.won
+                ? "linear-gradient(160deg, rgba(20,60,10,0.97), rgba(40,100,10,0.97))"
+                : "linear-gradient(160deg, rgba(80,10,10,0.97), rgba(140,20,20,0.97))",
+              border: `2px solid ${gambleResult.won ? "rgba(100,220,60,0.6)" : "rgba(220,60,60,0.6)"}`,
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <div className="text-5xl mb-3">{gambleResult.won ? "🍺" : "💪"}</div>
+            <div
+              className="text-2xl font-black tracking-wide mb-2"
+              style={{
+                color: gambleResult.won ? "rgb(180,255,80)" : "rgb(255,120,120)",
+                fontFamily: "Georgia,serif",
+                textShadow: gambleResult.won
+                  ? "0 0 20px rgba(120,255,40,0.6)"
+                  : "0 0 20px rgba(255,60,60,0.6)",
+              }}
+            >
+              {gambleResult.won ? "BOSS DRINKS!" : "BOSS RESISTS!"}
+            </div>
+            <div className="text-sm" style={{ color: "rgba(255,255,255,0.7)", fontFamily: "Georgia,serif" }}>
+              {gambleResult.won
+                ? `${gambleResult.damage} damage dealt (${gambleResult.wagered}×3)`
+                : `Your team drinks ${gambleResult.wagered} sip${gambleResult.wagered !== 1 ? "s" : ""}`}
             </div>
           </div>
         </div>
@@ -908,28 +964,28 @@ export default function BossFightPage({ params }: Props) {
           className="fixed bottom-0 inset-x-0 flex items-center h-[68px] px-4 gap-3 border-t border-stone-800/40 z-30"
           style={{ background: "rgba(4,3,1,0.97)" }}
         >
-          {/* Offer count */}
+          {/* Offer count (available for gamble) */}
           <div
             className="flex flex-col items-center justify-center w-12 h-12 rounded-full border border-amber-900/35 flex-shrink-0"
             style={{ background: "rgba(18,12,4,0.95)", fontFamily: "Georgia, serif" }}
           >
             <span className="text-lg leading-none">🍺</span>
-            <span className="text-[9px] text-amber-600 font-bold mt-0.5">{offerSpent}</span>
+            <span className="text-[9px] text-amber-600 font-bold mt-0.5">{availableForGamble}</span>
           </div>
 
           {/* Drunk gamble button */}
           <button
             className="flex-1 flex flex-col items-center justify-center py-2 rounded-xl font-bold text-stone-900 disabled:opacity-40"
             style={{
-              background: offerSpent > 0 ? "linear-gradient(135deg, #b87010, #e0a020)" : "rgba(60,40,10,0.4)",
+              background: availableForGamble > 0 ? "linear-gradient(135deg, #b87010, #e0a020)" : "rgba(60,40,10,0.4)",
               fontFamily: "Georgia, serif",
             }}
-            onClick={() => offerSpent > 0 && setDrunkModal(true)}
-            disabled={offerSpent === 0}
+            onClick={() => availableForGamble > 0 && setDrunkModal(true)}
+            disabled={availableForGamble === 0}
           >
-            <span className="text-sm tracking-widest">🍺 BERUSE BOSSEN</span>
+            <span className="text-sm tracking-widest">🍺 DRUNK GAMBLE</span>
             <span className="text-[9px] font-normal opacity-70 tracking-wide">
-              {offerSpent > 0 ? `50/50 — op til ${offerSpent} slurke` : "Ingen slurke at satse endnu"}
+              {availableForGamble > 0 ? `50/50 — up to ${availableForGamble} sip${availableForGamble !== 1 ? "s" : ""}` : "No sips available to wager"}
             </span>
           </button>
 

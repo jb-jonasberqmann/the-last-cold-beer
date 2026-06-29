@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { unlockRoom } from "@/lib/game/actions";
-import type { DbGame, DbRoomProgress } from "@/types/database";
+import type { DbGame, DbRoomProgress, DbGameEvent } from "@/types/database";
 import type { TeamId } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
-import { localizeRoom } from "@/lib/content/localize";
-import { useLanguage } from "@/hooks/useLanguage";
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -72,8 +70,6 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const { gameId, teamId } = params;
   const router = useRouter();
   const { session } = usePlayer();
-  const { lang } = useLanguage();
-
   const [game, setGame] = useState<DbGame | null>(null);
   const [roomProgress, setRoomProgress] = useState<DbRoomProgress[]>([]);
   const [pendingUnlock, setPendingUnlock] = useState<string | null>(null);
@@ -81,22 +77,43 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [otherRoomsCompleted, setOtherRoomsCompleted] = useState<number | null>(null);
+  const [tollBanners, setTollBanners] = useState<{ msg: string; key: number }[]>([]);
+  const tollKeyRef = useRef(0);
+  const seenEventIdsRef = useRef<Set<string>>(new Set());
 
   // Map scroll — CSS scale makes map larger than screen; native overflow-y scroll
-  // Scale 2.2× means rooms span more than viewport height so you can't see them all at once.
   const mapScrollRef = useRef<HTMLDivElement>(null);
-  // Ref mirrors roomProgress so the stall-timeout can read current value without a stale closure
   const roomProgressRef = useRef<DbRoomProgress[]>([]);
+  // Whether this session has already played the intro sweep
+  const introPlayedRef = useRef(false);
 
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
     const res = await fetch(`/api/game/${gameId}/progress?teamId=${teamId}`);
     if (!res.ok) return;
     const data = await res.json();
-    setGame(data.game);
+    const g: DbGame = data.game;
+    setGame(g);
     const rp = data.roomProgress ?? [];
     setRoomProgress(rp);
     roomProgressRef.current = rp;
+
+    // Detect new offer_paid events → toll banner
+    const events: DbGameEvent[] = data.events ?? [];
+    const isFirstLoad = seenEventIdsRef.current.size === 0;
+    for (const ev of events) {
+      if (!seenEventIdsRef.current.has(ev.id)) {
+        seenEventIdsRef.current.add(ev.id);
+        if (!isFirstLoad && ev.event_type === "offer_paid") {
+          const amount = (ev.event_data?.amount as number) ?? 1;
+          const teamName = ev.team_id === "team-a" ? g.team_a_name : g.team_b_name;
+          const msg = `🍺 ${teamName ?? ev.team_id} paid ${amount} Offer${amount !== 1 ? "s" : ""}`;
+          const key = ++tollKeyRef.current;
+          setTollBanners((prev) => [...prev, { msg, key }]);
+          setTimeout(() => setTollBanners((prev) => prev.filter((b) => b.key !== key)), 4500);
+        }
+      }
+    }
 
     // Fetch other team's progress count (fire-and-forget, best effort)
     const otherTeam = teamId === "team-a" ? "team-b" : "team-a";
@@ -117,23 +134,52 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Start at top (show chapter title), stall 1.5s, then speed-ramp to active room (easeInCubic).
-  // Only runs on first visit (no completed rooms). Data arrives well within the 1.5s stall window.
+  // Scroll logic: first visit → stall at top then sweep down; return visits → jump to active node.
+  // "First visit" = no sessionStorage flag for this game+team combo.
   useEffect(() => {
+    const introKey = `quest-board-intro-${gameId}-${teamId}`;
+    const hasSeenIntro = typeof sessionStorage !== "undefined" && !!sessionStorage.getItem(introKey);
+
     let rafId: number;
+
+    if (hasSeenIntro) {
+      // Return visit: wait briefly for data then scroll to active node
+      introPlayedRef.current = true;
+      const timeoutId = setTimeout(() => {
+        const container = mapScrollRef.current;
+        if (!container) return;
+        // Active node is the first non-complete room or last completed
+        const activeNode = CH1_NODES.find((n) => {
+          const rp = roomProgressRef.current.find((r) => r.room_id === n.id);
+          return !rp || rp.status === "unlocked" || rp.status === "active";
+        }) ?? CH1_NODES[0];
+
+        // Convert SVG cy coord → scroll position
+        // SVG height = 520 units at 2.2× scale on 100vw → px per SVG unit = (vw * 2.2) / 340
+        const vw = window.innerWidth;
+        const pxPerUnit = (vw * 2.2) / 340;
+        // We want the node to be in the center of the viewport
+        const nodePx = activeNode.cy * pxPerUnit;
+        const targetScroll = nodePx - window.innerHeight * 0.45;
+        container.scrollTop = Math.max(0, targetScroll);
+      }, 200);
+      return () => clearTimeout(timeoutId);
+    }
+
+    // First visit: stall at top, then sweep to bottom (room list end = kitchen area)
     const stallMs = 1500;
-    const swooshMs = 750;
+    const swooshMs = 800;
 
     const timeoutId = setTimeout(() => {
-      // Skip animation on return visits
-      if (roomProgressRef.current.some((rp) => rp.status === "complete")) return;
-
       const container = mapScrollRef.current;
       if (!container) return;
+
+      if (typeof sessionStorage !== "undefined") sessionStorage.setItem(introKey, "1");
+      introPlayedRef.current = true;
+
       const startPos = container.scrollTop;
       const endPos = container.scrollHeight - container.clientHeight;
       const startTime = performance.now();
-
       const easeInCubic = (t: number) => t * t * t;
 
       const step = (now: number) => {
@@ -150,6 +196,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
       clearTimeout(timeoutId);
       cancelAnimationFrame(rafId);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const canInteract = !session?.isHost;
@@ -214,10 +261,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
     setPendingUnlock(null);
     if (result.success) {
       const cost = result.data.offerCost;
-      setMessage(cost > 0 ? `Rum låst op! (${cost} Offer brugt)` : "Rum låst op!");
+      setMessage(cost > 0 ? `Room unlocked! (${cost} Offer used)` : "Room unlocked!");
       fetchData();
     } else {
-      setMessage(result.error ?? "Fejl ved oplåsning.");
+      setMessage(result.error ?? "Failed to unlock.");
     }
     setTimeout(() => setMessage(null), 3000);
   };
@@ -226,8 +273,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
   const chapter = getChapter(game.current_chapter_id);
   const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
-  const rawPendingRoom = pendingUnlock ? getRoom(pendingUnlock) : null;
-  const pendingRoom = rawPendingRoom ? localizeRoom(rawPendingRoom, lang) : null;
+  const pendingRoom = pendingUnlock ? getRoom(pendingUnlock) : null;
 
   // Check if coffee-table (secret) is complete — for boss advantage display
   const secretRoomDone = getRoomStatus("coffee-table") === "complete";
@@ -285,13 +331,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
           <line x1="112" y1="50" x2="140" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
           <text x="170" y="56" textAnchor="middle" fontFamily="Georgia,serif" fontSize={6}
             fill="#d4a832" letterSpacing={5} filter="url(#titleShadow)" opacity={0.8}>
-            KAPITEL I
+            CHAPTER I
           </text>
           <line x1="200" y1="50" x2="228" y2="50" stroke="#d4a832" strokeWidth={0.7} opacity={0.55} />
 
           {/* ── Fog band ── */}
           <text x="170" y="178" textAnchor="middle" fontFamily="Georgia,serif" fontSize={7} fill="#8a6520" letterSpacing={2} opacity={0.6} fontStyle="italic">
-            ~ ukendt territorium ~
+            ~ unknown territory ~
           </text>
 
           {/* ── Paths ── */}
@@ -304,7 +350,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               opacity={pathOpacity(from, to, secret)}
             />
           ))}
-          <text x="215" y="412" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3ab8c8" opacity={0.75} letterSpacing={1}>hemmeligt</text>
+          <text x="215" y="412" textAnchor="middle" fontFamily="Georgia,serif" fontSize={5.5} fill="#3ab8c8" opacity={0.75} letterSpacing={1}>secret</text>
 
           {/* ── Boss node ── */}
           <g onClick={() => { if (canInteract && chapter) router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`); }} style={{ cursor: canInteract ? "pointer" : "default" }}>
@@ -347,8 +393,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
             const opacity = state === "locked" ? 0.35 : 1;
 
             const LABELS: Record<string, string> = {
-              kitchen: "KØKKEN", fridge: "KØLESKAB", terrace: "TERRASSE",
-              shed: "SKUR", "coffee-table": "SOFABORD",
+              kitchen: "KITCHEN", fridge: "FRIDGE", terrace: "TERRACE",
+              shed: "SHED", "coffee-table": "COFFEE TABLE",
             };
 
             return (
@@ -388,19 +434,19 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 {state === "done" && (
                   <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
                     fill="#6aee50" filter="url(#titleShadow)" opacity={0.85}>
-                    Gennemført
+                    Complete
                   </text>
                 )}
                 {state === "active" && (
                   <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={5}
                     fill="#f07030" fontWeight="bold" filter="url(#titleShadow)">
-                    Aktiv
+                    Active
                   </text>
                 )}
                 {state === "can_unlock" && room && (
                   <text x={cx} y={subY} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
                     fill={isSecret ? "#3ab8c8" : "#2aba4a"} filter="url(#titleShadow)">
-                    {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Gratis"}
+                    {room.unlockCost > 0 ? `${room.unlockCost} Offer` : isSecret ? "Bonus" : "Free"}
                   </text>
                 )}
               </g>
@@ -425,7 +471,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               className="text-[9px] uppercase tracking-[0.3em]"
               style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
             >
-              Kapitel I
+              Chapter I
             </span>
             <span
               className="font-bold text-lg leading-tight"
@@ -498,7 +544,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   className="text-xs font-bold truncate"
                   style={{ color: "rgb(254,202,202)", fontFamily: "Georgia,serif" }}
                 >
-                  Den Låste Køler
+                  The Locked Cooler
                 </div>
                 <div
                   className="mt-1 h-1.5 rounded-full overflow-hidden"
@@ -520,11 +566,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     className="text-[10px]"
                     style={{ color: "rgba(180,80,80,0.6)", fontFamily: "Georgia,serif" }}
                   >
-                    {completedRooms}/{totalMainRooms} rum ryddet
+                    {completedRooms}/{totalMainRooms} rooms cleared
                   </span>
                   {secretRoomDone && (
                     <span className="text-[10px]" style={{ color: "rgba(103,232,249,0.7)", fontFamily: "Georgia,serif" }}>
-                      · ⭐ buff aktiv
+                      · ⭐ buff active
                     </span>
                   )}
                 </div>
@@ -550,7 +596,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   }}
                   onClick={!bossUnlockable ? (e) => e.preventDefault() : undefined}
                 >
-                  {bossUnlockable ? "⚔️ Kæmp" : "🔒"}
+                  {bossUnlockable ? "⚔️ Fight" : "🔒"}
                 </a>
               )}
             </div>
@@ -584,7 +630,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 className="text-[9px] uppercase tracking-[0.25em] mb-4"
                 style={{ color: "rgba(180,130,50,0.35)", fontFamily: "Georgia,serif" }}
               >
-                Kontrolpanel
+                Control Panel
               </div>
 
               {/* Team status */}
@@ -602,13 +648,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     }}
                   >
                     <div className="text-[9px] uppercase tracking-widest mb-0.5" style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}>
-                      {team.isMe ? "Jeres hold" : "Modstandere"}
+                      {team.isMe ? "Your Team" : "Opponents"}
                     </div>
                     <div className="font-bold text-sm truncate" style={{ color: "rgba(245,225,170,0.9)", fontFamily: "Georgia,serif" }}>
                       {team.name}
                     </div>
                     <div className="text-[11px] mt-1" style={{ color: "rgba(180,130,50,0.6)", fontFamily: "Georgia,serif" }}>
-                      {team.count}/{totalMainRooms} rum
+                      {team.count}/{totalMainRooms} rooms
                     </div>
                   </div>
                 ))}
@@ -627,10 +673,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   <span className="text-xl">{bossUnlockable ? "⚔️" : "🔒"}</span>
                   <div>
                     <div className="text-sm font-bold" style={{ color: bossUnlockable ? "rgb(252,165,165)" : "rgba(120,80,40,0.6)", fontFamily: "Georgia,serif" }}>
-                      Den Låste Køler
+                      The Locked Cooler
                     </div>
                     <div className="text-xs" style={{ color: bossUnlockable ? "rgba(220,100,100,0.6)" : "rgba(100,60,20,0.4)", fontFamily: "Georgia,serif" }}>
-                      {bossUnlockable ? "Klar til kamp" : `${completedRooms}/${totalMainRooms} rum for at låse op`}
+                      {bossUnlockable ? "Ready for battle" : `${completedRooms}/${totalMainRooms} rooms to unlock`}
                     </div>
                   </div>
                 </a>
@@ -642,7 +688,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   >
                     <span className="text-xl">⭐</span>
                     <div className="text-sm" style={{ color: "rgba(103,232,249,0.7)", fontFamily: "Georgia,serif" }}>
-                      Sofabord-fordel aktiv
+                      Coffee Table bonus active
                     </div>
                   </div>
                 )}
@@ -651,6 +697,27 @@ export default function TeamQuestBoardPage({ params }: Props) {
           </div>
         </div>
       )}
+
+      {/* ── Toll banners ── */}
+      <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex flex-col gap-1 pt-[env(safe-area-inset-top,0px)]">
+        {tollBanners.map((b) => (
+          <div
+            key={b.key}
+            className="animate-banner-drop mx-3 mt-2 rounded-xl px-4 py-3 flex items-center gap-3 pointer-events-auto"
+            style={{
+              background: "rgba(120,60,0,0.95)",
+              border: "1px solid rgba(251,146,60,0.5)",
+              backdropFilter: "blur(8px)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
+            }}
+          >
+            <span className="text-xl flex-shrink-0">🍺</span>
+            <span className="text-sm font-bold" style={{ color: "rgb(254,215,170)", fontFamily: "Georgia,serif" }}>
+              {b.msg}
+            </span>
+          </div>
+        ))}
+      </div>
 
       {/* ── Toast ── */}
       {message && (
@@ -690,7 +757,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     className="text-xs uppercase tracking-widest font-bold mb-0.5"
                     style={{ color: pendingRoom.isSecret ? "#3ab8c8" : "#c8a040", fontFamily: "Georgia,serif" }}
                   >
-                    {pendingRoom.isSecret ? "★ Hemmeligt sted" : "Lås op"}
+                    {pendingRoom.isSecret ? "★ Secret Location" : "Unlock"}
                   </div>
                   <div className="font-bold text-white" style={{ fontFamily: "Georgia,serif" }}>
                     {pendingRoom.title}
@@ -706,7 +773,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               {/* Secret advantage callout */}
               {pendingRoom.isSecret && pendingRoom.secretAdvantage && (
                 <div className="rounded-lg bg-cyan-950/50 border border-cyan-800/50 px-3 py-2 mb-3 text-xs text-cyan-300" style={{ fontFamily: "Georgia,serif" }}>
-                  🎯 Fuldfør dette sted for at optjene en <strong>gratis handling</strong> mod bossen.
+                  🎯 Complete this location to earn a <strong>free action</strong> against the boss.
                 </div>
               )}
 
@@ -722,10 +789,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   }}
                 >
                   {unlocking
-                    ? "Låser op…"
+                    ? "Unlocking…"
                     : pendingRoom.unlockCost > 0
-                    ? `🍺 Lås op (${pendingRoom.unlockCost} Offer)`
-                    : "🔓 Lås op (gratis)"}
+                    ? `🍺 Unlock (${pendingRoom.unlockCost} Offer)`
+                    : "🔓 Unlock (free)"}
                 </button>
                 <button
                   onClick={() => setPendingUnlock(null)}

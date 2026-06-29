@@ -191,7 +191,7 @@ export default function DashboardPage({ params }: Props) {
             className="text-[10px] uppercase tracking-[0.3em] mb-1"
             style={{ color: "rgba(180,130,50,0.4)", fontFamily: "Georgia,serif" }}
           >
-            Kapitel I
+            Chapter I
           </div>
           <div
             className="text-2xl font-bold"
@@ -346,7 +346,7 @@ export default function DashboardPage({ params }: Props) {
                   Boss Fight
                 </div>
                 <div className="text-[10px]" style={{ color: "rgba(180,80,80,0.4)", fontFamily: "Georgia,serif" }}>
-                  Den Låste Køler
+                  The Locked Cooler
                 </div>
               </div>
             </Link>

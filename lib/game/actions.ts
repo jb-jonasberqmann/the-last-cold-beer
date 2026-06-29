@@ -410,6 +410,21 @@ export async function dealBossDamage(
         data: { damage: 0, newHp: bp.current_hp, defeated: false, failureText: foundAction.failureText ?? "You don't have the required clue." },
       };
     }
+    // Idempotency — clue actions can only deal damage once per team
+    const priorClueUse = await sql`
+      SELECT id FROM game_events
+      WHERE game_id = ${gameId}
+        AND team_id = ${teamId}
+        AND event_type = 'boss_damaged'
+        AND event_data->>'action_id' = ${actionId}
+      LIMIT 1
+    `;
+    if (priorClueUse.length > 0) {
+      return {
+        success: true,
+        data: { damage: 0, newHp: bp.current_hp, defeated: false, failureText: "This clue has already been applied — damage already dealt." },
+      };
+    }
   }
 
   // Puzzle check
