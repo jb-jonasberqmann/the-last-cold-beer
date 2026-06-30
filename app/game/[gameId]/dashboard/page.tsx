@@ -9,6 +9,8 @@ import { LiveProgress } from "@/components/game/LiveProgress";
 import type { DbGame, DbGameEvent } from "@/types/database";
 import { relativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { getChapter } from "@/content/chapters";
+import { getBoss } from "@/content/bosses";
 
 interface Props {
   params: { gameId: string };
@@ -136,6 +138,10 @@ export default function DashboardPage({ params }: Props) {
 
   // Most recent game_started event for the top banner
   const gameStartedEvent = events.find((e) => e.event_type === "game_started");
+
+  // Current act boss (dynamic — changes as act advances)
+  const currentChapter = getChapter(game.current_chapter_id);
+  const currentBoss = currentChapter ? getBoss(currentChapter.bossId) : null;
 
   return (
     <div
@@ -333,7 +339,7 @@ export default function DashboardPage({ params }: Props) {
               </div>
             </Link>
             <Link
-              href={`/game/${gameId}/boss/mads?team=${myTeamId}`}
+              href={`/game/${gameId}/boss/${currentChapter?.bossId ?? "mads"}?team=${myTeamId}`}
               className="rounded-xl p-4 flex flex-col items-center gap-2 active:scale-[0.98] transition-transform"
               style={{
                 background: "linear-gradient(160deg, #1a0505 0%, #0e0303 100%)",
@@ -346,7 +352,7 @@ export default function DashboardPage({ params }: Props) {
                   Boss Fight
                 </div>
                 <div className="text-[10px]" style={{ color: "rgba(180,80,80,0.4)", fontFamily: "Georgia,serif" }}>
-                  The Locked Cooler
+                  {currentBoss?.title ?? "The Keybearer"}
                 </div>
               </div>
             </Link>

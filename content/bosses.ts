@@ -10,7 +10,7 @@ export const BOSSES: Boss[] = [
   {
     id: "mads",
     chapterId: "act-1",
-    title: "Mads",
+    title: "The Keybearer",
     subtitle: "Late. Unapologetic. Arms completely full.",
     description:
       "Mads pulls in to the carport, door open before the engine's off. He is carrying more than is physically reasonable — a cooler, a sleeping bag, two cases of beer, something wrapped in a garbage bag. He grins. He does not apologize. His phone was on silent. He had the code the whole time.",
@@ -105,7 +105,7 @@ export const BOSSES: Boss[] = [
     victoryAdvantage:
       "Final fragment: Mads gives your team the last piece of the key box code. Head to the front door.",
     da: {
-      title: "Mads",
+      title: "The Keybearer",
       subtitle: "Forsinket. Uundskyldende. Armene fuldstændig fulde.",
       description:
         "Mads kører ind på carporten, døren åben inden motoren er slukket. Han bærer mere end det er fysisk rimeligt — en køler, en sovepose, to kasser øl, noget pakket ind i en skraldpose. Han griner. Han undskyldes ikke. Hans telefon var på lydløs. Han havde koden hele tiden.",

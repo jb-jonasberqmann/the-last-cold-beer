@@ -14,7 +14,7 @@ interface Props {
 export default function HostPage({ params }: Props) {
   const gameId = params.gameId;
 
-  const { session } = usePlayer();
+  const { session, isLoaded } = usePlayer();
   const [game, setGame] = useState<DbGame | null>(null);
   const [players, setPlayers] = useState<DbPlayer[]>([]);
   const [teamProgressA, setTeamProgressA] = useState<DbTeamProgress | null>(null);
@@ -43,6 +43,15 @@ export default function HostPage({ params }: Props) {
   }, [gameId]);
 
   useEffect(() => { if (gameId) fetchAll(); }, [gameId, fetchAll]);
+
+  // Wait for session to load from sessionStorage before checking auth
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center text-stone-400 text-sm">
+        Loading…
+      </div>
+    );
+  }
 
   if (!session?.isHost) {
     return (

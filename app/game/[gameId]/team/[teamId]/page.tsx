@@ -11,7 +11,7 @@ import { getChapter, getRoom } from "@/content/index";
 import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
 import { getQuest } from "@/content/quests";
-import { cn } from "@/lib/utils";
+
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -21,6 +21,83 @@ const ACT_THEMES: Record<string, { bg: string; accent: string; label: string; em
   "act-1": { bg: "from-amber-950/80 to-stone-950",  accent: "#d4a832", label: "The Arrival",    emoji: "🌅" },
   "act-2": { bg: "from-indigo-950/60 to-stone-950", accent: "#8ab4f8", label: "Settling In",    emoji: "🏠" },
   "act-3": { bg: "from-slate-950/90 to-stone-950",  accent: "#f87171", label: "The Late Night", emoji: "🌑" },
+};
+
+// Node positions as percentage of map image (x=left%, y=top%)
+const NODE_POSITIONS: Record<string, Record<string, { x: number; y: number }>> = {
+  "act-1": {
+    "driveway":       { x: 40, y: 20 },
+    "carport":        { x: 66, y: 12 },
+    "terrace":        { x: 73, y: 33 },
+    "garden":         { x: 39, y: 42 },
+    "shed":           { x: 20, y: 57 },
+    "petanque-court": { x: 68, y: 54 },
+    "front-door":     { x: 46, y: 71 },
+  },
+  "act-2": {
+    "double-room":  { x: 20, y: 17 },
+    "single-room":  { x: 50, y: 14 },
+    "bunk-room":    { x: 78, y: 17 },
+    "bathroom":     { x: 50, y: 31 },
+    "living-room":  { x: 44, y: 48 },
+    "sunroom":      { x: 16, y: 62 },
+    "kitchen-act2": { x: 74, y: 61 },
+    "dining-room":  { x: 44, y: 75 },
+  },
+  "act-3": {
+    "dining-room-dark":  { x: 48, y: 10 },
+    "utility-corner":    { x: 48, y: 22 },
+    "back-corridor":     { x: 48, y: 37 },
+    "fuse-box":          { x: 77, y: 49 },
+    "door-nobody-tried": { x: 19, y: 49 },
+    "behind-the-shed":   { x: 48, y: 49 },
+    "kitchen-dark":      { x: 79, y: 60 },
+    "rattling-window":   { x: 79, y: 70 },
+    "sealed-wall":       { x: 13, y: 63 },
+    "conservatory":      { x: 34, y: 64 },
+    "shed-dark":         { x: 63, y: 64 },
+    "revelation-circle": { x: 48, y: 79 },
+  },
+};
+
+// Path connections between nodes [fromRoomId, toRoomId]
+const NODE_PATHS: Record<string, [string, string][]> = {
+  "act-1": [
+    ["driveway", "carport"],
+    ["driveway", "terrace"],
+    ["driveway", "garden"],
+    ["terrace", "carport"],
+    ["garden", "carport"],
+    ["garden", "shed"],
+    ["garden", "petanque-court"],
+    ["shed", "front-door"],
+    ["carport", "front-door"],
+  ],
+  "act-2": [
+    ["double-room", "bathroom"],
+    ["single-room", "bathroom"],
+    ["bunk-room", "bathroom"],
+    ["double-room", "living-room"],
+    ["single-room", "living-room"],
+    ["bunk-room", "living-room"],
+    ["living-room", "sunroom"],
+    ["living-room", "kitchen-act2"],
+    ["kitchen-act2", "dining-room"],
+  ],
+  "act-3": [
+    ["dining-room-dark", "utility-corner"],
+    ["utility-corner", "back-corridor"],
+    ["back-corridor", "fuse-box"],
+    ["back-corridor", "door-nobody-tried"],
+    ["back-corridor", "behind-the-shed"],
+    ["fuse-box", "kitchen-dark"],
+    ["kitchen-dark", "rattling-window"],
+    ["door-nobody-tried", "sealed-wall"],
+    ["behind-the-shed", "conservatory"],
+    ["behind-the-shed", "shed-dark"],
+    ["shed-dark", "revelation-circle"],
+    ["door-nobody-tried", "revelation-circle"],
+  ],
 };
 
 export default function TeamQuestBoardPage({ params }: Props) {
@@ -261,104 +338,149 @@ export default function TeamQuestBoardPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Room cards ── */}
-      <div className="px-4 pt-4 pb-32 space-y-2">
-        {mainRooms.map((room) => {
-          if (!room) return null;
-          const status = getRoomStatus(room.id);
-          const locked = status === "locked";
-          const done = status === "complete";
-          const unlockable = canUnlock(room.id);
-          const occupied = status === "occupied";
+      {/* ── Map Quest Board ── */}
+      {(() => {
+        const actFolder = game.current_chapter_id.replace(/-/g, ""); // "act-1" → "act1"
+        const actKey = game.current_chapter_id;
+        const positions = NODE_POSITIONS[actKey] ?? {};
+        const paths = NODE_PATHS[actKey] ?? [];
 
-          const questsInRoom = room.questIds.length;
-          const doneQuests = 0; // could compute from questProgress — keep simple for now
+        return (
+          <div className="relative w-full" style={{ paddingBottom: "88px" }}>
+            {/* Map image container — maintains 768:1376 ratio */}
+            <div className="relative w-full" style={{ aspectRatio: "768 / 1376" }}>
+              {/* Background map */}
+              <img
+                src={`/map/${actFolder}/map.png`}
+                alt="Quest Map"
+                className="absolute inset-0 w-full h-full"
+                style={{ objectFit: "fill" }}
+                draggable={false}
+              />
 
-          return (
-            <button
-              key={room.id}
-              onClick={() => handleNodeClick(room.id)}
-              disabled={!canInteract || (locked && !unlockable)}
-              className={cn(
-                "w-full text-left rounded-xl border transition-all active:scale-[0.98] disabled:cursor-default",
-                done && "opacity-60",
-                locked && !unlockable && "opacity-30"
-              )}
-              style={{
-                background: done
-                  ? "rgba(20,30,12,0.9)"
-                  : occupied
-                  ? "rgba(30,10,10,0.9)"
-                  : unlockable
-                  ? "rgba(20,25,15,0.9)"
-                  : locked
-                  ? "rgba(10,8,6,0.7)"
-                  : "rgba(18,14,8,0.95)",
-                border: done
-                  ? "1px solid rgba(80,140,40,0.4)"
-                  : occupied
-                  ? "1px solid rgba(180,40,40,0.4)"
-                  : unlockable
-                  ? "1px solid rgba(60,160,60,0.5)"
-                  : locked
-                  ? "1px solid rgba(60,45,20,0.3)"
-                  : `1px solid ${theme.accent}30`,
-                boxShadow: unlockable ? "0 0 12px rgba(60,200,60,0.15)" : "none",
-              }}
-            >
-              <div className="flex items-center gap-3 px-4 py-3.5">
-                {/* Icon */}
-                <div className="text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg"
-                  style={{ background: "rgba(0,0,0,0.3)" }}>
-                  {done ? "✅" : occupied ? "🔒" : locked ? room.look.icon : room.look.icon}
-                </div>
+              {/* SVG path overlay — uses same 0-100 percentage coordinate space */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+              >
+                {paths.map(([fromId, toId], i) => {
+                  const from = positions[fromId];
+                  const to = positions[toId];
+                  if (!from || !to) return null;
+                  const fromStatus = getRoomStatus(fromId);
+                  const toStatus = getRoomStatus(toId);
+                  const bothDone = fromStatus === "complete" && toStatus === "complete";
+                  const eitherUnlocked = fromStatus !== "locked" || toStatus !== "locked";
+                  return (
+                    <g key={i}>
+                      {/* Road base */}
+                      <line
+                        x1={from.x} y1={from.y}
+                        x2={to.x} y2={to.y}
+                        stroke={bothDone ? "rgba(60,130,30,0.5)" : eitherUnlocked ? "rgba(100,70,15,0.55)" : "rgba(50,35,10,0.35)"}
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                      />
+                      {/* Dashed stripe on top */}
+                      <line
+                        x1={from.x} y1={from.y}
+                        x2={to.x} y2={to.y}
+                        stroke={bothDone ? "rgba(120,220,60,0.55)" : eitherUnlocked ? "rgba(210,165,60,0.5)" : "rgba(100,75,25,0.3)"}
+                        strokeWidth="0.55"
+                        strokeDasharray="2.5 2"
+                        strokeLinecap="round"
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
 
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm truncate" style={{ fontFamily: "Georgia,serif", color: done ? "rgba(140,200,80,0.85)" : occupied ? "rgba(220,80,80,0.8)" : "rgba(245,225,170,0.95)" }}>
-                    {room.title}
-                  </div>
-                  <div className="text-xs mt-0.5 truncate" style={{ fontFamily: "Georgia,serif", color: "rgba(140,110,60,0.55)" }}>
-                    {done
-                      ? "Complete"
-                      : occupied
-                      ? "Occupied by a teammate"
-                      : unlockable
-                      ? room.unlockCost > 0 ? `Unlock for ${room.unlockCost} Offer${room.unlockCost !== 1 ? "s" : ""}` : "Free to unlock"
-                      : locked
-                      ? "Locked"
-                      : room.look.atmosphere}
-                  </div>
-                </div>
+              {/* NodeBlob buttons */}
+              {mainRooms.map((room) => {
+                if (!room) return null;
+                const pos = positions[room.id];
+                if (!pos) return null;
+                const status = getRoomStatus(room.id);
+                const unlockable = canUnlock(room.id);
+                const isLocked = status === "locked" && !unlockable;
+                const isDone = status === "complete";
+                const nodeState = isDone ? "completed" : isLocked ? "locked" : "active";
+                const nodeImg = `/ui/${actFolder}/node-${nodeState}.png`;
 
-                {/* Status badge */}
-                <div className="flex-shrink-0">
-                  {done ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(40,80,20,0.5)", color: "rgba(140,220,80,0.8)", fontFamily: "Georgia,serif" }}>Done</span>
-                  ) : occupied ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(80,20,20,0.5)", color: "rgba(220,80,80,0.8)", fontFamily: "Georgia,serif" }}>Occupied</span>
-                  ) : unlockable ? (
-                    <span className="text-lg">🔓</span>
-                  ) : locked ? (
-                    <span className="text-lg opacity-40">🔒</span>
-                  ) : (
-                    <span className="text-lg">›</span>
-                  )}
-                </div>
-              </div>
+                return (
+                  <button
+                    key={room.id}
+                    onClick={() => handleNodeClick(room.id)}
+                    disabled={!canInteract || (status === "locked" && !unlockable)}
+                    className="absolute disabled:opacity-25 transition-transform active:scale-90"
+                    style={{
+                      left: `${pos.x}%`,
+                      top: `${pos.y}%`,
+                      transform: "translate(-50%, -50%)",
+                      width: "16%",
+                    }}
+                  >
+                    <img
+                      src={nodeImg}
+                      alt={room.title}
+                      className="w-full h-auto"
+                      style={{
+                        filter: unlockable
+                          ? "drop-shadow(0 0 5px rgba(80,200,80,0.85))"
+                          : isDone
+                          ? "drop-shadow(0 1px 3px rgba(0,0,0,0.7))"
+                          : isLocked
+                          ? "grayscale(0.3) brightness(0.7)"
+                          : "drop-shadow(0 1px 4px rgba(0,0,0,0.6))",
+                      }}
+                    />
+                    {/* Label */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "-22%",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "180%",
+                        textAlign: "center",
+                        fontSize: "clamp(7px, 2.2vw, 10px)",
+                        fontFamily: "Georgia, serif",
+                        color: isDone
+                          ? "rgba(140,220,80,0.95)"
+                          : unlockable
+                          ? "rgba(120,230,120,0.95)"
+                          : isLocked
+                          ? "rgba(140,110,60,0.55)"
+                          : "rgba(240,215,145,0.9)",
+                        textShadow: "0 1px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.8)",
+                        lineHeight: 1.15,
+                        pointerEvents: "none",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {room.title}
+                      {room.isOptional && !isDone && (
+                        <span style={{ opacity: 0.5 }}> ✦</span>
+                      )}
+                    </div>
 
-              {/* Optional room indicator */}
-              {room.isOptional && !done && (
-                <div className="px-4 pb-2">
-                  <span className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(100,180,120,0.5)", fontFamily: "Georgia,serif" }}>
-                    ✦ optional
-                  </span>
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                    {/* Unlockable glow ring */}
+                    {unlockable && (
+                      <div
+                        className="absolute inset-0 rounded-full animate-ping"
+                        style={{ background: "rgba(80,200,80,0.15)", animationDuration: "1.5s" }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Boss strip (fixed bottom) ── */}
       {chapter && (
@@ -376,7 +498,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold truncate" style={{ color: "rgb(254,202,202)", fontFamily: "Georgia,serif" }}>
-                  {chapter.bossId === "mads" ? "MADS" : chapter.bossId === "the-radio" ? "THE RADIO" : "YOURSELVES"}
+                  {(boss?.title ?? chapter.bossId).toUpperCase()}
                 </div>
                 <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(40,10,10,0.9)", border: "1px solid rgba(100,30,30,0.3)" }}>
                   <div className="h-full rounded-full transition-all duration-700"
@@ -488,7 +610,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   <span className="text-xl">{bossUnlockable ? "⚔️" : "🔒"}</span>
                   <div>
                     <div className="text-sm font-bold" style={{ color: bossUnlockable ? "rgb(252,165,165)" : "rgba(120,80,40,0.6)", fontFamily: "Georgia,serif" }}>
-                      {chapter.bossId === "mads" ? "Mads" : chapter.bossId === "the-radio" ? "The Radio" : "Yourselves"}
+                      {boss?.title ?? chapter.bossId}
                     </div>
                     <div className="text-xs" style={{ color: bossUnlockable ? "rgba(220,100,100,0.6)" : "rgba(100,60,20,0.4)", fontFamily: "Georgia,serif" }}>
                       {bossUnlockable ? "Ready for battle" : `${completedCount}/${totalRooms} rooms to unlock`}
