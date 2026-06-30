@@ -1,215 +1,132 @@
 import type { Boss } from "@/types/content";
 
 export const BOSSES: Boss[] = [
+
   // ==========================================
-  // CHAPTER 1 BOSS — The Locked Cooler
-  // 1 phase, 100 HP
-  // Team A combination: 67 (countdown start 6, inventory item 7, ordered)
-  // Team B combination: 04:08 (railing carvers 4, valid inventory 8, as time)
-  // Both teams fight the same cooler independently.
+  // ACT 1 BOSS — MADS
+  // Not a monster. A friend. Late, chaotic, arms full.
+  // HP label: "Unpacking"
   // ==========================================
   {
-    id: "locked-cooler",
-    chapterId: "chapter-1",
-    title: "The Locked Cooler",
-    subtitle: "It has waited for this moment.",
+    id: "mads",
+    chapterId: "act-1",
+    title: "Mads",
+    subtitle: "Late. Unapologetic. Arms completely full.",
     description:
-      "Behind the shed — or maybe it was always there — sits a large cooler with a combination lock. The lock is old. The cooler hums faintly, which is suspicious because it's not plugged in. The combination is somewhere in the clues your team has gathered. You hope.",
-    icon: "🧊",
+      "Mads pulls in to the carport, door open before the engine's off. He is carrying more than is physically reasonable — a cooler, a sleeping bag, two cases of beer, something wrapped in a garbage bag. He grins. He does not apologize. His phone was on silent. He had the code the whole time.",
+    icon: "🙋",
     look: {
-      icon: "🔒",
+      icon: "🙋",
       atmosphere:
-        "The cooler sits in the dim light of the back room. The combination lock dial has worn numbers. It doesn't move when you try to open it. Something inside shifts — gently, deliberately.",
-      colorFrom: "from-blue-950",
-      colorTo: "to-cyan-900",
-      backgroundStyle: "frosted-metal-dark",
+        "The carport. Mads's car is crooked in the space. The boot is open. The inside of the car is a chaos of bags, towels, and loose items. He needs help. The code fragment is in his jacket pocket. You cannot get to it while his arms are full.",
+      colorFrom: "from-amber-800",
+      colorTo: "to-stone-900",
+      backgroundStyle: "outdoor-carport",
     },
     maxHp: 100,
-    requiredRoomIds: ["shed"],
+    requiredRoomIds: ["terrace", "garden"],
     phases: [
       {
         phase: 1,
-        title: "The Lock",
+        title: "The Unloading",
         description:
-          "The combination lock doesn't budge. Your team has gathered clues across the cabin. Now use them. Apply what you found — or pay the tribute.",
+          "Mads cannot give you the code while his arms are full. Help him get everything inside.",
         hpThreshold: 100,
         actions: [
-          // ——— Team A: First Tumbler ———
           {
-            id: "cooler-clue-check-team-a",
-            label: "Apply the Order Rule (Team A)",
+            id: "mads-cooler",
+            label: "Carry the heavy cooler",
             description:
-              "The shed warned your team not to add or multiply — to use order instead. You have two numbers from the cabin: the countdown started at 6, and the locked cooler is Item 7. Place them in order.",
-            type: "clue_check",
+              "The cooler is enormous. Someone needs to grab the other handle. It goes in the utility corner.",
+            type: "social",
             damage: 20,
-            requiredClueId: "clue-shed-order-rule",
             rewardText:
-              "The order rule clicks into place. The clues align: 6 first, then 7. Something shifts inside the lock.",
-            failureText:
-              "You need the Order Rule clue from the Shed first. Go back and find it.",
+              "The cooler makes it inside. Mads's arms are slightly less full. 20 unpacking progress.",
+            failureText: "It's too heavy for one person. Try again together.",
           },
           {
-            id: "cooler-puzzle-team-a",
-            label: "Enter the Combination (Team A)",
+            id: "mads-beer",
+            label: "Grab the beer cases from the boot",
             description:
-              "Your team found:\n— The terrace countdown began at 6\n— The damaged inventory line placed the cooler at item 7\n— The shed warned you to use order, not math\n\nPlace the two numbers in sequence. What two digits open the lock?",
+              "Two cases of beer, stacked. Someone takes one, someone takes the other.",
+            type: "social",
+            damage: 20,
+            rewardText: "Beer inside. One fewer thing Mads is carrying. 20 progress.",
+            failureText: "Leave no beer behind.",
+          },
+          {
+            id: "mads-door",
+            label: "Hold the door while he squeezes through",
+            description:
+              "The sleeping bag is awkward. Someone holds the door, someone guides him through the frame.",
+            type: "social",
+            damage: 20,
+            rewardText: "Sleeping bag inside. Mads made it through the door. 20 progress.",
+          },
+          {
+            id: "mads-sleeping-bag",
+            label: "Find a spot for the sleeping bag",
+            description: "The bunk room. Someone takes the bag and claims the bunk.",
+            type: "social",
+            damage: 20,
+            rewardText: "Bag stowed. Mads has almost nothing left. 20 progress.",
+          },
+          {
+            id: "mads-phone",
+            label: "Help him find his phone",
+            description:
+              "His phone is somewhere in the car. Probably under the seat. The code fragment is in his notes app — but first you need the phone.",
             type: "puzzle",
-            damage: 40,
+            damage: 20,
             puzzle: {
               prompt:
-                "The lock is asking for a sequence, not a calculation.\nUse the clue about what came first, then what held it.\nEnter the two digits in order.",
-              answer: ["67", "6 7", "six seven"],
+                "Mads checks every pocket. Jacket — empty. Jeans — empty. Car seat — nothing. Then he looks at you. \"Check the sun visor,\" he says. \"I always put it there and always forget.\" What do you find?",
+              answer: ["phone", "his phone", "the phone", "telefon", "mobil", "mobilen"],
             },
-            hint: "First lost, then locked. The countdown tells you what came first. The inventory tells you what held it.",
+            hint: "He just told you where he put it.",
             rewardText:
-              "CLICK. The lock responds. The cooler takes serious damage. Your team is close.",
-            failureText:
-              "The lock is unimpressed. Think about what you found first — and what you found it locked inside.",
-          },
-
-          // ——— Team B: Receipt Tumbler ———
-          {
-            id: "cooler-clue-check-team-b",
-            label: "Apply the Time Format (Team B)",
-            description:
-              "The torn receipt in the shed showed a damaged timestamp — only the colon remained. The note said: \"The hour came from the railing. The minutes came from the list.\" Your team has both numbers.",
-            type: "clue_check",
-            damage: 20,
-            requiredClueId: "clue-shed-torn-timestamp",
-            rewardText:
-              "The time format clicks. The receipt clue is confirmed. Your numbers slot into hours and minutes.",
-            failureText:
-              "You need the Torn Timestamp clue from the Shed first. Go back and find it.",
+              "The phone. In the sun visor. He had it the whole time. Mads pulls up his notes app. There — one item. The last code fragment.",
+            failureText: "The car is messier than it looks. Try again.",
           },
           {
-            id: "cooler-puzzle-team-b",
-            label: "Enter the Combination (Team B)",
-            description:
-              "Your team found:\n— The terrace railing was carved by 4 different people (the hour)\n— The valid inventory count was 8 (the minutes)\n— The torn receipt told you to format it as a time\n\nWhat time opens the receipt lock?",
-            type: "puzzle",
-            damage: 40,
-            puzzle: {
-              prompt:
-                "Use the two numbers as parts of a clock, not as one normal number.\nA single-digit hour often needs help standing in the hour slot.\nEnter the time.",
-              answer: ["04:08", "4:08", "0408", "408", "04.08", "4.08"],
-            },
-            hint: "Railing gives the hour (4 carvers). Inventory gives the minutes (8 valid items). Format: HH:MM.",
-            rewardText:
-              "CLICK. The frozen receipt timestamp is confirmed. The cooler shudders. Major damage dealt.",
-            failureText:
-              "The lock rejects it. Check the format — does the hour need a leading zero?",
-          },
-
-          // ——— Shared: Offer boosts ———
-          {
-            id: "cooler-offer-boost",
-            label: "Force it with Ritual Strength",
-            description:
-              "Your team doesn't have all the clues yet but is determined. Pay the ritual cost to force partial progress through sheer collective will.",
+            id: "mads-offer-boost",
+            label: "Bribe Mads with an Offer",
+            description: "Pay the ritual cost to speed up the unloading. He's grateful but still needs help.",
             type: "offer_boost",
-            damage: 15,
-            offerCost: 3,
-            rewardText:
-              "Three Offers paid. The cooler registers your commitment. Something yields slightly. 15 damage dealt.",
-          },
-          {
-            id: "cooler-grand-offering",
-            label: "The Grand Offering",
-            description:
-              "Your team has struggled. The cooler has resisted. End it now with the Grand Offering — pay the maximum tribute and force the lock open through sheer ritual power.",
-            type: "offer_boost",
-            damage: 35,
-            offerCost: 7,
-            rewardText:
-              "Seven Offers. The cooler cannot stand against such commitment. The lock surrenders. The Grand Offering is complete.",
+            damage: 25,
+            offerCost: 2,
+            rewardText: "Mads appreciates the contribution. 25 unpacking progress.",
           },
         ],
       },
     ],
     defeatText:
-      "The Locked Cooler is defeated. Inside: two perfectly cold beers and a sealed envelope. Chapter 1 is complete. The team that opened it gets to read the envelope first — and gains the first advantage in Chapter 2.",
+      "Mads is finally empty-handed. He grins. He pulls out his phone and opens his notes app. \"This is it,\" he says, turning the screen to face you. The last code fragment. Now combine all five and try the front door.",
     victoryAdvantage:
-      "First Access: the winning team gets to unlock their first Chapter 2 room for free.",
+      "Final fragment: Mads gives your team the last piece of the key box code. Head to the front door.",
     da: {
-      title: "Den Låste Køler",
-      subtitle: "Den har ventet på dette øjeblik.",
+      title: "Mads",
+      subtitle: "Forsinket. Uundskyldende. Armene fuldstændig fulde.",
       description:
-        "Bag skuret — eller måske var den der altid — sidder en stor køler med en kombinationslås. Låsen er gammel. Køleren summer svagt, hvilket er mistænkeligt fordi den ikke er tilsluttet. Kombinationen gemmer sig et sted i de spor jeres hold har samlet. Forhåbentlig.",
+        "Mads kører ind på carporten, døren åben inden motoren er slukket. Han bærer mere end det er fysisk rimeligt — en køler, en sovepose, to kasser øl, noget pakket ind i en skraldpose. Han griner. Han undskyldes ikke. Hans telefon var på lydløs. Han havde koden hele tiden.",
       atmosphere:
-        "Køleren sidder i det dæmpede lys fra baglokalet. Kombinationslåsens skive har slidte tal. Den bevæger sig ikke når du forsøger at åbne den. Noget inde i den skifter — forsigtigt, bevidst.",
+        "Carporten. Mads' bil er skæv i parkeringspladsen. Bagagerummet er åbent. Indersiden af bilen er et kaos af tasker, håndklæder og løse genstande.",
       defeatText:
-        "Den Låste Køler er besejret. Indeni: to perfekt kolde øl og en forseglet konvolut. Kapitel 1 er fuldført. Det hold der åbnede den må læse konvolutten først — og får den første fordel i Kapitel 2.",
+        "Mads er endelig tomhændet. Han griner. Han trækker sin telefon op og åbner sin noter-app. \"Det er det,\" siger han og vender skærmen mod jer. Det sidste kodefragment.",
       victoryAdvantage:
-        "Første adgang: det vindende hold må låse deres første Kapitel 2-rum op gratis.",
+        "Sidste fragment: Mads giver jeres hold det sidste stykke af nøgleboks-koden.",
       phases: [
         {
           phase: 1,
-          title: "Låsen",
-          description:
-            "Kombinationslåsen giver ikke efter. Jeres hold har samlet spor gennem hele hytten. Brug dem nu. Anvend hvad I fandt — eller betal tribut.",
+          title: "Losningen",
+          description: "Mads kan ikke give jer koden mens hans arme er fulde. Hjælp ham med at få alt ind.",
           actions: [
-            {
-              id: "cooler-clue-check-team-a",
-              label: "Anvend Ordensreglen (Hold A)",
-              description:
-                "Skuret advarede jeres hold om ikke at addere eller multiplicere — men om at bruge rækkefølge. I har to tal fra hytten: nedtællingen startede ved 6, og den låste køler er Genstand 7. Placer dem i rækkefølge.",
-              rewardText:
-                "Ordensreglen klikker på plads. Sporene flugter: 6 først, derefter 7. Noget bevæger sig inde i låsen.",
-              failureText:
-                "Du har brug for Ordensregels-sporet fra Skuret først. Gå tilbage og find det.",
-            },
-            {
-              id: "cooler-puzzle-team-a",
-              label: "Indtast Kombinationen (Hold A)",
-              description:
-                "Jeres hold fandt:\n— Terrasse-nedtællingen begyndte ved 6\n— Den beskadigede inventarlinje placerede køleren ved genstand 7\n— Skuret advarede jer om at bruge rækkefølge, ikke matematik\n\nPlacer de to tal i rækkefølge. Hvilke to cifre åbner låsen?",
-              puzzlePrompt:
-                "Låsen beder om en sekvens, ikke en beregning.\nBrug sporet om hvad kom først, derefter hvad der holdt det.\nIndtast de to cifre i rækkefølge.",
-              hint: "Først tabt, derefter låst. Nedtællingen fortæller hvad der kom først. Inventaret fortæller hvad der holdt det.",
-              rewardText:
-                "KLIK. Låsen reagerer. Køleren tager alvorlig skade. Jeres hold er tæt på.",
-              failureText:
-                "Låsen er uimponeret. Tænk på hvad I fandt først — og hvad I fandt det låst inde i.",
-            },
-            {
-              id: "cooler-clue-check-team-b",
-              label: "Anvend Tidsformatet (Hold B)",
-              description:
-                "Den iturevne kvittering i skuret viste et beskadiget tidsstempel — kun kolonen var tilbage. Noten sagde: \"Timen kom fra gelænderet. Minutterne kom fra listen.\" Jeres hold har begge tal.",
-              rewardText:
-                "Tidsformatet klikker. Kvitteringssporet er bekræftet. Jeres tal passer ind som timer og minutter.",
-              failureText:
-                "Du har brug for Iturevet Tidsstempel-sporet fra Skuret først. Gå tilbage og find det.",
-            },
-            {
-              id: "cooler-puzzle-team-b",
-              label: "Indtast Kombinationen (Hold B)",
-              description:
-                "Jeres hold fandt:\n— Terrasse-gelænderet var ridset af 4 forskellige personer (timen)\n— Det gyldige inventarantal var 8 (minutterne)\n— Den iturevne kvittering fortalte jer at formatere det som et klokkeslæt\n\nHvilket klokkeslæt åbner kvitteringslåsen?",
-              puzzlePrompt:
-                "Brug de to tal som dele af et ur, ikke som et normalt tal.\nEt enkeltcifret antal timer har ofte brug for hjælp i timefeltet.\nIndtast klokkeslættet.",
-              hint: "Gelænderet giver timen (4 ristere). Inventaret giver minutterne (8 gyldige). Format: TT:MM.",
-              rewardText:
-                "KLIK. Det frosne kvitteringstidsstempel er bekræftet. Køleren skælver. Stor skade tilføjet.",
-              failureText:
-                "Låsen afviser det. Tjek formatet — skal timen have et foranstillet nul?",
-            },
-            {
-              id: "cooler-offer-boost",
-              label: "Tving Den Med Ritualstyrke",
-              description:
-                "Jeres hold har ikke alle sporene endnu, men er fast besluttet. Betal ritualomkostningen for at tvinge delvis fremgang igennem med ren kollektiv vilje.",
-              rewardText:
-                "Tre Offers betalt. Køleren registrerer jeres engagement. Noget giver en smule efter. 15 skade tilføjet.",
-            },
-            {
-              id: "cooler-grand-offering",
-              label: "Den Store Offergave",
-              description:
-                "Jeres hold har kæmpet. Køleren har modstået. Afslut det nu med Den Store Offergave — betal det maksimale tribut og tving låsen op med ren ritualstyrke.",
-              rewardText:
-                "Syv Offers. Køleren kan ikke modstå et sådant engagement. Låsen kapitulerer. Den Store Offergave er fuldført.",
-            },
+            { id: "mads-cooler", label: "Bær den tunge køler", rewardText: "Køleren er inde. 20 fremskridt.", failureText: "Den er for tung til én person." },
+            { id: "mads-beer", label: "Tag ølkasserne fra bagagerummet", rewardText: "Øl inde. 20 fremskridt." },
+            { id: "mads-door", label: "Hold døren mens han klemmer sig igennem", rewardText: "Sovepose inde. 20 fremskridt." },
+            { id: "mads-sleeping-bag", label: "Find plads til soveposen", rewardText: "Pose stuvet. 20 fremskridt." },
+            { id: "mads-phone", label: "Hjælp ham med at finde sin telefon", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger den altid der og glemmer det altid.\" Hvad finder du?", hint: "Han fortalte dig netop hvor han lagde den.", rewardText: "Telefonen. I solskærmen. Mads åbner sin noter-app. Der — én post. Det sidste kodefragment.", failureText: "Bilen er rodet end den ser ud." },
+            { id: "mads-offer-boost", label: "Bestik Mads med et Offer", rewardText: "Mads sætter pris på bidraget. 25 fremskridt." },
           ],
         },
       ],
@@ -217,140 +134,426 @@ export const BOSSES: Boss[] = [
   },
 
   // ==========================================
-  // CHAPTER 2 BOSS — The Fake Bottle Opener (stub)
+  // ACT 2 BOSS — THE RADIO
+  // HP label: "Signal Strength"
+  // Defeat is cinematic — triggers Act 2→3 transition
   // ==========================================
   {
-    id: "fake-bottle-opener",
-    chapterId: "chapter-2",
-    title: "The Fake Bottle Opener",
-    subtitle: "It opens nothing. That is the point.",
-    description: "TODO: Chapter 2 boss content.",
-    icon: "🔧",
+    id: "the-radio",
+    chapterId: "act-2",
+    title: "The Radio",
+    subtitle: "Old bakelite. Green dial. It has been trying to tell you something all evening.",
+    description:
+      "The old brown bakelite radio in the dining room. It has been crackling since you arrived. A green tuner dial. A fraying antenna. You've collected fragments of what it's been saying all evening — across the living room, the kitchen, the activity room. Now it's time to fix it and hear the broadcast clearly.",
+    icon: "📻",
     look: {
-      icon: "🔧",
-      atmosphere: "TODO: Chapter 2 boss atmosphere",
-      colorFrom: "from-purple-950",
+      icon: "📻",
+      atmosphere:
+        "The dining room, evening. The long pine table, eight chairs, candles burning. On the shelf: the radio. The green dial glows faintly. The static is low but constant. The sound fills the room in a way that makes it hard to tell if it's coming from inside or outside your head.",
+      colorFrom: "from-amber-950",
       colorTo: "to-stone-900",
-      backgroundStyle: "metal-dark",
+      backgroundStyle: "warm-dining-radio",
     },
     maxHp: 120,
-    phases: [],
-    defeatText: "TODO: Chapter 2 boss defeat text.",
-    victoryAdvantage: "TODO: Chapter 2 victory advantage.",
-  },
-
-  // ==========================================
-  // CHAPTER 3 / FINAL BOSS — The Opposing Team
-  // Each team fights the OTHER team in a head-to-head showdown.
-  // Questions are about the opposing team's players — answered live.
-  // ==========================================
-  {
-    id: "last-cold-beer",
-    chapterId: "chapter-3",
-    title: "The Opposing Team",
-    subtitle: "Your final boss has a name. Several, actually.",
-    description:
-      "The ritual reaches its end. The last cold beer stands in the center of the table. But it cannot be opened by solving a puzzle — it can only be opened by defeating the opposing team in a direct showdown. Questions about them. Challenges against them. One team opens the beer. One team watches.",
-    icon: "⚔️",
-    look: {
-      icon: "⚔️",
-      atmosphere:
-        "The two teams face each other. The beer is in the center. Someone is going to open it — but only after the other team has been tested, questioned, and humbled. The ritual demands a verdict.",
-      colorFrom: "from-red-950",
-      colorTo: "to-amber-900",
-      backgroundStyle: "battle-ground",
-    },
-    maxHp: 150,
+    requiredRoomIds: ["living-room", "kitchen-act2", "activity-room"],
     phases: [
       {
         phase: 1,
-        title: "The Interrogation",
-        description:
-          "Phase 1: Your team asks the opposing team three questions about themselves. Each correct answer by the opposing team counts as resistance. Each wrong answer deals damage to their boss HP.",
+        title: "Static",
+        description: "The signal is barely there. You have all three fragments. Start restoring.",
         hpThreshold: 100,
         actions: [
           {
-            id: "final-p1-trivia",
-            label: "Ask the Trivia Round",
+            id: "radio-antenna",
+            label: "Adjust the antenna",
             description:
-              "Your team asks the opposing team: what was the most embarrassing thing that happened on a previous cabin trip? The opposing team must answer. If the full group agrees the answer is genuine and specific, the boss takes full damage. If it's vague or dodged, pay the toll.",
+              "The antenna is bent at a wrong angle — not broken, just wrong. Someone has been at it. Straighten it. Try different positions. The static changes pitch when you're close.",
             type: "social",
-            damage: 30,
-            rewardText: "The opposing team answered. The ritual registers it. 30 damage dealt.",
-            failureText: "The opposing team dodged the question. The boss is unmoved.",
+            damage: 25,
+            rewardText:
+              "The antenna finds a position. The static thins slightly. Signal strength climbing. 25 HP restored.",
+            failureText: "The static is unchanged. Try a different angle.",
           },
           {
-            id: "final-p1-offer-boost",
-            label: "Press the Attack",
-            description: "Your team pays the ritual cost to press harder. No mercy.",
+            id: "radio-fuse",
+            label: "Replace the fuse",
+            description:
+              "Behind the back panel — a small compartment. Inside: a blown fuse. There's a spare taped to the inside of the panel door. Someone knew this would happen.",
+            type: "puzzle",
+            damage: 30,
+            puzzle: {
+              prompt:
+                "The replacement fuse is taped to the inside of the panel door. A note beside it, in handwriting you don't recognise: \"Not the first time. Won't be the last. Match the rating exactly.\" The blown fuse reads: 250mA. The spare reads: 250mA. What do you do?",
+              answer: ["replace", "swap", "install", "put it in", "use the spare", "erstat", "sæt den i"],
+            },
+            hint: "The note says to match the rating exactly. Both fuses match. The answer is obvious.",
+            rewardText:
+              "The fuse is replaced. The green dial brightens — visibly. Something is waking up in there. 30 HP restored.",
+            failureText: "The panel closes. The static continues. Think about what the note said.",
+          },
+          {
+            id: "radio-frequency",
+            label: "Tune the frequency",
+            description:
+              "The dial clicks in small increments. You have three fragments of the broadcast from across the house. Try to find the frequency where all three resolve into one sentence.",
+            type: "clue_check",
+            damage: 35,
+            requiredClueId: "radio-fragment-activity",
+            rewardText:
+              "The dial locks in. The green light blazes. Signal strength at maximum. One more action and the broadcast will be clear.",
+            failureText:
+              "You need all three radio fragments first — from the living room, the kitchen, and the activity room.",
+          },
+          {
+            id: "radio-offer-boost",
+            label: "Pour one out for the radio",
+            description: "Pay the ritual cost. The radio responds to sincerity.",
             type: "offer_boost",
             damage: 20,
-            offerCost: 3,
-            rewardText: "The pressure works. 20 damage dealt.",
+            offerCost: 2,
+            rewardText: "The static softens. 20 HP restored.",
           },
         ],
       },
       {
         phase: 2,
-        title: "The Challenge Round",
-        description:
-          "Phase 2: Direct challenges. Your team issues physical or social challenges to the opposing team. The host judges.",
-        hpThreshold: 66,
+        title: "Signal Locked",
+        description: "The signal is almost clear. One final action and the radio will broadcast.",
+        hpThreshold: 40,
         actions: [
           {
-            id: "final-p2-challenge",
-            label: "Issue a Cabin Challenge",
+            id: "radio-speaker",
+            label: "Clean the speaker grille",
             description:
-              "Your team issues a challenge to the opposing team — a physical feat, a performance, or a truth. The opposing team must attempt it. The host and full group vote on success. Success = full damage. Fail = half damage.",
+              "The grille is dusty — years of it. A cloth, a gentle hand. The sound needs somewhere to go.",
             type: "social",
-            damage: 35,
-            rewardText: "Challenge accepted and executed. The beer shifts toward your team. 35 damage.",
-            failureText: "They attempted it. Not quite. Half credit.",
-          },
-          {
-            id: "final-p2-offer-boost",
-            label: "Double Down",
-            description: "Pay the cost to deal bonus damage regardless of the outcome.",
-            type: "offer_boost",
-            damage: 15,
-            offerCost: 4,
-            rewardText: "You paid to press harder. 15 extra damage.",
-          },
-        ],
-      },
-      {
-        phase: 3,
-        title: "The Final Verdict",
-        description:
-          "Phase 3: The ritual demands a final verdict. One person from the opposing team must be named as the one who was most responsible for this weekend — for good or ill. The group votes.",
-        hpThreshold: 33,
-        actions: [
-          {
-            id: "final-p3-verdict",
-            label: "Deliver the Verdict",
-            description:
-              "Name one person from the opposing team as the MVP of this ritual weekend. Give a reason. The group applauds or boos. Majority rules. Deliver the verdict and the boss falls.",
-            type: "social",
-            damage: 50,
+            damage: 40,
             rewardText:
-              "The verdict is delivered. The opposing team has been named, judged, and honored. The last cold beer can now be opened. The ritual is complete.",
-            failureText: "The group is divided. Try again — someone must be named.",
+              "The grille is clear. The radio is ready. Complete the signal.",
+            failureText: "The grille resists. Try harder.",
           },
           {
-            id: "final-p3-grand-offering",
-            label: "The Grand Offering",
-            description: "Skip the verdict. End it with maximum ritual power.",
+            id: "radio-wire",
+            label: "Reconnect the loose wire",
+            description:
+              "There is one wire inside the back that is nearly disconnected. Someone pulled it most of the way out. Re-seat it.",
+            type: "social",
+            damage: 40,
+            rewardText:
+              "The wire clicks in. The green light holds steady. The radio is ready to speak.",
+          },
+          {
+            id: "radio-final-offer",
+            label: "Grand Offering to the Signal",
+            description: "Pay the maximum tribute. The radio will respond.",
             type: "offer_boost",
-            damage: 60,
-            offerCost: 8,
-            rewardText: "Eight Offers. The ritual acknowledges your sacrifice. The boss falls. The beer is yours.",
+            damage: 50,
+            offerCost: 4,
+            rewardText: "The signal locks. The broadcast begins.",
           },
         ],
       },
     ],
     defeatText:
-      "The opposing team has been defeated — questioned, challenged, and judged. The last cold beer belongs to your team. Open it together. The ritual is complete.",
-    victoryAdvantage: "The winning team opens the Last Cold Beer. One can. One team. The ritual ends here.",
+      "Signal locked in. Green light blazes.\n\nThe radio broadcasts clearly — one moment of absolute clarity.\n\n*\"The last one to take it... will always be the one to finish it.\"*\n\nA beat of silence.\n\nThe light overloads. White flash.\n\nThe house goes dark.\n\n*\"The house goes dark.\"*",
+    victoryAdvantage:
+      "Act 3 begins. The house is dark. You are in the dining room. Find a way to see.",
+    da: {
+      title: "Radioen",
+      subtitle: "Gammel bakelit. Grøn skive. Den har forsøgt at fortælle dig noget hele aftenen.",
+      description:
+        "Den gamle brune bakelit-radio i spisestuen. Den har knatret siden I ankom.",
+      atmosphere:
+        "Spisestuen, aften. Det lange fyrretræsbord, otte stole, stearinlys. På hylden: radioen. Den grønne skive lyser svagt.",
+      defeatText:
+        "Signal låst. Grønt lys blusser op.\n\nRadioen sender klart — ét øjeblik af absolut klarhed.\n\n*\"Den sidste der tog det... vil altid være den der afslutter det.\"*\n\nEt slag af stilhed.\n\nLyset overlaster. Hvid flash.\n\nHuset bliver mørkt.\n\n*\"Huset bliver mørkt.\"*",
+      victoryAdvantage:
+        "Akt 3 begynder. Huset er mørkt. Du er i spisestuen. Find en måde at se på.",
+      phases: [
+        {
+          phase: 1, title: "Statisk", description: "Signalet er næppe der. Start med at gendanne.",
+          actions: [
+            { id: "radio-antenna", label: "Juster antennen", rewardText: "Antennen finder en position. Signalstyrken stiger. 25 HP genoprettet.", failureText: "Statikken er uændret." },
+            { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Erstatningssikringen er klistret til indersiden af paneldøren. En seddel ved siden af den: \"Ikke første gang. Vil ikke være den sidste. Match vurderingen præcis.\" Hvad gør du?", hint: "Begge sikringer matcher. Svaret er indlysende.", rewardText: "Sikringen er udskiftet. Den grønne skive lyser op. 30 HP genoprettet.", failureText: "Panelet lukker. Statikken fortsætter." },
+            { id: "radio-frequency", label: "Stem frekvensen", rewardText: "Skiven låser. Det grønne lys blusser. 35 HP genoprettet.", failureText: "Du har brug for alle tre radiofragmenter først." },
+            { id: "radio-offer-boost", label: "Hæld en ud til radioen", rewardText: "Statikken dæmpes. 20 HP genoprettet." },
+          ],
+        },
+        {
+          phase: 2, title: "Signal Låst", description: "Signalet er næsten klart.",
+          actions: [
+            { id: "radio-speaker", label: "Rens højttalergitteret", rewardText: "Gitteret er rent. Radioen er klar.", failureText: "Gitteret modstår." },
+            { id: "radio-wire", label: "Genopret det løse kabel", rewardText: "Kablet klikker på plads. Det grønne lys holder stabil." },
+            { id: "radio-final-offer", label: "Stoffer til Signalet", rewardText: "Signalet låser. Udsendelsen begynder." },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ==========================================
+  // ACT 3 BOSS — YOURSELVES
+  // HP label: "Recognition"
+  // 3 phases: Denial → Recognition → Acceptance
+  // Defeat = culprit reveal
+  // ==========================================
+  {
+    id: "yourselves",
+    chapterId: "act-3",
+    title: "YOURSELVES",
+    subtitle: "The previous visitors. The ones who left all of this behind.",
+    description:
+      "The living room. The group is back together. The radio is silent. The stove is cold. Everything you found tonight — the bedroom notes, the date list, the sealed wall, the note in the shed signed with almost-your-names — points here. The boss fight is the house forcing a recognition. You are not fighting a monster. You are fighting your own denial.",
+    icon: "👥",
+    look: {
+      icon: "👥",
+      atmosphere:
+        "The living room in darkness. The sofa, the shelf of paperbacks, the cold stove. The group stands in a circle. The note from the shed is on the table. The date list photo is on someone's phone. Everything is here. The house has been trying to tell you something all evening. Now it makes you listen.",
+      colorFrom: "from-stone-950",
+      colorTo: "to-zinc-950",
+      backgroundStyle: "dark-living-boss",
+    },
+    maxHp: 150,
+    requiredRoomIds: ["shed-dark", "door-nobody-tried"],
+    phases: [
+      {
+        phase: 1,
+        title: "Denial",
+        description:
+          "*\"This can't be us.\"* — Actions establish uncomfortable familiarity. Things the group knows without knowing why.",
+        hpThreshold: 100,
+        actions: [
+          {
+            id: "yourselves-finish-sentence",
+            label: "Finish the sentence",
+            description:
+              "The note from the Double Room trails off mid-sentence: *\"I know we said we'd come back and finish what we—\"*\n\nSomeone in the group speaks the ending aloud. Any ending. The house accepts it.",
+            type: "social",
+            damage: 30,
+            rewardText:
+              "Someone said it. The house registered it. Recognition creeping in. 30 HP.",
+            failureText: "The sentence hangs unfinished. Someone must complete it.",
+          },
+          {
+            id: "yourselves-layout",
+            label: "You knew the layout",
+            description:
+              "Did anyone hesitate before any door tonight? Think back. The dining room, the corridor, the door nobody tried. Did you know where to look, without knowing why you knew?",
+            type: "choice",
+            damage: 25,
+            choices: [
+              {
+                id: "yes-hesitated",
+                label: "Yes — I hesitated",
+                description: "You paused before a specific door. You already knew what was behind it.",
+                isCorrect: true,
+                consequence: "The house notes this. Both answers matter equally. Recognition climbs.",
+              },
+              {
+                id: "no-first-time",
+                label: "No — first time here",
+                description: "You moved through the house fresh, as if seeing it for the first time.",
+                isCorrect: true,
+                consequence: "The house notes this too. Both answers register. That's the point.",
+              },
+            ],
+            rewardText: "The house is listening. Your answer — either answer — matters. 25 HP.",
+          },
+          {
+            id: "yourselves-shed-note-recall",
+            label: "Describe the shed note without looking at it",
+            description:
+              "Your team found the shed date list in Act 1. Describe it from memory — what was crossed out, what wasn't, what the last entry said.",
+            type: "puzzle",
+            damage: 30,
+            puzzle: {
+              prompt:
+                "Describe the shed date list from memory. What was on it? What made it wrong?\n\nAccepted: describe the list of dates, that today's date is uncrossed, that all others are crossed out.",
+              answer: [
+                "crossed out", "overstreget", "today", "i dag", "uncrossed", "ikke overstreget",
+                "july", "juli", "dates", "datoer", "list", "liste",
+              ],
+            },
+            hint: "The list of dates. All crossed out except the last one. The last one is today.",
+            rewardText:
+              "The group remembers. Without looking at a photo, without checking notes. You just knew. 30 HP.",
+            failureText: "The memory is fuzzy. Look at the clue if you need to — but this should be familiar.",
+          },
+        ],
+      },
+      {
+        phase: 2,
+        title: "Recognition",
+        description:
+          "*\"We've done this before.\"* — Actions force specific acknowledgements. Details only the previous visitors would know.",
+        hpThreshold: 60,
+        actions: [
+          {
+            id: "yourselves-handwriting",
+            label: "Whose handwriting is in the Double Room?",
+            description:
+              "The half-finished note in the Double Room. The group must name a player — whoever they think wrote it. The correct answer is the culprit. Any name is accepted. The tension is in the debate.",
+            type: "social",
+            damage: 35,
+            rewardText:
+              "A name is named. The house does not confirm or deny. But someone in the group feels it land. 35 HP.",
+            failureText: "Someone must be named. The house requires it.",
+          },
+          {
+            id: "yourselves-bunk-reads",
+            label: "What did the Bunk Room know?",
+            description:
+              "The player who completed the bunk room reads the note aloud to the group. All of it. Their scared-silent status ended when the Living Room was cleared in Act 2 — they've been able to speak normally through all of Act 3.",
+            type: "social",
+            damage: 30,
+            rewardText:
+              "*\"It was taken. It is always taken. The room where everyone gathers holds the rest.\"* Read aloud. The group hears it with different weight now. 30 HP.",
+            failureText: "The bunk room player must read the note aloud.",
+          },
+          {
+            id: "yourselves-stand-where-you-slept",
+            label: "Stand where you slept",
+            description:
+              "Physical challenge. Each player moves to the room they entered in Act 2 — the bedroom they claimed. 30 seconds. Then return.",
+            type: "puzzle",
+            damage: 25,
+            physicalChallenge: {
+              timerSeconds: 45,
+              startLabel: "Begin — scatter to your rooms",
+              activeEmoji: "🛌",
+              bannerText: "Everyone is in the room they slept in",
+              completeLabel: "Back together — the house noticed",
+            },
+            puzzle: {
+              prompt: "Confirm: did everyone return to their bedroom and come back?",
+              answer: ["yes", "ja", "done", "færdig", "complete"],
+            },
+            rewardText: "The house watched. You moved through it like you'd done it before. 25 HP.",
+          },
+          {
+            id: "yourselves-silence",
+            label: "Say nothing for 45 seconds",
+            description:
+              "Physical challenge. The house waits. Full silence. Phones down. Nobody types. Nobody speaks. 45 seconds.",
+            type: "puzzle",
+            damage: 30,
+            physicalChallenge: {
+              timerSeconds: 45,
+              startLabel: "Begin silence",
+              activeEmoji: "🤫",
+              bannerText: "The house is listening",
+              completeLabel: "The silence is over",
+            },
+            puzzle: {
+              prompt: "Confirm: did the group hold silence for the full 45 seconds?",
+              answer: ["yes", "ja", "done", "færdig"],
+            },
+            rewardText: "45 seconds of nothing. The house noticed. 30 HP.",
+          },
+        ],
+      },
+      {
+        phase: 3,
+        title: "Acceptance",
+        description:
+          "*\"We are the ones who didn't finish.\"* — Actions are acts of completion.",
+        hpThreshold: 20,
+        actions: [
+          {
+            id: "yourselves-name-taken",
+            label: "Name what was taken",
+            description:
+              "One thing was taken from this house. Not furniture. Not money. The one thing that required the house to keep its books open, to keep the date list running, to never cross tonight off. Name it.",
+            type: "puzzle",
+            damage: 40,
+            puzzle: {
+              prompt: "What was taken?\n\n(The radio said it. The note in the Double Room implies it. The game is named after it.)",
+              answer: [
+                "the last cold beer", "the beer", "last cold beer", "cold beer",
+                "øl", "den kolde øl", "den sidste kolde øl", "beer",
+              ],
+            },
+            hint: "The last. Cold. Beer.",
+            rewardText:
+              "Named. The house closes one ledger. One account remains open. 40 HP.",
+            failureText: "The answer is in the name of the game.",
+          },
+          {
+            id: "yourselves-radio-words",
+            label: "Say the radio's words together",
+            description:
+              "The whole group types — or speaks aloud — the broadcast line. All of it. Together.",
+            type: "puzzle",
+            damage: 40,
+            puzzle: {
+              prompt:
+                "Type the radio's broadcast — the exact words heard when the signal locked in Act 2.\n\n\"The last one to take it... will always be the one to finish it.\"",
+              answer: [
+                "the last one to take it will always be the one to finish it",
+                "the last one to take it... will always be the one to finish it",
+                "den sidste der tog det vil altid være den der afslutter det",
+              ],
+            },
+            hint: "The radio said it in Act 2. You heard it before the house went dark.",
+            rewardText:
+              "The words spoken. All of them, together. The house receives this. 40 HP.",
+            failureText: "Say exactly what the radio broadcast. All of it.",
+          },
+          {
+            id: "yourselves-ready",
+            label: "We're ready.",
+            description:
+              "The final action. No puzzle. No answer. One button. The house has made its case. The group has made their acknowledgement. Press it when you mean it.",
+            type: "social",
+            damage: 50,
+            rewardText:
+              "The partial light steadies.\n\n*(beat)*\n\n*\"You've been here before.\"*\n\n*(beat)*\n\n*\"All of you.\"*\n\n*(beat)*\n\n*\"Except one of you took something.\"*",
+          },
+        ],
+      },
+    ],
+    defeatText:
+      "The partial light steadies.\n\n*\"You've been here before.\"*\n\n*\"All of you.\"*\n\n*\"Except one of you took something.\"*\n\nThe culprit is revealed.",
+    victoryAdvantage:
+      "The game ends. The culprit is named. The last cold beer is in their hands.",
+    da: {
+      title: "JER SELV",
+      subtitle: "De tidligere besøgere. Dem der efterlod alt dette.",
+      description:
+        "Stuen. Gruppen er samlet igen. Radioen er stille. Ovnen er kold. Alt hvad I fandt i aften peger her.",
+      atmosphere:
+        "Stuen i mørket. Sofaen, hylden med paperbacks, den kolde ovn. Gruppen står i en cirkel.",
+      defeatText:
+        "Det delvise lys stabiliserer sig.\n\n*\"I har været her før.\"*\n\n*\"Alle jer.\"*\n\n*\"Undtagen én af jer tog noget.\"*\n\nSkylden afsløres.",
+      victoryAdvantage: "Spillet slutter. Den skyldige navngives. Den sidste kolde øl er i deres hænder.",
+      phases: [
+        {
+          phase: 1, title: "Fornægtelse", description: "*\"Det kan ikke være os.\"*",
+          actions: [
+            { id: "yourselves-finish-sentence", label: "Afslut sætningen", rewardText: "Nogen sagde det. Huset registrerede det. 30 HP.", failureText: "Sætningen hænger uafsluttet." },
+            { id: "yourselves-layout", label: "Du kendte plantegningen", rewardText: "Huset lytter. Dit svar — begge svar — betyder noget. 25 HP." },
+            { id: "yourselves-shed-note-recall", label: "Beskriv skursedlen uden at se på den", hint: "Listen af datoer. Alle overstreget undtagen den sidste. Den sidste er i dag.", rewardText: "Gruppen husker. Uden at kigge på et foto. 30 HP.", failureText: "Hukommelsen er uklar." },
+          ],
+        },
+        {
+          phase: 2, title: "Genkendelse", description: "*\"Vi har gjort dette før.\"*",
+          actions: [
+            { id: "yourselves-handwriting", label: "Hvems håndskrift er i dobbeltværelset?", rewardText: "Et navn er navngivet. 35 HP.", failureText: "Nogen skal navngives." },
+            { id: "yourselves-bunk-reads", label: "Hvad vidste køjestuen?", rewardText: "Læst højt. Gruppen hører det med anden vægt nu. 30 HP.", failureText: "Køjestuens spiller skal læse sedlen højt." },
+            { id: "yourselves-stand-where-you-slept", label: "Stå hvor du sov", rewardText: "Huset så til. I bevægede jer igennem det som om I havde gjort det før. 25 HP." },
+            { id: "yourselves-silence", label: "Sig ingenting i 45 sekunder", rewardText: "45 sekunders ingenting. Huset lagde mærke til det. 30 HP." },
+          ],
+        },
+        {
+          phase: 3, title: "Accept", description: "*\"Vi er dem der ikke afsluttede det.\"*",
+          actions: [
+            { id: "yourselves-name-taken", label: "Navngiv hvad der blev taget", hint: "Den sidste. Kolde. Øl.", rewardText: "Navngivet. 40 HP.", failureText: "Svaret er i spillets navn." },
+            { id: "yourselves-radio-words", label: "Sig radioens ord sammen", hint: "Radioen sagde det i Akt 2.", rewardText: "Ordene sagt. Alle af dem, sammen. 40 HP.", failureText: "Sig præcis hvad radioen sendte." },
+            { id: "yourselves-ready", label: "Vi er klar.", rewardText: "Det delvise lys stabiliserer sig.\n\n*(slag)*\n\n*\"I har været her før.\"*\n\n*(slag)*\n\n*\"Alle jer.\"*\n\n*(slag)*\n\n*\"Undtagen én af jer tog noget.\"*" },
+          ],
+        },
+      ],
+    },
   },
 ];
 

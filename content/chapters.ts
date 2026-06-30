@@ -1,67 +1,81 @@
 import type { Chapter } from "@/types/content";
 
 export const CHAPTERS: Chapter[] = [
+  // ==========================================
+  // ACT 1 — THE ARRIVAL
+  // Outside. Late afternoon. Golden hour.
+  // ==========================================
   {
-    id: "chapter-1",
-    title: "Arrival",
-    subtitle: "Something is wrong with the fridge.",
+    id: "act-1",
+    title: "The Arrival",
+    subtitle: "Mads is late. The key box has a code. Nobody knows the code.",
     description:
-      "The cars are parked. The bags are dumped. Someone has already claimed the best bed. And there, alone in the otherwise empty fridge, is a single beer — perfectly cold, covered in condensation — with a handwritten note taped to it: \"Only the worthy may open me.\" No one admits to putting it there.",
+      "The cars are parked. Bags on the gravel. The summerhouse is right there — but the front door has a key box, and the only person with the code isn't answering his phone. You explore the garden, the terrace, the shed. Something out here doesn't add up.",
     order: 1,
-    bossId: "locked-cooler",
-    roomIds: ["kitchen", "fridge", "coffee-table", "terrace", "shed"],
-    startingRoomIds: ["kitchen"], // kitchen is free, others must be unlocked
+    bossId: "mads",
+    roomIds: ["driveway", "terrace", "garden", "shed", "petanque-court", "front-door", "carport"],
+    startingRoomIds: ["driveway"],
     theme: {
       primaryColor: "amber",
-      accentColor: "blue",
-      backgroundClass: "from-amber-950 to-amber-900",
-      emoji: "🏡",
+      accentColor: "green",
+      backgroundClass: "from-amber-950 to-stone-950",
+      emoji: "🌅",
     },
   },
+
+  // ==========================================
+  // ACT 2 — SETTLING IN
+  // Inside. Evening. Warm lamplight.
+  // ==========================================
   {
-    id: "chapter-2",
-    title: "Suspicion",
-    subtitle: "The cabin remembers what happened.",
+    id: "act-2",
+    title: "Settling In",
+    subtitle: "Three bedrooms. Three stories. One radio that won't stop crackling.",
     description:
-      "Last year's trip left scars. Someone broke the pact. The cabin has not forgotten. As you dig deeper into the mystery, old receipts and dead group chats start to tell a different story than the one you remember.",
+      "The door is open. People find their rooms. The house is warm and smells of pine and old summers. But the radio in the dining room has been crackling since you walked in — and the static isn't quite random.",
     order: 2,
-    bossId: "fake-bottle-opener",
+    bossId: "the-radio",
     roomIds: [
-      "old-group-chat",
-      "garden-chair",
-      "store-receipt",
-      "false-alibi",
-      "playlist-from-hell",
+      "double-room", "single-room", "bunk-room",
+      "living-room", "sunroom",
+      "dining-room", "kitchen-act2", "activity-room",
+      "darts-board", "foosball-table",
     ],
-    startingRoomIds: ["old-group-chat"],
+    startingRoomIds: ["double-room", "single-room", "bunk-room"],
     theme: {
-      primaryColor: "purple",
+      primaryColor: "orange",
       accentColor: "amber",
-      backgroundClass: "from-purple-950 to-purple-900",
-      emoji: "🕵️",
+      backgroundClass: "from-stone-900 to-amber-950",
+      emoji: "🏠",
     },
   },
+
+  // ==========================================
+  // ACT 3 — THE LATE NIGHT
+  // Full property. Darkness.
+  // ==========================================
   {
-    id: "chapter-3",
-    title: "Judgement",
-    subtitle: "The truth must be uncovered.",
+    id: "act-3",
+    title: "The Late Night",
+    subtitle: "The house goes dark. You already know the way.",
     description:
-      "The final night. Every clue points somewhere. Every alibi has a hole. One team must face the Last Cold Beer itself — and account for what was done. The cabin demands a verdict.",
+      "The house is dark. The radio is silent. You are in the dining room and the lights don't work. Everything you found tonight is about to mean something different.",
     order: 3,
-    bossId: "last-cold-beer",
+    bossId: "yourselves",
     roomIds: [
-      "rules-of-the-ritual",
-      "final-ballot",
-      "alphabet-of-caps",
-      "missing-tradition",
-      "nightstand-secret",
+      "dining-room-dark", "utility-corner",
+      "back-corridor", "fuse-box",
+      "kitchen-dark", "broken-window",
+      "door-nobody-tried", "sealed-wall",
+      "behind-the-shed", "conservatory", "shed-dark",
+      "living-room-boss",
     ],
-    startingRoomIds: ["rules-of-the-ritual"],
+    startingRoomIds: ["dining-room-dark"],
     theme: {
-      primaryColor: "green",
+      primaryColor: "stone",
       accentColor: "red",
-      backgroundClass: "from-green-950 to-stone-900",
-      emoji: "⚖️",
+      backgroundClass: "from-stone-950 to-zinc-950",
+      emoji: "🕯️",
     },
   },
 ];

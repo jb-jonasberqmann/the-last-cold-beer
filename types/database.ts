@@ -5,7 +5,7 @@ import type { TeamId } from "./content";
 
 export type GameStatus = "lobby" | "active" | "complete";
 export type TeamStatus = "exploring" | "solving" | "at_boss" | "waiting" | "chapter_complete";
-export type RoomStatus = "locked" | "unlocked" | "active" | "complete";
+export type RoomStatus = "locked" | "unlocked" | "active" | "complete" | "occupied";
 export type QuestStatus = "active" | "completed" | "failed" | "skipped";
 export type BossStatus = "locked" | "active" | "defeated";
 
@@ -24,12 +24,16 @@ export interface DbGame {
   updated_at: string;
 }
 
+export type PlayerStatus = "normal" | "scared_silent";
+
 export interface DbPlayer {
   id: string;
   game_id: string;
   name: string;
   team_id: TeamId | null;
   is_host: boolean;
+  is_culprit: boolean;
+  player_status: PlayerStatus;
   created_at: string;
 }
 
@@ -53,6 +57,7 @@ export interface DbRoomProgress {
   team_id: TeamId;
   room_id: string;
   status: RoomStatus;
+  occupant_player_id: string | null; // for single-occupancy rooms
   unlocked_at: string | null;
   completed_at: string | null;
 }
@@ -107,17 +112,22 @@ export interface DbBossProgress {
 export type GameEventType =
   | "room_unlocked"
   | "room_completed"
+  | "room_occupied"           // single-occupancy bedroom claimed
   | "clue_found"
   | "quest_completed"
   | "boss_damaged"
   | "boss_phase_changed"
   | "boss_defeated"
   | "chapter_complete"
+  | "act_advanced"            // act transition (1→2 via key box, 2→3 via radio defeat)
   | "offer_paid"
   | "game_started"
   | "chapter_advanced"
-  | "role_assigned" // strawman / special roles
-  | "physical_challenge_started"; // team-wide timed physical challenge
+  | "scared_silent_set"       // bunk room complete — player can't type in living room
+  | "scared_silent_cleared"   // living room complete — player speaks again
+  | "culprit_revealed"        // YOURSELVES boss defeated — culprit shown
+  | "role_assigned"
+  | "physical_challenge_started";
 
 export interface DbGameEvent {
   id: string;

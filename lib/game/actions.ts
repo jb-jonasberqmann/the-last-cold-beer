@@ -30,7 +30,7 @@ export async function createGame(
 
   const gameRows = await sql`
     INSERT INTO games (code, offer_definition, team_a_name, team_b_name, status, current_chapter_id)
-    VALUES (${code}, ${offerDefinition}, ${teamAName}, ${teamBName}, 'lobby', 'chapter-1')
+    VALUES (${code}, ${offerDefinition}, ${teamAName}, ${teamBName}, 'lobby', 'act-1')
     RETURNING *
   `;
   const game = gameRows[0];
@@ -49,8 +49,8 @@ export async function createGame(
   await sql`
     INSERT INTO team_progress (game_id, team_id, current_chapter_id, status)
     VALUES
-      (${game.id}, 'team-a', 'chapter-1', 'exploring'),
-      (${game.id}, 'team-b', 'chapter-1', 'exploring')
+      (${game.id}, 'team-a', 'act-1', 'exploring'),
+      (${game.id}, 'team-b', 'act-1', 'exploring')
   `;
 
   return {
@@ -125,7 +125,7 @@ export async function startGame(gameId: string): Promise<ActionResult> {
     await sql`UPDATE players SET team_id = ${teamId} WHERE id = ${unassigned[i].id}`;
   }
 
-  const chapter = getChapter("chapter-1");
+  const chapter = getChapter("act-1");
   if (!chapter) return { success: false, error: "Chapter 1 not found." };
 
   const now = new Date().toISOString();
@@ -143,9 +143,12 @@ export async function startGame(gameId: string): Promise<ActionResult> {
 
   await sql`UPDATE games SET status = 'active', updated_at = ${now} WHERE id = ${gameId}`;
 
+  // Randomly assign culprit (one non-host player)
+  await _assignCulprit(gameId);
+
   await sql`
     INSERT INTO game_events (game_id, event_type, event_data)
-    VALUES (${gameId}, 'game_started', ${JSON.stringify({ chapter_id: "chapter-1" })}::jsonb)
+    VALUES (${gameId}, 'game_started', ${JSON.stringify({ chapter_id: "act-1" })}::jsonb)
   `;
 
   return { success: true, data: undefined };
@@ -171,6 +174,20 @@ export async function unlockRoom(
   `;
   if (existing[0] && existing[0].status !== "locked") {
     return { success: false, error: "Room already unlocked." };
+  }
+
+  // Check artifact prerequisites
+  if (room.unlockRequiresArtifacts && room.unlockRequiresArtifacts.length > 0) {
+    const teamClueRows = await sql`
+      SELECT clue_id FROM team_clues
+      WHERE game_id = ${gameId} AND team_id = ${teamId}
+        AND clue_id = ANY(${room.unlockRequiresArtifacts}::text[])
+    `;
+    const heldArtifacts = new Set((teamClueRows as { clue_id: string }[]).map((r) => r.clue_id));
+    const missingArtifacts = room.unlockRequiresArtifacts.filter((a) => !heldArtifacts.has(a));
+    if (missingArtifacts.length > 0) {
+      return { success: false, error: `Missing artifact(s): ${missingArtifacts.join(", ")}.` };
+    }
   }
 
   // Check prerequisites
@@ -252,6 +269,30 @@ export async function submitQuestAnswer(
             ${JSON.stringify({ quest_id: questId, room_id: quest.roomId })}::jsonb)
   `;
 
+  // Scared Silent: the bunk-room quest sets the answering player's flag
+  if (quest.setsScaredSilent) {
+    // We don't have playerId here — the flag will be set by the UI layer when it calls
+    // a dedicated setScaredSilent(gameId, playerId) helper below. Flag on quest for reference.
+    await sql`
+      INSERT INTO game_events (game_id, team_id, event_type, event_data)
+      VALUES (${gameId}, ${teamId}, 'scared_silent_set',
+              ${JSON.stringify({ quest_id: questId })}::jsonb)
+    `;
+  }
+
+  // Scared Silent cleared: living-room quest completion clears the whole team
+  if (quest.clearsScaredSilent) {
+    await sql`
+      UPDATE players SET player_status = 'normal'
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'scared_silent'
+    `;
+    await sql`
+      INSERT INTO game_events (game_id, team_id, event_type, event_data)
+      VALUES (${gameId}, ${teamId}, 'scared_silent_cleared',
+              ${JSON.stringify({ quest_id: questId })}::jsonb)
+    `;
+  }
+
   await _checkAndCompleteRoom(gameId, teamId, quest.roomId);
 
   return {
@@ -306,6 +347,26 @@ export async function completeQuest(
     VALUES (${gameId}, ${teamId}, 'quest_completed',
             ${JSON.stringify({ quest_id: questId, room_id: quest.roomId, choice_id: choiceId })}::jsonb)
   `;
+
+  // Scared Silent: social/choice quests can also set or clear the flag
+  if (quest.setsScaredSilent) {
+    await sql`
+      INSERT INTO game_events (game_id, team_id, event_type, event_data)
+      VALUES (${gameId}, ${teamId}, 'scared_silent_set',
+              ${JSON.stringify({ quest_id: questId })}::jsonb)
+    `;
+  }
+  if (quest.clearsScaredSilent) {
+    await sql`
+      UPDATE players SET player_status = 'normal'
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'scared_silent'
+    `;
+    await sql`
+      INSERT INTO game_events (game_id, team_id, event_type, event_data)
+      VALUES (${gameId}, ${teamId}, 'scared_silent_cleared',
+              ${JSON.stringify({ quest_id: questId })}::jsonb)
+    `;
+  }
 
   await _checkAndCompleteRoom(gameId, teamId, quest.roomId);
 
@@ -502,13 +563,28 @@ export async function dealBossDamage(
       INSERT INTO game_events (game_id, team_id, event_type, event_data)
       VALUES (${gameId}, ${teamId}, 'boss_defeated', ${JSON.stringify({ boss_id: bossId })}::jsonb)
     `;
-    // Record chapter 1 winner if not already set
     const bossContent = getBoss(bossId);
-    if (bossContent?.chapterId === "chapter-1") {
+
+    // Act 1 boss (Mads) defeated → record chapter winner
+    if (bossContent?.chapterId === "act-1") {
       await sql`
         UPDATE games SET chapter_1_winner = ${teamId}
         WHERE id = ${gameId} AND chapter_1_winner IS NULL
       `;
+    }
+
+    // Act 2 boss (The Radio) defeated → trigger Act 2→3 transition for this team
+    if (bossContent?.chapterId === "act-2") {
+      await advanceAct(gameId, "act-2", "act-3");
+    }
+
+    // Act 3 boss (YOURSELVES) defeated → emit culprit_revealed event; UI reads getCulpritReveal()
+    if (bossContent?.chapterId === "act-3") {
+      await sql`
+        INSERT INTO game_events (game_id, team_id, event_type, event_data)
+        VALUES (${gameId}, ${teamId}, 'culprit_revealed', ${JSON.stringify({ boss_id: bossId })}::jsonb)
+      `;
+      await sql`UPDATE games SET status = 'complete', updated_at = ${now} WHERE id = ${gameId}`;
     }
   }
 
@@ -705,12 +781,186 @@ export async function applyBossDamage(
   `;
 
   if (defeated) {
-    if (boss.chapterId === "chapter-1") {
+    if (boss.chapterId === "act-1") {
       await sql`UPDATE games SET chapter_1_winner = ${teamId} WHERE id = ${gameId} AND chapter_1_winner IS NULL`;
     }
   }
 
   return { success: true, data: { newHp, defeated } };
+}
+
+
+// ==========================================
+// SET SCARED SILENT
+// Called by UI right after the bunk-room answer quest succeeds —
+// marks the specific answering player so only THEY are silenced.
+// ==========================================
+
+export async function setScaredSilent(gameId: string, playerId: string): Promise<ActionResult> {
+  await sql`
+    UPDATE players SET player_status = 'scared_silent'
+    WHERE id = ${playerId} AND game_id = ${gameId}
+  `;
+  return { success: true, data: undefined };
+}
+
+// ==========================================
+// ENTER SINGLE-OCCUPANCY BEDROOM
+// First player to call this claims the room; all other team members are locked out.
+// ==========================================
+
+export async function enterBedroom(
+  gameId: string,
+  teamId: TeamId,
+  playerId: string,
+  roomId: string
+): Promise<ActionResult<{ claimed: boolean; occupantName?: string }>> {
+  const room = getRoom(roomId);
+  if (!room?.isSingleOccupancy) return { success: false, error: "Not a single-occupancy room." };
+
+  const existing = await sql`
+    SELECT status, occupant_player_id FROM room_progress
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND room_id = ${roomId}
+    LIMIT 1
+  `;
+
+  if (existing.length > 0) {
+    const row = existing[0] as { status: string; occupant_player_id: string | null };
+    if (row.status === "occupied" || row.status === "active" || row.status === "complete") {
+      // Room is already claimed — find occupant name
+      if (row.occupant_player_id && row.occupant_player_id !== playerId) {
+        const playerRows = await sql`
+          SELECT name FROM players WHERE id = ${row.occupant_player_id} LIMIT 1
+        `;
+        const occupantName = (playerRows[0] as { name: string } | undefined)?.name ?? "a teammate";
+        return { success: true, data: { claimed: false, occupantName } };
+      }
+      // This player already occupies it
+      return { success: true, data: { claimed: true } };
+    }
+  }
+
+  // Claim the room atomically
+  const now = new Date().toISOString();
+  const result = await sql`
+    INSERT INTO room_progress
+      (game_id, team_id, room_id, status, occupant_player_id, unlocked_at)
+    VALUES
+      (${gameId}, ${teamId}, ${roomId}, 'occupied', ${playerId}, ${now})
+    ON CONFLICT (game_id, team_id, room_id) DO UPDATE
+      SET status = CASE
+            WHEN room_progress.status = 'locked' THEN 'occupied'
+            ELSE room_progress.status
+          END,
+          occupant_player_id = CASE
+            WHEN room_progress.occupant_player_id IS NULL THEN ${playerId}
+            ELSE room_progress.occupant_player_id
+          END,
+          unlocked_at = COALESCE(room_progress.unlocked_at, ${now})
+    RETURNING occupant_player_id
+  `;
+
+  const claimedBy = (result[0] as { occupant_player_id: string })?.occupant_player_id;
+  if (claimedBy !== playerId) {
+    const playerRows = await sql`SELECT name FROM players WHERE id = ${claimedBy} LIMIT 1`;
+    const occupantName = (playerRows[0] as { name: string } | undefined)?.name ?? "a teammate";
+    return { success: true, data: { claimed: false, occupantName } };
+  }
+
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (${gameId}, ${teamId}, 'room_occupied',
+            ${ JSON.stringify({ room_id: roomId, player_id: playerId }) }::jsonb)
+  `;
+
+  return { success: true, data: { claimed: true } };
+}
+
+// ==========================================
+// ASSIGN CULPRIT
+// Called at game start once all players are assigned to teams.
+// One random non-host player is flagged is_culprit = true.
+// ==========================================
+
+async function _assignCulprit(gameId: string) {
+  const players = await sql`
+    SELECT id FROM players
+    WHERE game_id = ${gameId} AND is_host = FALSE AND team_id IS NOT NULL
+    ORDER BY random()
+    LIMIT 1
+  `;
+  if (players.length === 0) return;
+  await sql`UPDATE players SET is_culprit = TRUE WHERE id = ${players[0].id}`;
+}
+
+// ==========================================
+// ADVANCE ACT
+// Act 1→2: triggered after front-door key box solved.
+// Act 2→3: triggered automatically after radio boss defeated (called from dealBossDamage).
+// ==========================================
+
+export async function advanceAct(
+  gameId: string,
+  fromActId: string,
+  toActId: string
+): Promise<ActionResult> {
+  const now = new Date().toISOString();
+  const nextAct = getChapter(toActId);
+  if (!nextAct) return { success: false, error: `Act ${toActId} not found.` };
+
+  // Update game's current_chapter_id
+  await sql`UPDATE games SET current_chapter_id = ${toActId}, updated_at = ${now} WHERE id = ${gameId}`;
+
+  // Update both teams' current_chapter_id
+  await sql`UPDATE team_progress SET current_chapter_id = ${toActId}, updated_at = ${now} WHERE game_id = ${gameId}`;
+
+  // Unlock starting rooms for both teams in new act
+  for (const teamId of ["team-a", "team-b"] as TeamId[]) {
+    for (const roomId of nextAct.startingRoomIds) {
+      await sql`
+        INSERT INTO room_progress (game_id, team_id, room_id, status, unlocked_at)
+        VALUES (${gameId}, ${teamId}, ${roomId}, 'unlocked', ${now})
+        ON CONFLICT (game_id, team_id, room_id) DO NOTHING
+      `;
+    }
+  }
+
+  await sql`
+    INSERT INTO game_events (game_id, event_type, event_data)
+    VALUES (${gameId}, 'act_advanced',
+            ${ JSON.stringify({ from: fromActId, to: toActId }) }::jsonb)
+  `;
+
+  return { success: true, data: undefined };
+}
+
+// ==========================================
+// GET CULPRIT REVEAL
+// Only returns data after YOURSELVES boss is defeated.
+// ==========================================
+
+export async function getCulpritReveal(
+  gameId: string
+): Promise<ActionResult<{ culpritName: string; culpritPlayerId: string } | null>> {
+  // Check boss is defeated
+  const bossRows = await sql`
+    SELECT status FROM boss_progress
+    WHERE game_id = ${gameId} AND boss_id = 'yourselves' AND status = 'defeated'
+    LIMIT 1
+  `;
+  if (bossRows.length === 0) {
+    return { success: true, data: null }; // Boss not defeated yet — no reveal
+  }
+
+  const culpritRows = await sql`
+    SELECT id, name FROM players
+    WHERE game_id = ${gameId} AND is_culprit = TRUE
+    LIMIT 1
+  `;
+  if (culpritRows.length === 0) return { success: false, error: "No culprit assigned." };
+
+  const culprit = culpritRows[0] as { id: string; name: string };
+  return { success: true, data: { culpritName: culprit.name, culpritPlayerId: culprit.id } };
 }
 
 // ==========================================

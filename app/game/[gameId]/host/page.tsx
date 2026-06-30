@@ -72,12 +72,12 @@ export default function HostPage({ params }: Props) {
   };
 
   const handleResetBoss = async (teamId: "team-a" | "team-b") => {
-    await hostResetBoss(gameId, teamId, "locked-cooler", 100);
+    await hostResetBoss(gameId, teamId, "mads", 100);
     showMessage(`Boss reset for ${teamId}`);
     fetchAll();
   };
 
-  const allRooms = ["kitchen", "fridge", "coffee-table", "terrace", "shed"];
+  const allRooms = ["driveway", "terrace", "garden", "shed", "petanque-court"];
 
   return (
     <GameLayout

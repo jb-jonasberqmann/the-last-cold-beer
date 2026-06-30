@@ -136,6 +136,8 @@ export function getRoomStatusLabel(status: RoomStatus): string {
       return "In Progress";
     case "complete":
       return "Complete";
+    case "occupied":
+      return "Occupied";
   }
 }
 
@@ -149,6 +151,8 @@ export function getRoomStatusColor(status: RoomStatus): string {
       return "text-blue-400";
     case "complete":
       return "text-green-400";
+    case "occupied":
+      return "text-rose-400";
   }
 }
 

@@ -15,16 +15,19 @@ import type { TeamId, BossAction } from "@/types/content";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
 
-// ── Artwork mapping — extend as new bosses are added ──────────────────────────
+// ── Artwork mapping ────────────────────────────────────────────────────────────
 const BOSS_ARTWORK: Record<string, string> = {
-  "locked-cooler": "/rooms/boss-cooler.png",
+  "mads":       "/bosses/mads.png",
+  "the-radio":  "/bosses/the-radio.png",
+  "yourselves": "/bosses/yourselves.png",
 };
 
 // Clue hint labels per puzzle action (shown in cyan under the card description)
 const PUZZLE_CLUE_HINTS: Record<string, string> = {
-  "cooler-p1-puzzle":    "Uses the Terrace Inscription.",
-  "cooler-p2-puzzle":    "Uses the Shed Inventory.",
-  "cooler-p4-final-open": "Requires all three clues.",
+  "radio-frequency": "Uses the Broadcast Log from the Tool Shed.",
+  "radio-fuse":      "Check what you found in the Bunk Room.",
+  "yourselves-a1":   "Requires the artifact from Act 1.",
+  "yourselves-a2":   "Requires both team artifacts combined.",
 };
 
 interface Props {
@@ -197,9 +200,22 @@ export default function BossFightPage({ params }: Props) {
   const isActionUsed  = (actionId: string) => usedBossActionIds.includes(actionId);
   const bossImage     = BOSS_ARTWORK[bossId] ?? null;
 
-  const hasBossFreeAction = roomProgress.some(
-    (rp) => rp.room_id === "coffee-table" && rp.status === "complete"
-  );
+  // Free action: Act 1 boss — complete "landing-strip" (outdoor clearing) unlocks a free boost
+  // Act 2 boss — completing "tool-shed" unlocks a free radio sabotage action
+  const FREE_ACTION_ROOM: Record<string, string> = {
+    "mads":       "landing-strip",
+    "the-radio":  "tool-shed",
+  };
+  const freeActionRoom = FREE_ACTION_ROOM[bossId] ?? null;
+  const hasBossFreeAction = freeActionRoom
+    ? roomProgress.some((rp) => rp.room_id === freeActionRoom && rp.status === "complete")
+    : false;
+
+  const FREE_ACTION_ID: Record<string, string> = {
+    "mads":      "mads-offer-boost",
+    "the-radio": "radio-offer-boost",
+  };
+  const freeActionId = FREE_ACTION_ID[bossId] ?? "offer-boost";
 
   const bossEvents = events.filter((e) =>
     e.event_type === "boss_damaged" || e.event_type === "boss_defeated"
@@ -213,13 +229,14 @@ export default function BossFightPage({ params }: Props) {
       case "offer_boost": return "🍺";
       case "clue_check":  return "🗝️";
       case "social":      return "⚡";
+      case "choice":      return "🗳️";
       default:            return "⚔️";
     }
   };
 
   const handleFreeAction = async () => {
     setLoading("free-action");
-    const result = await dealBossDamage(gameId, teamId, bossId, "cooler-offer-boost", "", true);
+    const result = await dealBossDamage(gameId, teamId, bossId, freeActionId, "", true);
     setLoading(null);
     if (result.success && result.data.damage > 0) {
       try { localStorage.setItem(freeActionUsedKey, "1"); } catch {}
@@ -548,6 +565,36 @@ export default function BossFightPage({ params }: Props) {
           <h2 className="text-lg font-bold text-amber-300 mb-2">Defeated!</h2>
           <p className="text-sm text-amber-200/80 leading-relaxed">{boss.defeatText}</p>
           <div className="mt-3 text-xs text-amber-800 italic">{boss.victoryAdvantage}</div>
+          {/* YOURSELVES defeat → culprit reveal */}
+          {bossId === "yourselves" && (
+            <a
+              href={`/game/${gameId}/reveal`}
+              className="mt-5 inline-block px-6 py-3 rounded-lg text-sm font-bold"
+              style={{ background: "rgba(120,10,10,0.6)", border: "1px solid rgba(220,60,60,0.4)", color: "rgb(254,202,202)", fontFamily: "Georgia,serif" }}
+            >
+              📻 Hear what the radio said →
+            </a>
+          )}
+          {/* Radio defeat → Act 3 begins (act transition is server-side, just redirect to team page) */}
+          {bossId === "the-radio" && (
+            <a
+              href={`/game/${gameId}/team/${teamId}`}
+              className="mt-5 inline-block px-6 py-3 rounded-lg text-sm font-bold"
+              style={{ background: "rgba(20,20,60,0.7)", border: "1px solid rgba(80,80,200,0.4)", color: "rgb(180,180,255)", fontFamily: "Georgia,serif" }}
+            >
+              🌑 The night begins →
+            </a>
+          )}
+          {/* Mads defeat → back to quest board */}
+          {bossId === "mads" && (
+            <a
+              href={`/game/${gameId}/team/${teamId}`}
+              className="mt-5 inline-block px-6 py-3 rounded-lg text-sm font-bold"
+              style={{ background: "rgba(30,20,8,0.7)", border: "1px solid rgba(180,130,50,0.3)", color: "rgb(245,215,130)", fontFamily: "Georgia,serif" }}
+            >
+              🏠 Enter the house →
+            </a>
+          )}
         </div>
       ) : (
         <>
@@ -759,6 +806,34 @@ export default function BossFightPage({ params }: Props) {
                         >
                           {loading === action.id ? "…" : "Group Decision"}
                         </button>
+                      ) : action.type === "choice" && action.choices ? (
+                        isExpanded ? (
+                          <div className="space-y-1.5 mt-1">
+                            {action.choices.map((choice) => (
+                              <button
+                                key={choice.id}
+                                onClick={() => handleAction({ ...action, id: `${action.id}:${choice.id}` })}
+                                disabled={!!loading}
+                                className="w-full py-2 px-2.5 text-[11px] font-bold rounded-lg text-left border border-stone-700/40 text-stone-200 disabled:opacity-50 transition-colors"
+                                style={{ background: "rgba(18,16,12,0.9)", fontFamily: "Georgia, serif" }}
+                              >
+                                <div>{choice.label}</div>
+                                {choice.description && (
+                                  <div className="text-[9px] text-stone-500 mt-0.5 font-normal">{choice.description}</div>
+                                )}
+                              </button>
+                            ))}
+                            <button onClick={() => setActiveActionId(null)} className="text-[10px] text-stone-600">Cancel</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setActiveActionId(action.id)}
+                            className="w-full py-2 text-xs font-bold rounded-lg border border-stone-700/50 text-stone-300"
+                            style={{ background: "rgba(18,16,12,0.85)", fontFamily: "Georgia, serif" }}
+                          >
+                            Choose…
+                          </button>
+                        )
                       ) : null}
                     </div>
                   );

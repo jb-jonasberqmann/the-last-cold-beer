@@ -40,9 +40,11 @@ export interface Room {
   lockedDescription: string; // shown when room is still locked
   unlockCost: number; // Offer cost to unlock (0 = free / auto-unlocked)
   unlockRequires: string[]; // room IDs that must be completed first
+  unlockRequiresArtifacts?: string[]; // artifact clue IDs team must hold before entering
   questIds: string[];
   rewardClueIds: string[]; // clues earned for completing this room
   isOptional: boolean;
+  isSingleOccupancy?: boolean; // Act 2 bedrooms — only one player per team can enter
   isSecret?: boolean; // secret branch — optional detour off main spine
   secretAdvantage?: string; // key describing boss advantage granted on completion
   order: number; // display order in quest board
@@ -98,6 +100,8 @@ export interface Quest {
   rewardClueId?: string; // clue granted on completion
   rewardText?: string; // flavor text shown on success
   failureText?: string; // shown on wrong answer (before hint)
+  setsScaredSilent?: boolean; // if true, completing this quest sets the player's scared_silent flag
+  clearsScaredSilent?: boolean; // if true, completing this room clears scared_silent for the team
   da?: QuestDa; // Danish locale overrides
 }
 
@@ -157,6 +161,7 @@ export interface Clue {
   icon: string; // emoji
   flavor: string; // atmospheric one-liner shown when discovered
   isKeyClue: boolean; // required for boss or final reveal
+  isArtifact?: boolean; // artifact items (flashlight, fuse, wrench, candle, final note)
   revealedTo?: TeamId; // if set, only this team can see contents initially
   da?: ClueDa; // Danish locale overrides
 }
@@ -231,7 +236,7 @@ export interface BossAction {
   id: string;
   label: string;
   description: string;
-  type: "puzzle" | "offer_boost" | "clue_check" | "social";
+  type: "puzzle" | "offer_boost" | "clue_check" | "social" | "choice";
   damage: number; // HP removed on success
   offerCost?: number;
   requiredClueId?: string; // clue_check type
@@ -239,7 +244,17 @@ export interface BossAction {
     prompt: string;
     answer: string | string[];
   };
+  choices?: BossActionChoice[]; // for type === 'choice'
+  physicalChallenge?: PhysicalChallengeConfig; // optional timer overlay (used alongside puzzle type)
   hint?: string;
   rewardText?: string;
   failureText?: string;
+}
+
+export interface BossActionChoice {
+  id: string;
+  label: string;
+  description: string;
+  isCorrect: boolean;
+  consequence?: string;
 }

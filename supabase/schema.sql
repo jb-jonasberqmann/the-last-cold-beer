@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS games (
   offer_definition TEXT NOT NULL DEFAULT 'half a drink or 5 sips',
   status TEXT NOT NULL DEFAULT 'lobby'
     CHECK (status IN ('lobby', 'active', 'complete')),
-  current_chapter_id TEXT NOT NULL DEFAULT 'chapter-1',
+  current_chapter_id TEXT NOT NULL DEFAULT 'act-1',
   team_a_name TEXT NOT NULL DEFAULT 'Team A',
   team_b_name TEXT NOT NULL DEFAULT 'Team B',
   chapter_1_winner TEXT, -- 'team-a' | 'team-b' | null
@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS players (
   name TEXT NOT NULL,
   team_id TEXT CHECK (team_id IN ('team-a', 'team-b')),
   is_host BOOLEAN NOT NULL DEFAULT false,
+  is_culprit BOOLEAN NOT NULL DEFAULT false,       -- one player per game, randomly assigned at game creation
+  player_status TEXT NOT NULL DEFAULT 'normal'
+    CHECK (player_status IN ('normal', 'scared_silent')), -- set on bunk room completion, cleared on living room
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -40,7 +43,7 @@ CREATE TABLE IF NOT EXISTS team_progress (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   team_id TEXT NOT NULL CHECK (team_id IN ('team-a', 'team-b')),
-  current_chapter_id TEXT NOT NULL DEFAULT 'chapter-1',
+  current_chapter_id TEXT NOT NULL DEFAULT 'act-1',
   current_room_id TEXT,
   status TEXT NOT NULL DEFAULT 'exploring'
     CHECK (status IN ('exploring', 'solving', 'at_boss', 'waiting', 'chapter_complete')),
@@ -62,7 +65,9 @@ CREATE TABLE IF NOT EXISTS room_progress (
   team_id TEXT NOT NULL CHECK (team_id IN ('team-a', 'team-b')),
   room_id TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'locked'
-    CHECK (status IN ('locked', 'unlocked', 'active', 'complete')),
+    CHECK (status IN ('locked', 'unlocked', 'active', 'complete', 'occupied')),
+    -- 'occupied' = single-occupancy bedroom claimed by a teammate; others cannot enter
+  occupant_player_id TEXT,  -- set when a player claims a single-occupancy room
   unlocked_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
   UNIQUE(game_id, team_id, room_id)

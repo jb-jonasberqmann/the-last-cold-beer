@@ -37,6 +37,12 @@ const statusConfig: Record<RoomStatus, { label: string; border: string; opacity:
     opacity: "",
     badge: "bg-green-800/50 text-green-300",
   },
+  occupied: {
+    label: "Occupied",
+    border: "border-rose-700",
+    opacity: "opacity-50",
+    badge: "bg-rose-800/50 text-rose-300",
+  },
 };
 
 export function RoomCard({

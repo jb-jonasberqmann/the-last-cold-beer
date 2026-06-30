@@ -333,7 +333,7 @@ export default function DashboardPage({ params }: Props) {
               </div>
             </Link>
             <Link
-              href={`/game/${gameId}/boss/locked-cooler?team=${myTeamId}`}
+              href={`/game/${gameId}/boss/mads?team=${myTeamId}`}
               className="rounded-xl p-4 flex flex-col items-center gap-2 active:scale-[0.98] transition-transform"
               style={{
                 background: "linear-gradient(160deg, #1a0505 0%, #0e0303 100%)",

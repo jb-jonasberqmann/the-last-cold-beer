@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge } from "@/lib/game/actions";
+import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, enterBedroom, setScaredSilent, advanceAct } from "@/lib/game/actions";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
+import { usePlayer } from "@/hooks/usePlayer";
 import { Button } from "@/components/ui/Button";
 import { ClueCard } from "@/components/game/ClueCard";
 import { RoomSceneFullscreen } from "@/components/game/RoomSceneFullscreen";
 import { getRoom, getQuestsByRoom, getClue } from "@/content/index";
-import type { DbGame, DbQuestProgress, DbTeamClue, DbGameEvent } from "@/types/database";
+import type { DbGame, DbQuestProgress, DbTeamClue, DbGameEvent, DbPlayer } from "@/types/database";
 import type { TeamId, Quest, PhysicalChallengeConfig } from "@/types/content";
 import { getQuest } from "@/content/quests";
 import { cn } from "@/lib/utils";
@@ -23,8 +24,11 @@ import SlidingPuzzleQuest from "@/components/quests/SlidingPuzzleQuest";
 
 export default function RoomPage({ params }: Props) {
   const { gameId, teamId, roomId } = params;
+  const { session } = usePlayer();
 
   const [game, setGame] = useState<DbGame | null>(null);
+  const [players, setPlayers] = useState<DbPlayer[]>([]);
+  const [roomOccupiedBy, setRoomOccupiedBy] = useState<string | null>(null); // null = not single-occ or claimed by me
   const [questProgress, setQuestProgress] = useState<DbQuestProgress[]>([]);
   const [teamClues, setTeamClues] = useState<DbTeamClue[]>([]);
   // Clue banners: array of clue IDs to show in sequence
@@ -63,6 +67,7 @@ export default function RoomPage({ params }: Props) {
     if (!res.ok) return;
     const data = await res.json();
     setGame(data.game);
+    setPlayers(data.players ?? []);
     setQuestProgress(
       roomId
         ? (data.questProgress ?? []).filter((qp: DbQuestProgress) => qp.room_id === roomId)
@@ -117,6 +122,20 @@ export default function RoomPage({ params }: Props) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Single-occupancy: try to claim the room on mount
+  const rawRoomForMount = roomId ? getRoom(roomId) : null;
+  useEffect(() => {
+    if (!rawRoomForMount?.isSingleOccupancy || !session?.playerId || !gameId || !teamId || !roomId) return;
+    enterBedroom(gameId, teamId, session.playerId, roomId).then((res) => {
+      if (!res.success && res.error === "occupied") {
+        // Room is claimed by a teammate — show the blocked screen
+        // The occupant name will be derived from players state once loaded
+        setRoomOccupiedBy("teammate"); // placeholder; refined below
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawRoomForMount?.isSingleOccupancy, session?.playerId, gameId, teamId, roomId]);
+
   // Poll every 5 seconds so all players see toll notifications
   useRealtimeGame(gameId, fetchData);
 
@@ -131,7 +150,7 @@ export default function RoomPage({ params }: Props) {
 
   const rawRoom = roomId ? getRoom(roomId) : null;
   const room = rawRoom ?? null;
-  const allQuests = rawRoom ? getQuestsByRoom(rawRoom.id, teamId) : [];
+  const allQuests = rawRoom ? getQuestsByRoom(rawRoom.id) : [];
 
   const requiredQuests = allQuests.filter((q) => q.isRequired);
   const bonusQuests = allQuests.filter((q) => !q.isRequired);
@@ -155,6 +174,30 @@ export default function RoomPage({ params }: Props) {
     );
   }
 
+  // Single-occupancy: blocked screen if a different player claims the room
+  if (room.isSingleOccupancy && roomOccupiedBy && session?.playerId) {
+    const occupantName = players.find((p) => p.id !== session.playerId && p.team_id === teamId)?.name ?? "your teammate";
+    return (
+      <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center p-8 text-center">
+        <div className="text-5xl mb-6">🛏️</div>
+        <h2 className="text-lg font-bold mb-2" style={{ color: "rgb(245,225,170)", fontFamily: "Georgia,serif" }}>
+          {room.title}
+        </h2>
+        <p className="text-sm mb-1" style={{ color: "rgba(200,160,80,0.7)", fontFamily: "Georgia,serif" }}>
+          {occupantName} is already in here.
+        </p>
+        <p className="text-xs mt-2" style={{ color: "rgba(120,90,40,0.5)", fontFamily: "Georgia,serif" }}>
+          Single occupancy — wait for them to finish.
+        </p>
+        <a href={`/game/${gameId}/team/${teamId}`}
+          className="mt-8 px-5 py-2.5 rounded-lg text-sm"
+          style={{ background: "rgba(40,30,10,0.7)", border: "1px solid rgba(180,130,50,0.3)", color: "rgba(220,180,80,0.8)", fontFamily: "Georgia,serif" }}>
+          ← Back to quest board
+        </a>
+      </div>
+    );
+  }
+
   const getQuestState = (questId: string) =>
     questProgress.find((qp) => qp.quest_id === questId);
   const isComplete = (questId: string) =>
@@ -165,6 +208,10 @@ export default function RoomPage({ params }: Props) {
   const completedQuestsList = quests.filter((q) => isComplete(q.id));
   const activeQuest = quests.find((q) => !isComplete(q.id));
   const offerDef = game.offer_definition;
+
+  // Scared silent: current player's status
+  const myPlayer = players.find((p) => p.id === session?.playerId);
+  const isScaredSilent = myPlayer?.player_status === "scared_silent" && roomId === "living-room";
 
   // Clues for this room that team has found
   const roomClueCount = room.rewardClueIds.filter(
@@ -612,12 +659,20 @@ export default function RoomPage({ params }: Props) {
                     teamId={teamId}
                     isReadOnly={false}
                     challengeStartedAt={activeChallenges[activeQuest.id] ?? null}
-                    onComplete={(clueId) => {
+                    onComplete={async (clueId) => {
                       triggerHit();
                       if (clueId) setClueBanners((prev) => [...prev, clueId]);
+                      // Wire special post-quest effects
+                      if (activeQuest.setsScaredSilent && session?.playerId) {
+                        await setScaredSilent(gameId, session.playerId);
+                      }
+                      if (activeQuest.id === "front-door-keybox") {
+                        await advanceAct(gameId, "act-1", "act-2");
+                      }
                       fetchData();
                     }}
                     onMiss={triggerMiss}
+                    isScaredSilent={isScaredSilent}
                   />
                 </div>
               )}
@@ -703,7 +758,7 @@ export default function RoomPage({ params }: Props) {
 
 function QuestBlock({
   quest, isComplete, questState, offerDefinition, gameId, teamId,
-  isReadOnly, challengeStartedAt, onComplete, onMiss,
+  isReadOnly, challengeStartedAt, onComplete, onMiss, isScaredSilent,
 }: {
   quest: Quest;
   isComplete: boolean;
@@ -715,6 +770,7 @@ function QuestBlock({
   challengeStartedAt: string | null;
   onComplete: (clueId?: string) => void;
   onMiss?: () => void;
+  isScaredSilent?: boolean;
 }) {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -840,6 +896,7 @@ function QuestBlock({
         onAnswerChange={setAnswer}
         onSubmit={handleSubmitAnswer}
         onHint={handleUseHint}
+        isScaredSilent={isScaredSilent}
       />
     );
   }
@@ -1039,12 +1096,13 @@ interface ArtifactProps {
 // ─── Puzzle card ────────────────────────────────────────────
 function StickyNoteArtifact({
   quest, isComplete, feedback, shownHints, answer, loading, isReadOnly,
-  hintsUsed, offerDefinition, onAnswerChange, onSubmit, onHint,
+  hintsUsed, offerDefinition, onAnswerChange, onSubmit, onHint, isScaredSilent,
 }: ArtifactProps & {
   answer: string;
   onAnswerChange: (v: string) => void;
   onSubmit: () => void;
   onHint: (order: number) => void;
+  isScaredSilent?: boolean;
 }) {
   return (
     <div className={cn("transition-all duration-300", isComplete && "opacity-55")}>
@@ -1134,37 +1192,46 @@ function StickyNoteArtifact({
 
       {!isComplete && !isReadOnly && quest.answer && (
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={answer}
-            onChange={(e) => onAnswerChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSubmit()}
-            placeholder="Your answer…"
-            className="flex-1 rounded px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-amber-700/40"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(180,130,50,0.2)",
-              color: "rgba(230,210,165,0.9)",
-              fontFamily: "Georgia,serif",
-              fontSize: "16px",
-              touchAction: "manipulation",
-            }}
-          />
-          <button
-            onClick={onSubmit}
-            disabled={loading}
-            className="px-4 py-2.5 text-sm font-bold rounded transition-all active:scale-95 disabled:opacity-50"
-            style={{
-              background: loading ? "rgba(60,40,10,0.4)" : "linear-gradient(160deg, #a07010, #7a5200)",
-              color: loading ? "rgba(180,130,50,0.4)" : "rgba(255,240,195,0.97)",
-              fontFamily: "Georgia,serif",
-              border: "1px solid rgba(180,130,50,0.35)",
-              boxShadow: loading ? "none" : "0 2px 10px rgba(100,70,0,0.35)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {loading ? "…" : "⚔️ Strike"}
-          </button>
+          {isScaredSilent ? (
+            <div className="flex-1 rounded px-3 py-2.5 text-sm italic"
+              style={{ background: "rgba(20,10,10,0.6)", border: "1px solid rgba(180,40,40,0.3)", color: "rgba(180,80,80,0.6)", fontFamily: "Georgia,serif" }}>
+              😶 You can't speak. The bunk room got to you.
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={answer}
+              onChange={(e) => onAnswerChange(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onSubmit()}
+              placeholder="Your answer…"
+              className="flex-1 rounded px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-amber-700/40"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(180,130,50,0.2)",
+                color: "rgba(230,210,165,0.9)",
+                fontFamily: "Georgia,serif",
+                fontSize: "16px",
+                touchAction: "manipulation",
+              }}
+            />
+          )}
+          {!isScaredSilent && (
+            <button
+              onClick={onSubmit}
+              disabled={loading}
+              className="px-4 py-2.5 text-sm font-bold rounded transition-all active:scale-95 disabled:opacity-50"
+              style={{
+                background: loading ? "rgba(60,40,10,0.4)" : "linear-gradient(160deg, #a07010, #7a5200)",
+                color: loading ? "rgba(180,130,50,0.4)" : "rgba(255,240,195,0.97)",
+                fontFamily: "Georgia,serif",
+                border: "1px solid rgba(180,130,50,0.35)",
+                boxShadow: loading ? "none" : "0 2px 10px rgba(100,70,0,0.35)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {loading ? "…" : "⚔️ Strike"}
+            </button>
+          )}
         </div>
       )}
 
