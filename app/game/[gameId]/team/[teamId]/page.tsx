@@ -12,99 +12,145 @@ import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
 import { getQuest } from "@/content/quests";
 
-
 interface Props {
   params: { gameId: string; teamId: TeamId };
 }
 
-const ACT_THEMES: Record<string, { bg: string; accent: string; label: string; emoji: string }> = {
-  "act-1": { bg: "from-amber-950/80 to-stone-950",  accent: "#d4a832", label: "The Arrival",    emoji: "🌅" },
-  "act-2": { bg: "from-indigo-950/60 to-stone-950", accent: "#8ab4f8", label: "Settling In",    emoji: "🏠" },
-  "act-3": { bg: "from-slate-950/90 to-stone-950",  accent: "#f87171", label: "The Late Night", emoji: "🌑" },
+// ─── Per-act visual theme ────────────────────────────────────────────────────
+const ACT_THEMES: Record<string, { accent: string; label: string; subtitle: string; emoji: string }> = {
+  "act-1": { accent: "#d4a832", label: "THE ARRIVAL",    subtitle: "ACT I",   emoji: "🌅" },
+  "act-2": { accent: "#8ab4f8", label: "SETTLING IN",    subtitle: "ACT II",  emoji: "🏠" },
+  "act-3": { accent: "#f87171", label: "THE LATE NIGHT", subtitle: "ACT III", emoji: "🌑" },
 };
 
-// Node positions as percentage of map image (x=left%, y=top%)
-const NODE_POSITIONS: Record<string, Record<string, { x: number; y: number }>> = {
+// ─── SVG map geometry per act ─────────────────────────────────────────────────
+//   • Boss always at top   (cy ≈ 88)
+//   • Starting room(s) at bottom   (cy ≈ 440-600)
+//   • scale 2.2 for act 1/2, 2.0 for act 3 (more rooms)
+//   • spacerVW = scale × (svgH / svgW) × 100
+//   • Visible SVG-x at scale 2.2:  ≈ 93 – 247  (clipped at screen edges)
+//   • Visible SVG-x at scale 2.0:  ≈ 85 – 255
+//   • NodeBlob images rendered via SVG <image> — PNG alpha channels respected
+
+interface NodeDef {
+  id: string;
+  cx: number;
+  cy: number;
+  sz: number;        // half-size of NodeBlob image in SVG units (radius)
+  isOptional?: boolean;
+}
+
+interface ActGeo {
+  svgW: number; svgH: number;
+  scale: number;
+  bossNode: { cx: number; cy: number };
+  titleCY: number;       // y of act-title text in SVG units
+  nodes: NodeDef[];
+  paths: [string, string][];   // [fromId, toId]  — "boss" is valid
+}
+
+const ACT_GEO: Record<string, ActGeo> = {
+  // ── ACT 1 — outdoor / arrival ─────────────────────────────────────────────
   "act-1": {
-    "driveway":       { x: 40, y: 20 },
-    "carport":        { x: 66, y: 12 },
-    "terrace":        { x: 73, y: 33 },
-    "garden":         { x: 39, y: 42 },
-    "shed":           { x: 20, y: 57 },
-    "petanque-court": { x: 68, y: 54 },
-    "front-door":     { x: 46, y: 71 },
+    svgW: 340, svgH: 520, scale: 2.2,
+    bossNode: { cx: 170, cy: 88 },
+    titleCY: 42,
+    nodes: [
+      { id: "front-door",     cx: 170, cy: 178, sz: 22 },
+      { id: "shed",           cx: 100, cy: 262, sz: 20 },
+      { id: "carport",        cx: 240, cy: 262, sz: 20 },
+      { id: "garden",         cx: 132, cy: 352, sz: 22 },
+      { id: "terrace",        cx: 240, cy: 415, sz: 20 },
+      { id: "petanque-court", cx: 238, cy: 460, sz: 18, isOptional: true },
+      { id: "driveway",       cx: 144, cy: 460, sz: 22 },
+    ],
+    paths: [
+      ["driveway",    "garden"],
+      ["driveway",    "terrace"],
+      ["garden",      "shed"],
+      ["garden",      "carport"],
+      ["garden",      "petanque-court"],
+      ["terrace",     "carport"],
+      ["shed",        "front-door"],
+      ["carport",     "front-door"],
+      ["front-door",  "boss"],
+    ],
   },
+
+  // ── ACT 2 — indoor / settling ─────────────────────────────────────────────
   "act-2": {
-    "double-room":  { x: 20, y: 17 },
-    "single-room":  { x: 50, y: 14 },
-    "bunk-room":    { x: 78, y: 17 },
-    "bathroom":     { x: 50, y: 31 },
-    "living-room":  { x: 44, y: 48 },
-    "sunroom":      { x: 16, y: 62 },
-    "kitchen-act2": { x: 74, y: 61 },
-    "dining-room":  { x: 44, y: 75 },
+    svgW: 340, svgH: 520, scale: 2.2,
+    bossNode: { cx: 170, cy: 82 },
+    titleCY: 38,
+    nodes: [
+      { id: "dining-room",  cx: 170, cy: 158, sz: 22 },
+      { id: "kitchen-act2", cx: 242, cy: 248, sz: 20 },
+      { id: "sunroom",      cx: 100, cy: 248, sz: 18, isOptional: true },
+      { id: "living-room",  cx: 170, cy: 340, sz: 22 },
+      { id: "bathroom",     cx: 170, cy: 400, sz: 18 },
+      { id: "double-room",  cx: 100, cy: 455, sz: 20 },
+      { id: "single-room",  cx: 170, cy: 455, sz: 22 },
+      { id: "bunk-room",    cx: 242, cy: 455, sz: 20 },
+    ],
+    paths: [
+      ["double-room",  "bathroom"],
+      ["single-room",  "bathroom"],
+      ["bunk-room",    "bathroom"],
+      ["bathroom",     "living-room"],
+      ["living-room",  "sunroom"],
+      ["living-room",  "kitchen-act2"],
+      ["kitchen-act2", "dining-room"],
+      ["dining-room",  "boss"],
+    ],
   },
+
+  // ── ACT 3 — late night / dark ─────────────────────────────────────────────
   "act-3": {
-    "dining-room-dark":  { x: 48, y: 10 },
-    "utility-corner":    { x: 48, y: 22 },
-    "back-corridor":     { x: 48, y: 37 },
-    "fuse-box":          { x: 77, y: 49 },
-    "door-nobody-tried": { x: 19, y: 49 },
-    "behind-the-shed":   { x: 48, y: 49 },
-    "kitchen-dark":      { x: 79, y: 60 },
-    "rattling-window":   { x: 79, y: 70 },
-    "sealed-wall":       { x: 13, y: 63 },
-    "conservatory":      { x: 34, y: 64 },
-    "shed-dark":         { x: 63, y: 64 },
-    "revelation-circle": { x: 48, y: 79 },
+    svgW: 340, svgH: 640, scale: 2.0,
+    bossNode: { cx: 170, cy: 88 },
+    titleCY: 42,
+    nodes: [
+      { id: "revelation-circle", cx: 148, cy: 162, sz: 22 },
+      { id: "shed-dark",         cx: 240, cy: 238, sz: 20 },
+      { id: "door-nobody-tried", cx: 95,  cy: 312, sz: 20 },
+      { id: "conservatory",      cx: 155, cy: 312, sz: 18 },
+      { id: "kitchen-dark",      cx: 248, cy: 312, sz: 20 },
+      { id: "sealed-wall",       cx: 92,  cy: 238, sz: 18 },
+      { id: "rattling-window",   cx: 250, cy: 238, sz: 16, isOptional: true },
+      { id: "behind-the-shed",   cx: 138, cy: 385, sz: 18 },
+      { id: "fuse-box",          cx: 248, cy: 385, sz: 18 },
+      { id: "back-corridor",     cx: 170, cy: 455, sz: 22 },
+      { id: "utility-corner",    cx: 170, cy: 528, sz: 20 },
+      { id: "dining-room-dark",  cx: 170, cy: 598, sz: 22 },
+    ],
+    paths: [
+      ["dining-room-dark",  "utility-corner"],
+      ["utility-corner",    "back-corridor"],
+      ["back-corridor",     "behind-the-shed"],
+      ["back-corridor",     "fuse-box"],
+      ["back-corridor",     "door-nobody-tried"],
+      ["behind-the-shed",   "conservatory"],
+      ["behind-the-shed",   "shed-dark"],
+      ["fuse-box",          "kitchen-dark"],
+      ["door-nobody-tried", "sealed-wall"],
+      ["door-nobody-tried", "revelation-circle"],
+      ["kitchen-dark",      "rattling-window"],
+      ["shed-dark",         "revelation-circle"],
+      ["revelation-circle", "boss"],
+    ],
   },
 };
 
-// Path connections between nodes [fromRoomId, toRoomId]
-const NODE_PATHS: Record<string, [string, string][]> = {
-  "act-1": [
-    ["driveway", "carport"],
-    ["driveway", "terrace"],
-    ["driveway", "garden"],
-    ["terrace", "carport"],
-    ["garden", "carport"],
-    ["garden", "shed"],
-    ["garden", "petanque-court"],
-    ["shed", "front-door"],
-    ["carport", "front-door"],
-  ],
-  "act-2": [
-    ["double-room", "bathroom"],
-    ["single-room", "bathroom"],
-    ["bunk-room", "bathroom"],
-    ["double-room", "living-room"],
-    ["single-room", "living-room"],
-    ["bunk-room", "living-room"],
-    ["living-room", "sunroom"],
-    ["living-room", "kitchen-act2"],
-    ["kitchen-act2", "dining-room"],
-  ],
-  "act-3": [
-    ["dining-room-dark", "utility-corner"],
-    ["utility-corner", "back-corridor"],
-    ["back-corridor", "fuse-box"],
-    ["back-corridor", "door-nobody-tried"],
-    ["back-corridor", "behind-the-shed"],
-    ["fuse-box", "kitchen-dark"],
-    ["kitchen-dark", "rattling-window"],
-    ["door-nobody-tried", "sealed-wall"],
-    ["behind-the-shed", "conservatory"],
-    ["behind-the-shed", "shed-dark"],
-    ["shed-dark", "revelation-circle"],
-    ["door-nobody-tried", "revelation-circle"],
-  ],
-};
+// ─── Scroll helpers ───────────────────────────────────────────────────────────
+function easeInCubic(t: number): number { return t * t * t; }
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function TeamQuestBoardPage({ params }: Props) {
   const { gameId, teamId } = params;
   const router = useRouter();
   const { session } = usePlayer();
 
+  // ── Data state ───────────────────────────────────────────────────────────
   const [game, setGame] = useState<DbGame | null>(null);
   const [roomProgress, setRoomProgress] = useState<DbRoomProgress[]>([]);
   const [pendingUnlock, setPendingUnlock] = useState<string | null>(null);
@@ -123,6 +169,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const seenClueCountRef = useRef<number | null>(null);
   const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
 
+  // ── Map scroll refs ───────────────────────────────────────────────────────
+  const mapScrollRef = useRef<HTMLDivElement>(null);
+  const scrollSetupActRef = useRef<string | null>(null);  // which act we've already set up scroll for
+
+  // ── Data fetching ─────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
     const res = await fetch(`/api/game/${gameId}/progress?teamId=${teamId}`);
@@ -179,9 +230,6 @@ export default function TeamQuestBoardPage({ params }: Props) {
     }
     setActiveChallenges(running);
 
-    // Act-transition redirect: if game.current_chapter_id changed, check if we should push to new chapter
-    // (handled naturally — page reads game.current_chapter_id and shows correct act)
-
     const otherTeam = teamId === "team-a" ? "team-b" : "team-a";
     fetch(`/api/game/${gameId}/progress?teamId=${otherTeam}`)
       .then((r) => r.ok ? r.json() : null)
@@ -198,26 +246,71 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
+  // ── Scroll setup — runs once per act ──────────────────────────────────────
+  useEffect(() => {
+    if (!game || !gameId || !teamId) return;
+    const actId = game.current_chapter_id;
+    if (scrollSetupActRef.current === actId) return;  // already set up for this act
+    scrollSetupActRef.current = actId;
+
+    const el = mapScrollRef.current;
+    if (!el) return;
+
+    const storageKey = `tlcb_scroll_${gameId}_${teamId}_${actId}`;
+    const savedScroll = sessionStorage.getItem(storageKey);
+
+    if (savedScroll !== null) {
+      // Return visit — restore scroll position immediately
+      el.scrollTop = parseInt(savedScroll, 10);
+    } else {
+      // First visit to this act — play intro animation
+      el.scrollTop = 0;
+      let rafId: number;
+      const timeoutId = setTimeout(() => {
+        const endPos = el.scrollHeight - el.clientHeight;
+        const startTime = performance.now();
+        const duration = 850;
+        const step = (now: number) => {
+          const t = Math.min((now - startTime) / duration, 1);
+          el.scrollTop = endPos * easeInCubic(t);
+          if (t < 1) rafId = requestAnimationFrame(step);
+          else sessionStorage.setItem(storageKey, String(el.scrollTop));
+        };
+        rafId = requestAnimationFrame(step);
+      }, 1500);
+
+      return () => { clearTimeout(timeoutId); cancelAnimationFrame(rafId); };
+    }
+  }, [game, gameId, teamId]);
+
+  // Save scroll position on every scroll
+  useEffect(() => {
+    const el = mapScrollRef.current;
+    if (!el || !game?.current_chapter_id || !gameId || !teamId) return;
+    const actId = game.current_chapter_id;
+    const storageKey = `tlcb_scroll_${gameId}_${teamId}_${actId}`;
+    const onScroll = () => sessionStorage.setItem(storageKey, String(el.scrollTop));
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [game?.current_chapter_id, gameId, teamId]);
+
+  // ── Room helpers ─────────────────────────────────────────────────────────
   const canInteract = !session?.isHost;
 
   const getRoomStatus = (roomId: string): DbRoomProgress["status"] =>
     roomProgress.find((r) => r.room_id === roomId)?.status ?? "locked";
 
-  const getRoomOccupant = (roomId: string): string | null =>
-    roomProgress.find((r) => r.room_id === roomId)?.occupant_player_id ?? null;
-
   const canUnlock = (roomId: string): boolean => {
     const room = getRoom(roomId);
     if (!room) return false;
-    const status = getRoomStatus(roomId);
-    if (status !== "locked") return false;
+    if (getRoomStatus(roomId) !== "locked") return false;
     return room.unlockRequires.every((req) => getRoomStatus(req) === "complete");
   };
 
   const handleNodeClick = (roomId: string) => {
     if (!canInteract) return;
     const status = getRoomStatus(roomId);
-    if (status === "complete" || status === "active" || status === "unlocked" || status === "occupied") {
+    if (["complete", "active", "unlocked", "occupied"].includes(status)) {
       router.push(`/game/${gameId}/team/${teamId}/room/${roomId}`);
     } else if (canUnlock(roomId)) {
       setPendingUnlock(roomId);
@@ -240,11 +333,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
     setTimeout(() => setMessage(null), 3000);
   };
 
+  // ── Guard ─────────────────────────────────────────────────────────────────
   if (!game || !gameId || !teamId) return null;
 
-  const chapter = getChapter(game.current_chapter_id);
-  const theme = ACT_THEMES[game.current_chapter_id] ?? ACT_THEMES["act-1"];
-  const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
+  // ── Derived values ────────────────────────────────────────────────────────
+  const chapter    = getChapter(game.current_chapter_id);
+  const theme      = ACT_THEMES[game.current_chapter_id] ?? ACT_THEMES["act-1"];
+  const geo        = ACT_GEO[game.current_chapter_id] ?? ACT_GEO["act-1"];
+  const actFolder  = game.current_chapter_id.replace(/-/g, "");  // "act-1" → "act1"
+  const teamName   = teamId === "team-a" ? game.team_a_name : game.team_b_name;
   const pendingRoom = pendingUnlock ? getRoom(pendingUnlock) : null;
 
   const sipMatch = game.offer_definition.trim().match(/^(\d+)/);
@@ -260,18 +357,323 @@ export default function TeamQuestBoardPage({ params }: Props) {
     ? boss.requiredRoomIds.every((r) => getRoomStatus(r) === "complete")
     : completedCount >= Math.ceil(totalRooms * 0.8);
 
+  // SVG scale math
+  const { svgW, svgH, scale } = geo;
+  const naturalHeightVW = (svgH / svgW * 100).toFixed(2);    // SVG height before scale
+  const spacerVW = (scale * svgH / svgW * 100).toFixed(1);    // total scrollable height
+
+  // Helper: get cx/cy for a node ID (including "boss")
+  const getNodePos = (id: string): { cx: number; cy: number } | null => {
+    if (id === "boss") return geo.bossNode;
+    return geo.nodes.find((n) => n.id === id) ?? null;
+  };
+
+  // ── Path colour helper ────────────────────────────────────────────────────
+  const pathColor = (fromId: string, toId: string) => {
+    const fromSt = fromId === "boss" ? "complete" : getRoomStatus(fromId);
+    const toSt   = toId   === "boss" ? "complete" : getRoomStatus(toId);
+    const bothDone = fromSt === "complete" && toSt === "complete";
+    const anyUnlocked = fromSt !== "locked" || toSt !== "locked";
+    return {
+      base: bothDone  ? "rgba(60,130,30,0.65)"  : anyUnlocked ? "rgba(100,72,16,0.6)" : "rgba(50,35,10,0.35)",
+      dash: bothDone  ? "rgba(130,235,70,0.6)"  : anyUnlocked ? "rgba(215,168,55,0.55)" : "rgba(100,75,25,0.28)",
+      width: bothDone ? 1.9 : 1.5,
+    };
+  };
+
+  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: "#080604" }}>
-      {/* ── Top HUD ── */}
+    <div className="fixed inset-0 overflow-hidden" style={{ background: "#080604" }}>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SCROLLABLE MAP
+      ══════════════════════════════════════════════════════════════════════ */}
       <div
-        className="sticky top-0 z-20 px-4 py-3 flex items-center gap-2"
+        ref={mapScrollRef}
+        className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+        style={{ scrollbarWidth: "none" } as React.CSSProperties}
+      >
+        {/* Spacer establishes scrollable height; SVG is absolutely inside it */}
+        <div
+          style={{
+            height: `${spacerVW}vw`,
+            width: "100%",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <svg
+            viewBox={`0 0 ${svgW} ${svgH}`}
+            xmlns="http://www.w3.org/2000/svg"
+            style={{
+              display: "block",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: `${naturalHeightVW}vw`,
+              transformOrigin: "top center",
+              transform: `scale(${scale})`,
+            }}
+          >
+            {/* ── Filters ── */}
+            <defs>
+              <filter id="tlcb-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="1" stdDeviation="2.5" floodColor="#000" floodOpacity="0.95" />
+              </filter>
+              <filter id="tlcb-glow-green" x="-40%" y="-40%" width="180%" height="180%">
+                <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#50d080" floodOpacity="0.9" />
+              </filter>
+              <filter id="tlcb-glow-red" x="-40%" y="-40%" width="180%" height="180%">
+                <feDropShadow dx="0" dy="0" stdDeviation="7" floodColor="#e03030" floodOpacity="0.85" />
+              </filter>
+              <filter id="tlcb-glow-amber" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#d4a832" floodOpacity="0.75" />
+              </filter>
+            </defs>
+
+            {/* ── Map background ── */}
+            <image
+              href={`/map/${actFolder}/map.png`}
+              x="0" y="0"
+              width={svgW} height={svgH}
+              preserveAspectRatio="xMidYMid slice"
+            />
+
+            {/* ── Act title ── */}
+            <text
+              x={svgW / 2} y={geo.titleCY - 7}
+              textAnchor="middle"
+              fontFamily="Georgia,serif"
+              fontSize={13}
+              fontWeight="bold"
+              fill={theme.accent}
+              letterSpacing={3}
+              filter="url(#tlcb-shadow)"
+              opacity={0.96}
+            >
+              {theme.label}
+            </text>
+            <text
+              x={svgW / 2} y={geo.titleCY + 4}
+              textAnchor="middle"
+              fontFamily="Georgia,serif"
+              fontSize={6}
+              fill={theme.accent}
+              letterSpacing={5}
+              filter="url(#tlcb-shadow)"
+              opacity={0.55}
+            >
+              {theme.subtitle}
+            </text>
+            {/* Decorative rule */}
+            <line
+              x1={svgW / 2 - 55} y1={geo.titleCY + 1}
+              x2={svgW / 2 - 22} y2={geo.titleCY + 1}
+              stroke={theme.accent} strokeWidth={0.5} opacity={0.3}
+            />
+            <line
+              x1={svgW / 2 + 22} y1={geo.titleCY + 1}
+              x2={svgW / 2 + 55} y2={geo.titleCY + 1}
+              stroke={theme.accent} strokeWidth={0.5} opacity={0.3}
+            />
+
+            {/* ── Path lines between nodes ── */}
+            {geo.paths.map(([fromId, toId], i) => {
+              const from = getNodePos(fromId);
+              const to   = getNodePos(toId);
+              if (!from || !to) return null;
+              const col = pathColor(fromId, toId);
+              return (
+                <g key={i}>
+                  {/* Base road */}
+                  <line
+                    x1={from.cx} y1={from.cy}
+                    x2={to.cx}   y2={to.cy}
+                    stroke={col.base}
+                    strokeWidth={col.width}
+                    strokeLinecap="round"
+                  />
+                  {/* Dashed stripe overlay */}
+                  <line
+                    x1={from.cx} y1={from.cy}
+                    x2={to.cx}   y2={to.cy}
+                    stroke={col.dash}
+                    strokeWidth={0.55}
+                    strokeDasharray="2.6 2.0"
+                    strokeLinecap="round"
+                  />
+                </g>
+              );
+            })}
+
+            {/* ── Boss node ── */}
+            {(() => {
+              const { cx, cy } = geo.bossNode;
+              const bossImg = bossUnlockable
+                ? `/ui/${actFolder}/node-active.png`
+                : `/ui/${actFolder}/node-locked.png`;
+              return (
+                <g
+                  onClick={() => {
+                    if (canInteract && chapter) {
+                      router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`);
+                    }
+                  }}
+                  style={{ cursor: canInteract && bossUnlockable ? "pointer" : "default" }}
+                >
+                  {/* Pulse ring when unlockable */}
+                  {bossUnlockable && (
+                    <circle cx={cx} cy={cy} r={32} fill="none" stroke="#e03020" strokeWidth={1.8} opacity={0.7}>
+                      <animate attributeName="r"       values="32;50;32" dur="2s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                  )}
+                  {/* Boss NodeBlob */}
+                  <image
+                    href={bossImg}
+                    x={cx - 28} y={cy - 28}
+                    width={56} height={56}
+                    opacity={bossUnlockable ? 1 : 0.45}
+                    style={bossUnlockable
+                      ? { filter: "drop-shadow(0 0 10px rgba(220,40,40,0.9)) hue-rotate(310deg) saturate(2)" }
+                      : {}}
+                  />
+                  {/* Boss label */}
+                  <text
+                    x={cx} y={cy + 37}
+                    textAnchor="middle"
+                    fontFamily="Georgia,serif"
+                    fontSize={6.5}
+                    fill={bossUnlockable ? "#fca5a5" : "rgba(180,100,100,0.45)"}
+                    letterSpacing={1.5}
+                    filter="url(#tlcb-shadow)"
+                    opacity={0.95}
+                  >
+                    {(boss?.title ?? "BOSS").toUpperCase()}
+                  </text>
+                </g>
+              );
+            })()}
+
+            {/* ── Room NodeBlobs ── */}
+            {geo.nodes.map(({ id, cx, cy, sz, isOptional }) => {
+              const status     = getRoomStatus(id);
+              const unlockable = canUnlock(id);
+              const isDone     = status === "complete";
+              const isLocked   = status === "locked" && !unlockable;
+              const isActive   = !isDone && !isLocked;
+              const nodeState  = isDone ? "completed" : isLocked ? "locked" : "active";
+              const clickable  = canInteract && !isLocked;
+              const room       = getRoom(id);
+              const opacity    = isLocked ? 0.3 : 1;
+
+              // Only show nodes that are in this chapter's room list
+              if (chapter && !chapter.roomIds.includes(id)) return null;
+
+              return (
+                <g
+                  key={id}
+                  onClick={() => { if (clickable) handleNodeClick(id); }}
+                  style={{ cursor: clickable ? "pointer" : "default" }}
+                  opacity={opacity}
+                >
+                  {/* Hit-area circle (larger than image) */}
+                  <circle cx={cx} cy={cy} r={sz + 8} fill="transparent" />
+
+                  {/* Pulsing ring — unlockable rooms */}
+                  {unlockable && (
+                    <circle cx={cx} cy={cy} r={sz + 3} fill="none" stroke="#50d080" strokeWidth={1.5} opacity={0}>
+                      <animate attributeName="r"       values={`${sz+3};${sz+18};${sz+3}`} dur="1.8s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="0.85;0;0.85" dur="1.8s" repeatCount="indefinite" />
+                    </circle>
+                  )}
+
+                  {/* Gentle ambient ring — active (entered) rooms */}
+                  {isActive && !unlockable && !isDone && (
+                    <circle cx={cx} cy={cy} r={sz + 2} fill="none" stroke={theme.accent} strokeWidth={1} opacity={0}>
+                      <animate attributeName="r"       values={`${sz+2};${sz+12};${sz+2}`} dur="3s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite" />
+                    </circle>
+                  )}
+
+                  {/* NodeBlob image — SVG <image> handles PNG alpha correctly */}
+                  <image
+                    href={`/ui/${actFolder}/node-${nodeState}.png`}
+                    x={cx - sz} y={cy - sz}
+                    width={sz * 2} height={sz * 2}
+                    style={{
+                      filter: unlockable
+                        ? "url(#tlcb-glow-green)"
+                        : isDone
+                        ? "drop-shadow(0 1px 3px rgba(0,0,0,0.9))"
+                        : undefined,
+                    }}
+                  />
+
+                  {/* Optional star badge */}
+                  {isOptional && !isDone && (
+                    <text
+                      x={cx + sz - 1} y={cy - sz + 7}
+                      textAnchor="middle"
+                      fontSize={7}
+                      fill="#a8e8c0"
+                      fontFamily="Georgia,serif"
+                      opacity={0.7}
+                    >★</text>
+                  )}
+
+                  {/* Room name label */}
+                  <text
+                    x={cx} y={cy + sz + 9}
+                    textAnchor="middle"
+                    fontFamily="Georgia,serif"
+                    fontSize={5.8}
+                    fill={
+                      isDone      ? "#7ae050" :
+                      unlockable  ? "#90ee90" :
+                      isLocked    ? "rgba(140,110,60,0.5)" :
+                      theme.accent
+                    }
+                    filter="url(#tlcb-shadow)"
+                    opacity={0.95}
+                    letterSpacing={0.4}
+                  >
+                    {(room?.title ?? id).toUpperCase()}
+                  </text>
+
+                  {/* Sub-label: status */}
+                  {isDone && (
+                    <text x={cx} y={cy + sz + 17} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
+                      fill="#6ae840" filter="url(#tlcb-shadow)" opacity={0.8}>
+                      ✓ Done
+                    </text>
+                  )}
+                  {unlockable && !isDone && (
+                    <text x={cx} y={cy + sz + 17} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
+                      fill="#50d080" filter="url(#tlcb-shadow)" opacity={0.85}>
+                      {room && room.unlockCost > 0 ? `Unlock (${room.unlockCost} Offer)` : "Tap to unlock"}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          TOP HUD — fixed overlay
+      ══════════════════════════════════════════════════════════════════════ */}
+      <div
+        className="absolute top-0 left-0 right-0 z-20 px-4 py-3 flex items-center gap-2 pointer-events-none"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
-          background: "linear-gradient(180deg, rgba(8,6,4,0.98) 0%, rgba(8,6,4,0.92) 100%)",
-          borderBottom: "1px solid rgba(180,130,50,0.12)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
+          background: "linear-gradient(180deg, rgba(8,6,4,0.97) 0%, rgba(8,6,4,0.0) 100%)",
         }}
       >
-        <div className="flex-1 min-w-0">
+        {/* Team name + act label — pointer-events-none on parent, re-enable on children */}
+        <div className="flex-1 min-w-0 pointer-events-auto">
           <div className="text-[9px] uppercase tracking-[0.3em] mb-0.5" style={{ color: theme.accent, fontFamily: "Georgia,serif", opacity: 0.6 }}>
             {theme.emoji} {theme.label}
           </div>
@@ -280,20 +682,20 @@ export default function TeamQuestBoardPage({ params }: Props) {
           </div>
         </div>
 
-        {/* VS pill */}
-        <div className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px]"
-          style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(180,130,50,0.2)", fontFamily: "Georgia,serif" }}>
+        {/* VS progress pill */}
+        <div className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] pointer-events-auto"
+          style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(180,130,50,0.22)", fontFamily: "Georgia,serif" }}>
           <span style={{ color: bossUnlockable ? "rgb(248,113,113)" : theme.accent }}>
             {completedCount}/{totalRooms}
           </span>
           <span style={{ color: "rgba(120,80,30,0.5)", margin: "0 2px" }}>vs</span>
-          <span style={{ color: "rgba(180,160,100,0.6)" }}>{otherRoomsCompleted ?? "·"}/{totalRooms}</span>
+          <span style={{ color: "rgba(180,160,100,0.55)" }}>{otherRoomsCompleted ?? "·"}/{totalRooms}</span>
         </div>
 
-        {/* Sips */}
+        {/* Sips counter */}
         {totalSipsDrunk > 0 && (
-          <div className="flex items-center gap-1 h-8 px-2.5 rounded-full"
-            style={{ background: "rgba(0,0,0,0.45)", border: "1px solid rgba(180,130,50,0.15)", fontFamily: "Georgia,serif" }}>
+          <div className="flex items-center gap-1 h-8 px-2.5 rounded-full pointer-events-auto"
+            style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(180,130,50,0.18)", fontFamily: "Georgia,serif" }}>
             <span style={{ fontSize: "12px" }}>🍺</span>
             <span className="text-[11px] font-bold" style={{ color: "rgba(180,130,50,0.75)" }}>{totalSipsDrunk}</span>
           </div>
@@ -302,11 +704,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
         {/* Case File */}
         <button
           onClick={() => { setShowCaseFile(true); seenClueCountRef.current = teamClues.length; setNewClueCount(0); }}
-          className={`flex items-center gap-1.5 h-8 px-2.5 rounded-full active:scale-95 transition-transform relative ${newClueCount > 0 ? "animate-pulse-glow" : ""}`}
+          className={`flex items-center gap-1.5 h-8 px-2.5 rounded-full active:scale-95 transition-transform relative pointer-events-auto ${newClueCount > 0 ? "animate-pulse-glow" : ""}`}
           style={{
-            background: newClueCount > 0 ? "rgba(120,80,10,0.6)" : "rgba(0,0,0,0.45)",
+            background: newClueCount > 0 ? "rgba(120,80,10,0.7)" : "rgba(0,0,0,0.55)",
             border: `1px solid ${newClueCount > 0 ? "rgba(251,191,36,0.55)" : "rgba(180,130,50,0.2)"}`,
-            color: teamClues.length > 0 ? "rgba(251,191,36,0.9)" : "rgba(120,90,30,0.45)",
+            color: teamClues.length > 0 ? "rgba(251,191,36,0.9)" : "rgba(120,90,30,0.4)",
             fontSize: "13px",
           }}
         >
@@ -324,13 +726,17 @@ export default function TeamQuestBoardPage({ params }: Props) {
           )}
         </button>
 
-        <button onClick={() => setShowPanel(true)} className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ background: "rgba(0,0,0,0.45)", border: "1px solid rgba(180,130,50,0.2)", color: "rgba(180,130,50,0.7)", fontSize: "14px" }}>
+        {/* Settings */}
+        <button
+          onClick={() => setShowPanel(true)}
+          className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform pointer-events-auto"
+          style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(180,130,50,0.2)", color: "rgba(180,130,50,0.7)", fontSize: "14px" }}
+        >
           ⚙
         </button>
       </div>
 
-      {/* ── Toast ── */}
+      {/* ── Toast message ── */}
       {message && (
         <div className="fixed left-4 right-4 z-50 rounded-lg px-4 py-2 text-sm"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 72px)", background: "rgba(20,14,6,0.95)", border: "1px solid rgba(180,130,50,0.35)", color: "rgb(251,191,36)", fontFamily: "Georgia,serif" }}>
@@ -338,161 +744,19 @@ export default function TeamQuestBoardPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Map Quest Board ── */}
-      {(() => {
-        const actFolder = game.current_chapter_id.replace(/-/g, ""); // "act-1" → "act1"
-        const actKey = game.current_chapter_id;
-        const positions = NODE_POSITIONS[actKey] ?? {};
-        const paths = NODE_PATHS[actKey] ?? [];
-
-        return (
-          <div className="relative w-full" style={{ paddingBottom: "88px" }}>
-            {/* Map image container — maintains 768:1376 ratio */}
-            <div className="relative w-full" style={{ aspectRatio: "768 / 1376" }}>
-              {/* Background map */}
-              <img
-                src={`/map/${actFolder}/map.png`}
-                alt="Quest Map"
-                className="absolute inset-0 w-full h-full"
-                style={{ objectFit: "fill" }}
-                draggable={false}
-              />
-
-              {/* SVG path overlay — uses same 0-100 percentage coordinate space */}
-              <svg
-                className="absolute inset-0 w-full h-full pointer-events-none"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-              >
-                {paths.map(([fromId, toId], i) => {
-                  const from = positions[fromId];
-                  const to = positions[toId];
-                  if (!from || !to) return null;
-                  const fromStatus = getRoomStatus(fromId);
-                  const toStatus = getRoomStatus(toId);
-                  const bothDone = fromStatus === "complete" && toStatus === "complete";
-                  const eitherUnlocked = fromStatus !== "locked" || toStatus !== "locked";
-                  return (
-                    <g key={i}>
-                      {/* Road base */}
-                      <line
-                        x1={from.x} y1={from.y}
-                        x2={to.x} y2={to.y}
-                        stroke={bothDone ? "rgba(60,130,30,0.5)" : eitherUnlocked ? "rgba(100,70,15,0.55)" : "rgba(50,35,10,0.35)"}
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                      />
-                      {/* Dashed stripe on top */}
-                      <line
-                        x1={from.x} y1={from.y}
-                        x2={to.x} y2={to.y}
-                        stroke={bothDone ? "rgba(120,220,60,0.55)" : eitherUnlocked ? "rgba(210,165,60,0.5)" : "rgba(100,75,25,0.3)"}
-                        strokeWidth="0.55"
-                        strokeDasharray="2.5 2"
-                        strokeLinecap="round"
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {/* NodeBlob buttons */}
-              {mainRooms.map((room) => {
-                if (!room) return null;
-                const pos = positions[room.id];
-                if (!pos) return null;
-                const status = getRoomStatus(room.id);
-                const unlockable = canUnlock(room.id);
-                const isLocked = status === "locked" && !unlockable;
-                const isDone = status === "complete";
-                const nodeState = isDone ? "completed" : isLocked ? "locked" : "active";
-                const nodeImg = `/ui/${actFolder}/node-${nodeState}.png`;
-
-                return (
-                  <button
-                    key={room.id}
-                    onClick={() => handleNodeClick(room.id)}
-                    disabled={!canInteract || (status === "locked" && !unlockable)}
-                    className="absolute disabled:opacity-25 transition-transform active:scale-90"
-                    style={{
-                      left: `${pos.x}%`,
-                      top: `${pos.y}%`,
-                      transform: "translate(-50%, -50%)",
-                      width: "16%",
-                    }}
-                  >
-                    <img
-                      src={nodeImg}
-                      alt={room.title}
-                      className="w-full h-auto"
-                      style={{
-                        filter: unlockable
-                          ? "drop-shadow(0 0 5px rgba(80,200,80,0.85))"
-                          : isDone
-                          ? "drop-shadow(0 1px 3px rgba(0,0,0,0.7))"
-                          : isLocked
-                          ? "grayscale(0.3) brightness(0.7)"
-                          : "drop-shadow(0 1px 4px rgba(0,0,0,0.6))",
-                      }}
-                    />
-                    {/* Label */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "-22%",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        width: "180%",
-                        textAlign: "center",
-                        fontSize: "clamp(7px, 2.2vw, 10px)",
-                        fontFamily: "Georgia, serif",
-                        color: isDone
-                          ? "rgba(140,220,80,0.95)"
-                          : unlockable
-                          ? "rgba(120,230,120,0.95)"
-                          : isLocked
-                          ? "rgba(140,110,60,0.55)"
-                          : "rgba(240,215,145,0.9)",
-                        textShadow: "0 1px 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.8)",
-                        lineHeight: 1.15,
-                        pointerEvents: "none",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {room.title}
-                      {room.isOptional && !isDone && (
-                        <span style={{ opacity: 0.5 }}> ✦</span>
-                      )}
-                    </div>
-
-                    {/* Unlockable glow ring */}
-                    {unlockable && (
-                      <div
-                        className="absolute inset-0 rounded-full animate-ping"
-                        style={{ background: "rgba(80,200,80,0.15)", animationDuration: "1.5s" }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* ── Boss strip (fixed bottom) ── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          BOSS STRIP — fixed bottom
+      ══════════════════════════════════════════════════════════════════════ */}
       {chapter && (
         <div className="fixed bottom-0 left-0 right-0 z-20"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", background: "linear-gradient(180deg, transparent 0%, rgba(6,2,2,0.98) 35%)" }}>
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", background: "linear-gradient(180deg, transparent 0%, rgba(6,2,2,0.98) 38%)" }}>
           <div className="px-4 pt-3 pb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
                 style={{
                   background: "radial-gradient(circle, #3f0808 0%, #1a0303 100%)",
-                  border: `1px solid rgba(180,40,40,${bossUnlockable ? 0.6 : 0.3})`,
-                  boxShadow: bossUnlockable ? "0 0 12px rgba(180,40,40,0.3)" : "none",
+                  border: `1px solid rgba(180,40,40,${bossUnlockable ? 0.65 : 0.3})`,
+                  boxShadow: bossUnlockable ? "0 0 14px rgba(180,40,40,0.35)" : "none",
                 }}>
                 {bossUnlockable ? "☠️" : "🔒"}
               </div>
@@ -520,7 +784,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   } : {
                     background: "rgba(30,10,10,0.6)",
                     border: "1px solid rgba(100,30,30,0.25)",
-                    color: "rgba(180,80,80,0.35)",
+                    color: "rgba(180,80,80,0.32)",
                     cursor: "not-allowed",
                     fontFamily: "Georgia,serif",
                   }}
@@ -549,7 +813,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
         ))}
       </div>
 
-      {/* ── Unlock modal ── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          UNLOCK MODAL
+      ══════════════════════════════════════════════════════════════════════ */}
       {pendingUnlock && pendingRoom && (
         <div className="fixed inset-0 flex items-center justify-center p-6 z-40"
           style={{ background: "rgba(12,26,44,0.85)", backdropFilter: "blur(5px)" }}
@@ -580,7 +846,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Control panel overlay ── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          CONTROL PANEL
+      ══════════════════════════════════════════════════════════════════════ */}
       {showPanel && (
         <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(3px)" }} onClick={() => setShowPanel(false)}>
           <div className="absolute bottom-0 left-0 right-0 animate-sheet-up rounded-t-2xl"
@@ -623,7 +891,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Case File drawer ── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          CASE FILE DRAWER
+      ══════════════════════════════════════════════════════════════════════ */}
       {showCaseFile && (
         <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
           onClick={() => { setShowCaseFile(false); setSelectedClue(null); }}>
@@ -689,6 +959,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
   );
 }
 
+// ─── Physical challenge countdown banner ────────────────────────────────────
 function PhysicalChallengeBanner({ questId, startedAt }: { questId: string; startedAt: string }) {
   const quest = getQuest(questId);
   const config = quest?.physicalChallenge;
