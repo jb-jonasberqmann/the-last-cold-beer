@@ -51,26 +51,29 @@ interface ActGeo {
 
 const ACT_GEO: Record<string, ActGeo> = {
   // ── ACT 1 — outdoor / arrival ─────────────────────────────────────────────
+  // Spine (cx≈170): driveway → garden → front-door → boss
+  // Branches: terrace/carport right, shed left, petanque optional right
+  // Scale 1.8 → visible SVG-x ≈ 76–264 → all nodes between cx 112–228 ✓
   "act-1": {
-    svgW: 340, svgH: 520, scale: 2.2,
+    svgW: 340, svgH: 520, scale: 1.8,
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "front-door",     cx: 170, cy: 178, sz: 22 },
-      { id: "shed",           cx: 100, cy: 262, sz: 20 },
-      { id: "carport",        cx: 240, cy: 262, sz: 20 },
-      { id: "garden",         cx: 132, cy: 352, sz: 22 },
-      { id: "terrace",        cx: 240, cy: 415, sz: 20 },
-      { id: "petanque-court", cx: 238, cy: 460, sz: 18, isOptional: true },
-      { id: "driveway",       cx: 144, cy: 460, sz: 22 },
+      { id: "front-door",     cx: 170, cy: 180, sz: 13 },
+      { id: "shed",           cx: 114, cy: 265, sz: 11 },
+      { id: "carport",        cx: 226, cy: 265, sz: 11 },
+      { id: "garden",         cx: 170, cy: 355, sz: 13 },
+      { id: "terrace",        cx: 228, cy: 408, sz: 11 },
+      { id: "petanque-court", cx: 230, cy: 458, sz: 10, isOptional: true },
+      { id: "driveway",       cx: 155, cy: 462, sz: 13 },
     ],
     paths: [
       ["driveway",    "garden"],
       ["driveway",    "terrace"],
+      ["terrace",     "carport"],
       ["garden",      "shed"],
       ["garden",      "carport"],
       ["garden",      "petanque-court"],
-      ["terrace",     "carport"],
       ["shed",        "front-door"],
       ["carport",     "front-door"],
       ["front-door",  "boss"],
@@ -78,19 +81,21 @@ const ACT_GEO: Record<string, ActGeo> = {
   },
 
   // ── ACT 2 — indoor / settling ─────────────────────────────────────────────
+  // Spine (cx≈170): bedrooms → bathroom → living-room → kitchen → dining → boss
+  // Branches: sunroom left (optional), kitchen-act2 right
   "act-2": {
-    svgW: 340, svgH: 520, scale: 2.2,
+    svgW: 340, svgH: 520, scale: 1.8,
     bossNode: { cx: 170, cy: 82 },
     titleCY: 38,
     nodes: [
-      { id: "dining-room",  cx: 170, cy: 158, sz: 22 },
-      { id: "kitchen-act2", cx: 242, cy: 248, sz: 20 },
-      { id: "sunroom",      cx: 100, cy: 248, sz: 18, isOptional: true },
-      { id: "living-room",  cx: 170, cy: 340, sz: 22 },
-      { id: "bathroom",     cx: 170, cy: 400, sz: 18 },
-      { id: "double-room",  cx: 100, cy: 455, sz: 20 },
-      { id: "single-room",  cx: 170, cy: 455, sz: 22 },
-      { id: "bunk-room",    cx: 242, cy: 455, sz: 20 },
+      { id: "dining-room",  cx: 170, cy: 162, sz: 13 },
+      { id: "kitchen-act2", cx: 226, cy: 248, sz: 11 },
+      { id: "sunroom",      cx: 114, cy: 248, sz: 10, isOptional: true },
+      { id: "living-room",  cx: 170, cy: 335, sz: 13 },
+      { id: "bathroom",     cx: 170, cy: 400, sz: 11 },
+      { id: "double-room",  cx: 114, cy: 462, sz: 11 },
+      { id: "single-room",  cx: 170, cy: 462, sz: 13 },
+      { id: "bunk-room",    cx: 226, cy: 462, sz: 11 },
     ],
     paths: [
       ["double-room",  "bathroom"],
@@ -105,35 +110,38 @@ const ACT_GEO: Record<string, ActGeo> = {
   },
 
   // ── ACT 3 — late night / dark ─────────────────────────────────────────────
+  // Spine: dining-dark → utility → back-corridor → revelation → boss
+  // 3-way fan from back-corridor: door (left), behind-shed (centre), fuse-box (right)
+  // Scale 1.7 → visible SVG-x ≈ 70–270 → all nodes between cx 95–245 ✓
   "act-3": {
-    svgW: 340, svgH: 640, scale: 2.0,
+    svgW: 340, svgH: 640, scale: 1.7,
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "revelation-circle", cx: 148, cy: 162, sz: 22 },
-      { id: "shed-dark",         cx: 240, cy: 238, sz: 20 },
-      { id: "door-nobody-tried", cx: 95,  cy: 312, sz: 20 },
-      { id: "conservatory",      cx: 155, cy: 312, sz: 18 },
-      { id: "kitchen-dark",      cx: 248, cy: 312, sz: 20 },
-      { id: "sealed-wall",       cx: 92,  cy: 238, sz: 18 },
-      { id: "rattling-window",   cx: 250, cy: 238, sz: 16, isOptional: true },
-      { id: "behind-the-shed",   cx: 138, cy: 385, sz: 18 },
-      { id: "fuse-box",          cx: 248, cy: 385, sz: 18 },
-      { id: "back-corridor",     cx: 170, cy: 455, sz: 22 },
-      { id: "utility-corner",    cx: 170, cy: 528, sz: 20 },
-      { id: "dining-room-dark",  cx: 170, cy: 598, sz: 22 },
+      { id: "revelation-circle", cx: 155, cy: 162, sz: 12 },
+      { id: "door-nobody-tried", cx: 107, cy: 238, sz: 11 },
+      { id: "shed-dark",         cx: 215, cy: 238, sz: 11 },
+      { id: "sealed-wall",       cx: 95,  cy: 308, sz: 10 },
+      { id: "conservatory",      cx: 152, cy: 308, sz: 10 },
+      { id: "kitchen-dark",      cx: 232, cy: 308, sz: 11 },
+      { id: "rattling-window",   cx: 242, cy: 238, sz: 9, isOptional: true },
+      { id: "behind-the-shed",   cx: 165, cy: 382, sz: 11 },
+      { id: "fuse-box",          cx: 235, cy: 382, sz: 10 },
+      { id: "back-corridor",     cx: 170, cy: 455, sz: 13 },
+      { id: "utility-corner",    cx: 170, cy: 528, sz: 11 },
+      { id: "dining-room-dark",  cx: 170, cy: 600, sz: 13 },
     ],
     paths: [
       ["dining-room-dark",  "utility-corner"],
       ["utility-corner",    "back-corridor"],
+      ["back-corridor",     "door-nobody-tried"],
       ["back-corridor",     "behind-the-shed"],
       ["back-corridor",     "fuse-box"],
-      ["back-corridor",     "door-nobody-tried"],
+      ["door-nobody-tried", "sealed-wall"],
+      ["door-nobody-tried", "revelation-circle"],
       ["behind-the-shed",   "conservatory"],
       ["behind-the-shed",   "shed-dark"],
       ["fuse-box",          "kitchen-dark"],
-      ["door-nobody-tried", "sealed-wall"],
-      ["door-nobody-tried", "revelation-circle"],
       ["kitchen-dark",      "rattling-window"],
       ["shed-dark",         "revelation-circle"],
       ["revelation-circle", "boss"],
@@ -524,24 +532,24 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 >
                   {/* Pulse ring when unlockable */}
                   {bossUnlockable && (
-                    <circle cx={cx} cy={cy} r={32} fill="none" stroke="#e03020" strokeWidth={1.8} opacity={0.7}>
-                      <animate attributeName="r"       values="32;50;32" dur="2s" repeatCount="indefinite" />
+                    <circle cx={cx} cy={cy} r={18} fill="none" stroke="#e03020" strokeWidth={1.5} opacity={0.7}>
+                      <animate attributeName="r"       values="18;30;18" dur="2s" repeatCount="indefinite" />
                       <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
                     </circle>
                   )}
                   {/* Boss NodeBlob */}
                   <image
                     href={bossImg}
-                    x={cx - 28} y={cy - 28}
-                    width={56} height={56}
+                    x={cx - 16} y={cy - 16}
+                    width={32} height={32}
                     opacity={bossUnlockable ? 1 : 0.45}
                     style={bossUnlockable
-                      ? { filter: "drop-shadow(0 0 10px rgba(220,40,40,0.9)) hue-rotate(310deg) saturate(2)" }
+                      ? { filter: "drop-shadow(0 0 8px rgba(220,40,40,0.9)) hue-rotate(310deg) saturate(2)" }
                       : {}}
                   />
                   {/* Boss label */}
                   <text
-                    x={cx} y={cy + 37}
+                    x={cx} y={cy + 24}
                     textAnchor="middle"
                     fontFamily="Georgia,serif"
                     fontSize={6.5}

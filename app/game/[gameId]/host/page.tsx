@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole, rebalanceTeams } from "@/lib/game/actions";
-import { GameLayout } from "@/components/layout/GameLayout";
 import { Button } from "@/components/ui/Button";
 import type { DbGame, DbPlayer, DbTeamProgress, DbBossProgress } from "@/types/database";
 
@@ -13,6 +13,7 @@ interface Props {
 
 export default function HostPage({ params }: Props) {
   const gameId = params.gameId;
+  const router = useRouter();
 
   const { session, isLoaded } = usePlayer();
   const [game, setGame] = useState<DbGame | null>(null);
@@ -89,12 +90,24 @@ export default function HostPage({ params }: Props) {
   const allRooms = ["driveway", "terrace", "garden", "shed", "petanque-court"];
 
   return (
-    <GameLayout
-      gameId={gameId}
-      backHref={`/game/${gameId}/dashboard`}
-      backLabel="Dashboard"
-      title="Host Controls"
-    >
+    <div className="min-h-screen bg-stone-950 text-white">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-stone-950/95 border-b border-amber-900/30 px-4 py-3 flex items-center gap-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top,0px) + 12px)" }}>
+        <button
+          onClick={() => router.push(`/game/${gameId}/dashboard`)}
+          className="text-amber-700 hover:text-amber-400 text-sm transition-colors"
+          style={{ fontFamily: "Georgia,serif" }}
+        >
+          ← Dashboard
+        </button>
+        <h1 className="font-bold text-amber-200 flex-1 text-center" style={{ fontFamily: "Georgia,serif", letterSpacing: "0.05em" }}>
+          Host Controls
+        </h1>
+        <div className="w-16" />
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6">
       <div className="space-y-6">
         {/* Game info */}
         <div className="rounded-xl bg-stone-800 border border-stone-600 p-4 space-y-2">
@@ -242,6 +255,7 @@ export default function HostPage({ params }: Props) {
           ↻ Refresh Data
         </Button>
       </div>
-    </GameLayout>
+      </div>
+    </div>
   );
 }
