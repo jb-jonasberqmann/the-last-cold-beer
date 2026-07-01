@@ -1,11 +1,28 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-// Single Neon SQL client — works in both server components and server actions.
-// Uses the tagged-template literal API: sql`SELECT * FROM games WHERE id = ${id}`
-// Results are plain JS objects typed by the caller.
+// Lazy Neon client — defers initialization until the first SQL call.
+//
+// WHY: The old pattern `if (!DATABASE_URL) throw` fires at module-load time.
+// Next.js evaluates the full server-side module graph during SSR, so any
+// module-level throw escapes React error boundaries and kills the render.
+// By deferring to the first actual query, we let the error surface in the
+// normal server-action error path where it belongs.
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not set. Copy .env.local.example to .env.local and fill in your Neon connection string.");
+let _sql: NeonQueryFunction<false, false> | undefined;
+
+function getSQL(): NeonQueryFunction<false, false> {
+  if (_sql) return _sql;
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL is not set. Copy .env.local.example to .env.local and fill in your Neon connection string."
+    );
+  }
+  _sql = neon(url);
+  return _sql;
 }
 
-export const sql = neon(process.env.DATABASE_URL);
+// Exported as a tagged-template function — all existing call sites (sql`...`) work unchanged.
+export const sql: NeonQueryFunction<false, false> = (
+  (...args: Parameters<NeonQueryFunction<false, false>>) => getSQL()(...args)
+) as NeonQueryFunction<false, false>;
