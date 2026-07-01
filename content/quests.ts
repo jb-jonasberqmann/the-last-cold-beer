@@ -252,23 +252,23 @@ export const QUESTS: Quest[] = [
 
   // --- CARPORT ---
   {
-    id: "carport-unload",
+    id: "carport-chalk",
     roomId: "carport",
     type: "social_challenge",
-    title: "Help Mads Unload",
+    title: "The Chalk Arrows",
     description:
-      "Mads has arrived. His car is full — cooler, sleeping bag, two cases of beer, a guitar he won't play. He needs hands. Everyone pitches in.",
+      "Two chalk arrows on the back wall of the carport, low down near the floor. One pointing down. One pointing right. They're careful — too deliberate to be accidental. No label, no date, no signature.",
     prompt:
-      "Everyone helps Mads unload the car. Once everything is inside and Mads has had his first beer, he pulls a crumpled piece of paper from his shirt pocket and hands it over. One number on it.",
+      "The group must agree on what the arrows mean. Any interpretation — as long as everyone commits to the same one. The house accepts what you collectively decide.",
     order: 1,
     isRequired: true,
     hints: [],
-    rewardText: "4. Scrawled on paper, carried in a shirt pocket for three days. Mads calls it 'the most important number I've ever owned.'",
+    rewardText: "Agreed. Whatever the arrows meant, you'll recognize the moment when it arrives.",
     da: {
-      title: "Hjælp Mads med at Losse",
-      description: "Mads er ankommet. Hans bil er fuld — køler, sovepose, to kasser øl, en guitar han ikke spiller.",
-      prompt: "Alle hjælper Mads med at losse bilen. Når alt er inde og Mads har fået sin første øl, trækker han et krøllet stykke papir frem fra skjortelommen.",
-      rewardText: "4. Kradset på papir, båret i en skjommelomme i tre dage. Mads kalder det 'det vigtigste tal jeg nogensinde har ejet.'",
+      title: "Kridit-pilene",
+      description: "To kridt-pile på bagevæggen af carporten, lavt nede ved gulvet. Én peger ned. Én peger til højre. De er omhyggelige — for bevidste til at være tilfældige.",
+      prompt: "Gruppen skal blive enige om hvad pilene betyder. Enhver fortolkning — bare alle er enige om den samme.",
+      rewardText: "Aftalt. Uanset hvad pilene betød, genkender I øjeblikket når det kommer.",
     },
   },
 
@@ -281,7 +281,7 @@ export const QUESTS: Quest[] = [
     description:
       "Five digits. Open your Case File and find the five Code Fragments — one from each location. The order is the order you found them: Driveway first, then Terrace, Garden, Shed, and Mads last. Each fragment is a single digit. Read them in that order and enter the five-digit code.",
     prompt:
-      "Open your Case File (🗂 top right). Find the five Code Fragment clues and read each digit:\n\n" +
+      "Ask one of your team members to open the Case File (🗂 top right on the map screen — you can't access it from inside a room). Find the five Code Fragment clues and read out each digit:\n\n" +
       "1. Code Fragment — Driveway\n" +
       "2. Code Fragment — Terrace\n" +
       "3. Code Fragment — Garden\n" +
@@ -303,7 +303,7 @@ export const QUESTS: Quest[] = [
     da: {
       title: "Nøgleboksen",
       description: "Fem cifre. Åbn din sagsmappen og find de fem Kodefragmenter — ét fra hvert sted. Rækkefølgen er den du fandt dem: Indkørslen først, så Terrassen, Haven, Skuret og Mads sidst.",
-      prompt: "Åbn din sagsmappe (🗂 øverst til højre). Find de fem Kodefragment-ledetråde og læs hvert ciffer:\n\n1. Kodefragment — Indkørslen\n2. Kodefragment — Terrassen\n3. Kodefragment — Haven\n4. Kodefragment — Skuret\n5. Kodefragment — Mads\n\nKombiner de fem cifre i den rækkefølge. Indtast den femsifrede kode.",
+      prompt: "Bed et af jeres holdmedlemmer om at åbne sagsmappen (🗂 øverst til højre på kortskærmen — I kan ikke åbne den inde i et rum). Find de fem Kodefragment-ledetråde og læs hvert ciffer:\n\n1. Kodefragment — Indkørslen\n2. Kodefragment — Terrassen\n3. Kodefragment — Haven\n4. Kodefragment — Skuret\n5. Kodefragment — Mads\n\nKombiner de fem cifre i den rækkefølge. Indtast den femsifrede kode.",
       rewardText: "Klik. Nøgleboksen åbner. Døren låses op. Akt 2 begynder.",
       failureText: "Nøgleboksen afviser det. Tjek rækkefølgen.",
     },

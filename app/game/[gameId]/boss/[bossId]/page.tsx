@@ -198,10 +198,10 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const isActionUsed  = (actionId: string) => usedBossActionIds.includes(actionId);
   const bossImage     = BOSS_ARTWORK[bossId] ?? null;
 
-  // Free action: Act 1 boss — complete "landing-strip" (outdoor clearing) unlocks a free boost
+  // Free action: Act 1 boss — complete "carport" (optional branch) unlocks a free boost
   // Act 2 boss — completing "tool-shed" unlocks a free radio sabotage action
   const FREE_ACTION_ROOM: Record<string, string> = {
-    "mads":       "landing-strip",
+    "mads":       "carport",
     "the-radio":  "tool-shed",
   };
   const freeActionRoom = FREE_ACTION_ROOM[bossId] ?? null;

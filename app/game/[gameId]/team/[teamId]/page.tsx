@@ -55,24 +55,27 @@ const ACT_GEO: Record<string, ActGeo> = {
   //   DRIVEWAY → TERRACE → GARDEN → CARPORT → FRONT DOOR → BOSS
   //                                          ↘ SHED (dead-end)
   "act-1": {
-    svgW: 340, svgH: 520, scale: 1.65,
-    bossNode: { cx: 170, cy: 88 },
+    // Act 1 flow (bottom → top):
+    //   DRIVEWAY → TERRACE → GARDEN → SHED (main) → BOSS (Mads) → FRONT DOOR (triggers Act 2)
+    //                                              ↗ CARPORT (optional branch — unlocks boss advantage)
+    svgW: 340, svgH: 540, scale: 1.65,
+    bossNode: { cx: 170, cy: 195 },
     titleCY: 42,
     nodes: [
-      { id: "front-door", cx: 170, cy: 195, sz: 14 },
-      { id: "carport",    cx: 115, cy: 288, sz: 13 },  // LEFT
-      { id: "shed",       cx: 255, cy: 288, sz: 12 },  // RIGHT — dead-end branch
-      { id: "garden",     cx: 108, cy: 372, sz: 14 },  // LEFT
-      { id: "terrace",    cx: 245, cy: 398, sz: 12 },  // RIGHT
-      { id: "driveway",   cx: 175, cy: 458, sz: 14 },  // bottom center
+      { id: "front-door", cx: 170, cy: 95,  sz: 14 },  // TOP — very last room
+      { id: "shed",       cx: 130, cy: 295, sz: 13 },  // main path (left-center)
+      { id: "carport",    cx: 255, cy: 295, sz: 11 },  // optional branch (RIGHT)
+      { id: "garden",     cx: 108, cy: 385, sz: 14 },  // after terrace
+      { id: "terrace",    cx: 245, cy: 410, sz: 12 },  // after driveway
+      { id: "driveway",   cx: 175, cy: 470, sz: 14 },  // START — bottom center
     ],
     paths: [
-      ["driveway",   "terrace"],    // 1st: terrace before garden
-      ["terrace",    "garden"],     // 2nd: garden after terrace
-      ["garden",     "carport"],    // 3rd: carport after garden
-      ["carport",    "shed"],       // dead-end branch
-      ["carport",    "front-door"], // main progression
-      ["front-door", "boss"],
+      ["driveway",   "terrace"],    // 1: terrace before garden
+      ["terrace",    "garden"],     // 2: garden after terrace
+      ["garden",     "shed"],       // 3: shed — main route
+      ["garden",     "carport"],    // 3b: carport — optional branch (no further connection)
+      ["shed",       "boss"],       // 4: boss after shed
+      ["boss",       "front-door"], // 5: front-door is last
     ],
   },
 
@@ -324,7 +327,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
     const room = getRoom(roomId);
     if (!room) return false;
     if (getRoomStatus(roomId) !== "locked") return false;
-    return room.unlockRequires.every((req) => getRoomStatus(req) === "complete");
+    if (!room.unlockRequires.every((req) => getRoomStatus(req) === "complete")) return false;
+    if (room.unlockRequiresArtifacts && room.unlockRequiresArtifacts.length > 0) {
+      return room.unlockRequiresArtifacts.every((cid) => teamClues.some((c) => c.id === cid));
+    }
+    return true;
   };
 
   const handleNodeClick = (roomId: string) => {

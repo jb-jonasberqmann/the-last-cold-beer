@@ -13,18 +13,18 @@ export const BOSSES: Boss[] = [
     title: "The Keybearer",
     subtitle: "Late. Unapologetic. Arms completely full.",
     description:
-      "Mads pulls in to the carport, door open before the engine's off. He is carrying more than is physically reasonable — a cooler, a sleeping bag, two cases of beer, something wrapped in a garbage bag. He grins. He does not apologize. His phone was on silent. He had the code the whole time.",
+      "Mads arrives just as you're heading to the front door. Arms completely full — a cooler, a sleeping bag, two cases of beer, something wrapped in a garbage bag. He grins. He does not apologize. His phone was on silent. He had the code the whole time. He won't give it to you until his arms are empty.",
     icon: "🙋",
     look: {
       icon: "🙋",
       atmosphere:
-        "The carport. Mads's car is crooked in the space. The boot is open. The inside of the car is a chaos of bags, towels, and loose items. He needs help. The code fragment is in his jacket pocket. You cannot get to it while his arms are full.",
+        "Mads's car is blocking the path. The boot is open. Bags, towels, loose items — he needs help unloading. The code fragment is somewhere in that jacket. You cannot get to it while his arms are full.",
       colorFrom: "from-amber-800",
       colorTo: "to-stone-900",
       backgroundStyle: "outdoor-carport",
     },
     maxHp: 100,
-    requiredRoomIds: ["carport"],
+    requiredRoomIds: ["shed"],
     counterAttacks: [
       {
         id: "defend",

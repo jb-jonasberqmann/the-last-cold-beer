@@ -682,12 +682,13 @@ export async function dealBossDamage(
     `;
     const bossContent = getBoss(bossId);
 
-    // Act 1 boss (Mads) defeated → record chapter winner
+    // Act 1 boss (Mads) defeated → record chapter winner + award code fragment
     if (bossContent?.chapterId === "act-1") {
       await sql`
         UPDATE games SET chapter_1_winner = ${teamId}
         WHERE id = ${gameId} AND chapter_1_winner IS NULL
       `;
+      await _awardClue(gameId, teamId, "fragment-mads");
     }
 
     // Act 2 boss (The Radio) defeated → trigger Act 2→3 transition for this team
