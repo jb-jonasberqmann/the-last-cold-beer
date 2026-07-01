@@ -24,7 +24,7 @@ export default function GlobalError({
           {error.stack && <pre style={{ color: "#a8a29e", fontSize: "0.75rem", whiteSpace: "pre-wrap", marginTop: "0.75rem" }}>{error.stack}</pre>}
         </div>
         <button
-          onClick={reset}
+          onClick={() => window.location.reload()}
           style={{ marginTop: "1.5rem", padding: "0.5rem 1rem", background: "#b45309", color: "#fff", border: "none", borderRadius: "0.375rem", cursor: "pointer" }}
         >
           Try again

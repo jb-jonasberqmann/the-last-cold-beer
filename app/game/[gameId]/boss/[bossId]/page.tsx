@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
@@ -34,9 +34,7 @@ interface Props {
   params: { gameId: string; bossId: string };
 }
 
-export default function BossFightPage({ params }: Props) {
-  const gameId = params.gameId;
-  const bossId = params.bossId;
+function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }) {
   const { lang } = useLanguage();
   const router = useRouter();
 
@@ -1121,5 +1119,13 @@ export default function BossFightPage({ params }: Props) {
         </div>
       )}
     </GameLayout>
+  );
+}
+
+export default function BossFightPage({ params }: Props) {
+  return (
+    <Suspense fallback={null}>
+      <BossFightContent gameId={params.gameId} bossId={params.bossId} />
+    </Suspense>
   );
 }
