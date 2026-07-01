@@ -426,7 +426,7 @@ export async function dealBossDamage(
   actionId: string,
   answer?: string,
   bypassOfferCost?: boolean
-): Promise<ActionResult<{ damage: number; newHp: number; defeated: boolean; rewardText?: string; failureText?: string }>> {
+): Promise<ActionResult<{ damage: number; newHp: number; defeated: boolean; rewardText?: string; failureText?: string; counterAttack?: { move: string; label: string; description: string; defense_multiplier?: number; team_offer_damage?: number; heal_amount?: number } | null }>> {
   const boss = getBoss(bossId);
   if (!boss) return { success: false, error: "Boss not found." };
 
@@ -520,8 +520,9 @@ export async function dealBossDamage(
     }
   }
 
-  // ── One-time use check for social + offer_boost actions ─────────────────
-  if (foundAction.type === "social" || foundAction.type === "offer_boost") {
+  // ── One-time use check for offer_boost actions only ─────────────────────
+  // Social actions are repeatable; only the bribe (offer_boost) is locked after first use.
+  if (foundAction.type === "offer_boost") {
     const priorUse = await sql`
       SELECT id FROM game_events
       WHERE game_id = ${gameId}
@@ -533,9 +534,7 @@ export async function dealBossDamage(
     if (priorUse.length > 0) {
       return {
         success: false,
-        error: foundAction.type === "offer_boost"
-          ? "Mads won't be bought twice. The bribe is one-time only."
-          : "Already done — each action can only be used once.",
+        error: "Mads won't be bought twice. The bribe is one-time only.",
       };
     }
   }
@@ -612,6 +611,8 @@ export async function dealBossDamage(
   `;
 
   // ── Boss counter-attack (only when boss survives) ─────────────────────────
+  let chosenCounter: { move: string; label: string; description: string; defense_multiplier?: number; team_offer_damage?: number; heal_amount?: number } | null = null;
+
   if (!defeated && boss.counterAttacks && boss.counterAttacks.length > 0) {
     // Determine last used move (to prevent repeating)
     const lastMove = lastCounterEvRows.length > 0
@@ -659,17 +660,21 @@ export async function dealBossDamage(
         await _logOffer(gameId, teamId, chosen.effect.teamOfferDamage, `Boss attack: ${chosen.label}`, bossId);
       }
 
+      chosenCounter = {
+        move: chosen.id,
+        label: chosen.label,
+        description: chosen.description,
+        defense_multiplier: chosen.effect.defenseMultiplier,
+        team_offer_damage: chosen.effect.teamOfferDamage,
+        heal_amount: healAmount > 0 ? healAmount : undefined,
+      };
+
       await sql`
         INSERT INTO game_events (game_id, team_id, event_type, event_data)
         VALUES (${gameId}, ${teamId}, 'boss_counter_attacked',
                 ${JSON.stringify({
                   boss_id: bossId,
-                  move: chosen.id,
-                  label: chosen.label,
-                  description: chosen.description,
-                  defense_multiplier: chosen.effect.defenseMultiplier,
-                  team_offer_damage: chosen.effect.teamOfferDamage,
-                  heal_amount: healAmount > 0 ? healAmount : undefined,
+                  ...chosenCounter,
                 })}::jsonb)
       `;
     }
@@ -708,7 +713,7 @@ export async function dealBossDamage(
 
   return {
     success: true,
-    data: { damage, newHp, defeated, rewardText: foundAction.rewardText },
+    data: { damage, newHp, defeated, rewardText: foundAction.rewardText, counterAttack: chosenCounter },
   };
 }
 
