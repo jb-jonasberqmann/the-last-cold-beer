@@ -51,29 +51,28 @@ interface ActGeo {
 
 const ACT_GEO: Record<string, ActGeo> = {
   // ── ACT 1 — outdoor / arrival ─────────────────────────────────────────────
-  // Layout matches reference: KEYBEARER top → FRONT DOOR center → CARPORT(L)/SHED(R) row
-  // → GARDEN(L)/TERRACE(R) row → DRIVEWAY bottom center
-  // Scale 1.65 → visible SVG-x ≈ 67–273 ✓
+  // Linear flow (no reconnecting branches):
+  //   DRIVEWAY → TERRACE → GARDEN → CARPORT → FRONT DOOR → BOSS
+  //                                          ↘ SHED (dead-end)
   "act-1": {
     svgW: 340, svgH: 520, scale: 1.65,
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "front-door",     cx: 170, cy: 195, sz: 14 },
-      { id: "carport",        cx: 115, cy: 288, sz: 13 },  // LEFT
-      { id: "shed",           cx: 255, cy: 288, sz: 12 },  // RIGHT — horizontal from carport
-      { id: "garden",         cx: 108, cy: 372, sz: 14 },  // LEFT — below carport
-      { id: "terrace",        cx: 245, cy: 398, sz: 12 },  // RIGHT — below shed/terrace row
-      { id: "driveway",       cx: 175, cy: 458, sz: 14 },  // bottom center
+      { id: "front-door", cx: 170, cy: 195, sz: 14 },
+      { id: "carport",    cx: 115, cy: 288, sz: 13 },  // LEFT
+      { id: "shed",       cx: 255, cy: 288, sz: 12 },  // RIGHT — dead-end branch
+      { id: "garden",     cx: 108, cy: 372, sz: 14 },  // LEFT
+      { id: "terrace",    cx: 245, cy: 398, sz: 12 },  // RIGHT
+      { id: "driveway",   cx: 175, cy: 458, sz: 14 },  // bottom center
     ],
     paths: [
-      ["driveway",    "garden"],
-      ["driveway",    "terrace"],
-      ["garden",      "terrace"],    // horizontal connection across bottom row
-      ["garden",      "carport"],
-      ["carport",     "shed"],       // horizontal
-      ["carport",     "front-door"],
-      ["front-door",  "boss"],
+      ["driveway",   "terrace"],    // 1st: terrace before garden
+      ["terrace",    "garden"],     // 2nd: garden after terrace
+      ["garden",     "carport"],    // 3rd: carport after garden
+      ["carport",    "shed"],       // dead-end branch
+      ["carport",    "front-door"], // main progression
+      ["front-door", "boss"],
     ],
   },
 
@@ -373,21 +372,20 @@ export default function TeamQuestBoardPage({ params }: Props) {
     return geo.nodes.find((n) => n.id === id) ?? null;
   };
 
-  // ── Path colour helper ────────────────────────────────────────────────────
+  // ── Path colour helper ─────────────────────────────────────────────────────
+  // Single thin dotted line: dark=locked, yellow=accessible, green=complete.
+  // A path [A→B] is "complete" when B is done, "active" when A is done (B is reachable).
   const pathColor = (fromId: string, toId: string) => {
     const fromSt = fromId === "boss" ? "complete" : getRoomStatus(fromId);
-    const toSt   = toId   === "boss" ? "complete" : getRoomStatus(toId);
-    const bothDone    = fromSt === "complete" && toSt === "complete";
-    const anyActive   = fromSt !== "locked" || toSt !== "locked";
+    const toSt   = toId   === "boss" ? (bossUnlockable ? "active" : "locked") : getRoomStatus(toId);
+    const bothDone = fromSt === "complete" && toSt === "complete";
+    const fromDone = fromSt === "complete";
+    // Act 1 (light parchment): locked paths use visible dark brown instead of near-black
+    const lockedColor = theme.darkLabels ? "rgba(80,55,28,0.42)" : "rgba(40,30,12,0.35)";
     return {
-      // Thick road bed
-      base:      bothDone  ? "rgba(30,90,10,0.85)"   : anyActive ? "rgba(80,52,8,0.80)"  : "rgba(28,20,6,0.45)",
-      // Thin bright stripe on top
-      stripe:    bothDone  ? "rgba(140,255,80,0.70)"  : anyActive ? "rgba(230,180,60,0.65)" : "rgba(90,65,20,0.30)",
-      // Road width (SVG units) — will be pixel-magnified by scale
-      roadW:     bothDone  ? 3.2 : anyActive ? 2.8 : 2.0,
-      stripeW:   bothDone  ? 0.9 : anyActive ? 0.8 : 0.55,
-      dashArray: bothDone  ? "3.5 2.2" : "2.8 2.2",
+      color:     bothDone ? "rgba(90,210,60,0.95)" : fromDone ? "rgba(225,175,40,0.95)" : lockedColor,
+      width:     1.6,
+      dashArray: "4.5 3",
     };
   };
 
@@ -456,15 +454,16 @@ export default function TeamQuestBoardPage({ params }: Props) {
             />
 
             {/* ── Act title ── */}
+            {/* Act 1 uses dark text + light halo for readability on bright parchment */}
             <text
               x={svgW / 2} y={geo.titleCY - 7}
               textAnchor="middle"
               fontFamily="Georgia,serif"
               fontSize={13}
               fontWeight="bold"
-              fill={theme.accent}
+              fill={theme.darkLabels ? "#3c2008" : theme.accent}
               letterSpacing={3}
-              filter="url(#tlcb-shadow)"
+              filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
               opacity={0.96}
             >
               {theme.label}
@@ -474,10 +473,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
               textAnchor="middle"
               fontFamily="Georgia,serif"
               fontSize={6}
-              fill={theme.accent}
+              fill={theme.darkLabels ? "#3c2008" : theme.accent}
               letterSpacing={5}
-              filter="url(#tlcb-shadow)"
-              opacity={0.55}
+              filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
+              opacity={0.65}
             >
               {theme.subtitle}
             </text>
@@ -485,12 +484,12 @@ export default function TeamQuestBoardPage({ params }: Props) {
             <line
               x1={svgW / 2 - 55} y1={geo.titleCY + 1}
               x2={svgW / 2 - 22} y2={geo.titleCY + 1}
-              stroke={theme.accent} strokeWidth={0.5} opacity={0.3}
+              stroke={theme.darkLabels ? "#3c2008" : theme.accent} strokeWidth={0.5} opacity={0.35}
             />
             <line
               x1={svgW / 2 + 22} y1={geo.titleCY + 1}
               x2={svgW / 2 + 55} y2={geo.titleCY + 1}
-              stroke={theme.accent} strokeWidth={0.5} opacity={0.3}
+              stroke={theme.darkLabels ? "#3c2008" : theme.accent} strokeWidth={0.5} opacity={0.35}
             />
 
             {/* ── Path lines between nodes ── */}
@@ -500,33 +499,15 @@ export default function TeamQuestBoardPage({ params }: Props) {
               if (!from || !to) return null;
               const col = pathColor(fromId, toId);
               return (
-                <g key={i}>
-                  {/* Shadow/outline under road for depth */}
-                  <line
-                    x1={from.cx} y1={from.cy}
-                    x2={to.cx}   y2={to.cy}
-                    stroke="rgba(0,0,0,0.55)"
-                    strokeWidth={col.roadW + 1.4}
-                    strokeLinecap="round"
-                  />
-                  {/* Base road bed */}
-                  <line
-                    x1={from.cx} y1={from.cy}
-                    x2={to.cx}   y2={to.cy}
-                    stroke={col.base}
-                    strokeWidth={col.roadW}
-                    strokeLinecap="round"
-                  />
-                  {/* Dashed stripe overlay */}
-                  <line
-                    x1={from.cx} y1={from.cy}
-                    x2={to.cx}   y2={to.cy}
-                    stroke={col.stripe}
-                    strokeWidth={col.stripeW}
-                    strokeDasharray={col.dashArray}
-                    strokeLinecap="round"
-                  />
-                </g>
+                <line
+                  key={i}
+                  x1={from.cx} y1={from.cy}
+                  x2={to.cx}   y2={to.cy}
+                  stroke={col.color}
+                  strokeWidth={col.width}
+                  strokeDasharray={col.dashArray}
+                  strokeLinecap="round"
+                />
               );
             })}
 
@@ -547,30 +528,30 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 >
                   {/* Pulse ring when unlockable */}
                   {bossUnlockable && (
-                    <circle cx={cx} cy={cy} r={18} fill="none" stroke="#e03020" strokeWidth={1.5} opacity={0.7}>
-                      <animate attributeName="r"       values="18;30;18" dur="2s" repeatCount="indefinite" />
+                    <circle cx={cx} cy={cy} r={24} fill="none" stroke="#e03020" strokeWidth={1.5} opacity={0.7}>
+                      <animate attributeName="r"       values="24;38;24" dur="2s" repeatCount="indefinite" />
                       <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
                     </circle>
                   )}
-                  {/* Boss NodeBlob */}
+                  {/* Boss NodeBlob — larger than room nodes */}
                   <image
                     href={bossImg}
-                    x={cx - 16} y={cy - 16}
-                    width={32} height={32}
-                    opacity={bossUnlockable ? 1 : 0.45}
+                    x={cx - 22} y={cy - 22}
+                    width={44} height={44}
+                    opacity={bossUnlockable ? 1 : 0.50}
                     style={bossUnlockable
-                      ? { filter: "drop-shadow(0 0 8px rgba(220,40,40,0.9)) hue-rotate(310deg) saturate(2)" }
-                      : {}}
+                      ? { filter: "drop-shadow(0 0 10px rgba(220,40,40,0.95)) hue-rotate(310deg) saturate(2)" }
+                      : { filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.85))" }}
                   />
                   {/* Boss label */}
                   <text
-                    x={cx} y={cy + 24}
+                    x={cx} y={cy + 30}
                     textAnchor="middle"
                     fontFamily="Georgia,serif"
-                    fontSize={6.5}
-                    fill={bossUnlockable ? "#fca5a5" : "rgba(180,100,100,0.45)"}
+                    fontSize={7}
+                    fill={bossUnlockable ? "#fca5a5" : (theme.darkLabels ? "rgba(120,60,60,0.65)" : "rgba(180,100,100,0.45)")}
                     letterSpacing={1.5}
-                    filter="url(#tlcb-shadow)"
+                    filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
                     opacity={0.95}
                   >
                     {(boss?.title ?? "BOSS").toUpperCase()}

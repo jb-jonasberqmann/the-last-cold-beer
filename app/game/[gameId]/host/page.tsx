@@ -87,7 +87,7 @@ export default function HostPage({ params }: Props) {
     fetchAll();
   };
 
-  const allRooms = ["driveway", "terrace", "garden", "shed", "petanque-court"];
+  const allRooms = ["driveway", "terrace", "garden", "carport", "shed", "front-door"];
 
   return (
     <div className="min-h-screen bg-stone-950 text-white">

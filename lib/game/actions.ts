@@ -760,15 +760,16 @@ export async function applyBossDamage(
 
   const newHp = Math.max(0, bp.current_hp - actualDamage);
   const defeated = newHp <= 0;
-  const newStatus = defeated ? "defeated" : "active";
+  // Avoid nested sql`` literals — use conditional value (null when not defeated)
+  const defeatTime = defeated ? new Date().toISOString() : null;
 
   await sql`
     UPDATE boss_progress SET
       current_hp   = ${newHp},
       damage_dealt = damage_dealt + ${actualDamage},
-      status       = ${newStatus},
+      status       = ${defeated ? "defeated" : "active"},
+      defeated_at  = ${defeatTime},
       updated_at   = NOW()
-      ${defeated ? sql`, defeated_at = NOW()` : sql``}
     WHERE game_id = ${gameId} AND team_id = ${teamId} AND boss_id = ${bossId}
   `;
 
@@ -781,6 +782,10 @@ export async function applyBossDamage(
   `;
 
   if (defeated) {
+    await sql`
+      INSERT INTO game_events (game_id, team_id, event_type, event_data)
+      VALUES (${gameId}, ${teamId}, 'boss_defeated', ${JSON.stringify({ boss_id: bossId })}::jsonb)
+    `;
     if (boss.chapterId === "act-1") {
       await sql`UPDATE games SET chapter_1_winner = ${teamId} WHERE id = ${gameId} AND chapter_1_winner IS NULL`;
     }
