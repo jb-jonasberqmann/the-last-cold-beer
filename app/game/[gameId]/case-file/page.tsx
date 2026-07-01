@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -13,9 +13,8 @@ interface Props {
   params: { gameId: string };
 }
 
-export default function CaseFilePage({ params }: Props) {
-  const gameId = params.gameId;
-
+// Separate component so useSearchParams is inside a Suspense boundary (Next.js 14 requirement)
+function CaseFileContent({ gameId }: { gameId: string }) {
   const searchParams = useSearchParams();
   const { session } = usePlayer();
   const teamId = (searchParams.get("team") ?? session?.teamId ?? "team-a") as TeamId;
@@ -98,5 +97,13 @@ export default function CaseFilePage({ params }: Props) {
         </div>
       )}
     </GameLayout>
+  );
+}
+
+export default function CaseFilePage({ params }: Props) {
+  return (
+    <Suspense fallback={null}>
+      <CaseFileContent gameId={params.gameId} />
+    </Suspense>
   );
 }

@@ -17,10 +17,10 @@ interface Props {
 }
 
 // ─── Per-act visual theme ────────────────────────────────────────────────────
-const ACT_THEMES: Record<string, { accent: string; label: string; subtitle: string; emoji: string }> = {
-  "act-1": { accent: "#d4a832", label: "THE ARRIVAL",    subtitle: "ACT I",   emoji: "🌅" },
-  "act-2": { accent: "#8ab4f8", label: "SETTLING IN",    subtitle: "ACT II",  emoji: "🏠" },
-  "act-3": { accent: "#f87171", label: "THE LATE NIGHT", subtitle: "ACT III", emoji: "🌑" },
+const ACT_THEMES: Record<string, { accent: string; label: string; subtitle: string; emoji: string; darkLabels: boolean }> = {
+  "act-1": { accent: "#d4a832", label: "THE ARRIVAL",    subtitle: "ACT I",   emoji: "🌅", darkLabels: true  },
+  "act-2": { accent: "#8ab4f8", label: "SETTLING IN",    subtitle: "ACT II",  emoji: "🏠", darkLabels: false },
+  "act-3": { accent: "#f87171", label: "THE LATE NIGHT", subtitle: "ACT III", emoji: "🌑", darkLabels: false },
 };
 
 // ─── SVG map geometry per act ─────────────────────────────────────────────────
@@ -53,19 +53,19 @@ const ACT_GEO: Record<string, ActGeo> = {
   // ── ACT 1 — outdoor / arrival ─────────────────────────────────────────────
   // Spine (cx≈170): driveway → garden → front-door → boss
   // Branches: terrace/carport right, shed left, petanque optional right
-  // Scale 1.8 → visible SVG-x ≈ 76–264 → all nodes between cx 112–228 ✓
+  // Scale 1.65 → visible SVG-x ≈ 67–273 → all nodes between cx 112–230 ✓
   "act-1": {
-    svgW: 340, svgH: 520, scale: 1.8,
+    svgW: 340, svgH: 520, scale: 1.65,
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "front-door",     cx: 170, cy: 180, sz: 13 },
-      { id: "shed",           cx: 114, cy: 265, sz: 11 },
-      { id: "carport",        cx: 226, cy: 265, sz: 11 },
-      { id: "garden",         cx: 170, cy: 355, sz: 13 },
-      { id: "terrace",        cx: 228, cy: 408, sz: 11 },
-      { id: "petanque-court", cx: 230, cy: 458, sz: 10, isOptional: true },
-      { id: "driveway",       cx: 155, cy: 462, sz: 13 },
+      { id: "front-door",     cx: 170, cy: 180, sz: 14 },
+      { id: "shed",           cx: 114, cy: 265, sz: 12 },
+      { id: "carport",        cx: 226, cy: 265, sz: 12 },
+      { id: "garden",         cx: 170, cy: 355, sz: 14 },
+      { id: "terrace",        cx: 228, cy: 408, sz: 12 },
+      { id: "petanque-court", cx: 230, cy: 458, sz: 11, isOptional: true },
+      { id: "driveway",       cx: 155, cy: 462, sz: 14 },
     ],
     paths: [
       ["driveway",    "garden"],
@@ -84,18 +84,18 @@ const ACT_GEO: Record<string, ActGeo> = {
   // Spine (cx≈170): bedrooms → bathroom → living-room → kitchen → dining → boss
   // Branches: sunroom left (optional), kitchen-act2 right
   "act-2": {
-    svgW: 340, svgH: 520, scale: 1.8,
+    svgW: 340, svgH: 520, scale: 1.65,
     bossNode: { cx: 170, cy: 82 },
     titleCY: 38,
     nodes: [
-      { id: "dining-room",  cx: 170, cy: 162, sz: 13 },
-      { id: "kitchen-act2", cx: 226, cy: 248, sz: 11 },
-      { id: "sunroom",      cx: 114, cy: 248, sz: 10, isOptional: true },
-      { id: "living-room",  cx: 170, cy: 335, sz: 13 },
-      { id: "bathroom",     cx: 170, cy: 400, sz: 11 },
-      { id: "double-room",  cx: 114, cy: 462, sz: 11 },
-      { id: "single-room",  cx: 170, cy: 462, sz: 13 },
-      { id: "bunk-room",    cx: 226, cy: 462, sz: 11 },
+      { id: "dining-room",  cx: 170, cy: 162, sz: 14 },
+      { id: "kitchen-act2", cx: 226, cy: 248, sz: 12 },
+      { id: "sunroom",      cx: 114, cy: 248, sz: 11, isOptional: true },
+      { id: "living-room",  cx: 170, cy: 335, sz: 14 },
+      { id: "bathroom",     cx: 170, cy: 400, sz: 12 },
+      { id: "double-room",  cx: 114, cy: 462, sz: 12 },
+      { id: "single-room",  cx: 170, cy: 462, sz: 14 },
+      { id: "bunk-room",    cx: 226, cy: 462, sz: 12 },
     ],
     paths: [
       ["double-room",  "bathroom"],
@@ -112,24 +112,24 @@ const ACT_GEO: Record<string, ActGeo> = {
   // ── ACT 3 — late night / dark ─────────────────────────────────────────────
   // Spine: dining-dark → utility → back-corridor → revelation → boss
   // 3-way fan from back-corridor: door (left), behind-shed (centre), fuse-box (right)
-  // Scale 1.7 → visible SVG-x ≈ 70–270 → all nodes between cx 95–245 ✓
+  // Scale 1.55 → visible SVG-x ≈ 60–280 → all nodes between cx 95–245 ✓
   "act-3": {
-    svgW: 340, svgH: 640, scale: 1.7,
+    svgW: 340, svgH: 640, scale: 1.55,
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "revelation-circle", cx: 155, cy: 162, sz: 12 },
-      { id: "door-nobody-tried", cx: 107, cy: 238, sz: 11 },
-      { id: "shed-dark",         cx: 215, cy: 238, sz: 11 },
-      { id: "sealed-wall",       cx: 95,  cy: 308, sz: 10 },
-      { id: "conservatory",      cx: 152, cy: 308, sz: 10 },
-      { id: "kitchen-dark",      cx: 232, cy: 308, sz: 11 },
-      { id: "rattling-window",   cx: 242, cy: 238, sz: 9, isOptional: true },
-      { id: "behind-the-shed",   cx: 165, cy: 382, sz: 11 },
-      { id: "fuse-box",          cx: 235, cy: 382, sz: 10 },
-      { id: "back-corridor",     cx: 170, cy: 455, sz: 13 },
-      { id: "utility-corner",    cx: 170, cy: 528, sz: 11 },
-      { id: "dining-room-dark",  cx: 170, cy: 600, sz: 13 },
+      { id: "revelation-circle", cx: 155, cy: 162, sz: 13 },
+      { id: "door-nobody-tried", cx: 107, cy: 238, sz: 12 },
+      { id: "shed-dark",         cx: 215, cy: 238, sz: 12 },
+      { id: "sealed-wall",       cx: 95,  cy: 308, sz: 11 },
+      { id: "conservatory",      cx: 152, cy: 308, sz: 11 },
+      { id: "kitchen-dark",      cx: 232, cy: 308, sz: 12 },
+      { id: "rattling-window",   cx: 242, cy: 238, sz: 10, isOptional: true },
+      { id: "behind-the-shed",   cx: 165, cy: 382, sz: 12 },
+      { id: "fuse-box",          cx: 235, cy: 382, sz: 11 },
+      { id: "back-corridor",     cx: 170, cy: 455, sz: 14 },
+      { id: "utility-corner",    cx: 170, cy: 528, sz: 12 },
+      { id: "dining-room-dark",  cx: 170, cy: 600, sz: 14 },
     ],
     paths: [
       ["dining-room-dark",  "utility-corner"],
@@ -380,12 +380,17 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const pathColor = (fromId: string, toId: string) => {
     const fromSt = fromId === "boss" ? "complete" : getRoomStatus(fromId);
     const toSt   = toId   === "boss" ? "complete" : getRoomStatus(toId);
-    const bothDone = fromSt === "complete" && toSt === "complete";
-    const anyUnlocked = fromSt !== "locked" || toSt !== "locked";
+    const bothDone    = fromSt === "complete" && toSt === "complete";
+    const anyActive   = fromSt !== "locked" || toSt !== "locked";
     return {
-      base: bothDone  ? "rgba(60,130,30,0.65)"  : anyUnlocked ? "rgba(100,72,16,0.6)" : "rgba(50,35,10,0.35)",
-      dash: bothDone  ? "rgba(130,235,70,0.6)"  : anyUnlocked ? "rgba(215,168,55,0.55)" : "rgba(100,75,25,0.28)",
-      width: bothDone ? 1.9 : 1.5,
+      // Thick road bed
+      base:      bothDone  ? "rgba(30,90,10,0.85)"   : anyActive ? "rgba(80,52,8,0.80)"  : "rgba(28,20,6,0.45)",
+      // Thin bright stripe on top
+      stripe:    bothDone  ? "rgba(140,255,80,0.70)"  : anyActive ? "rgba(230,180,60,0.65)" : "rgba(90,65,20,0.30)",
+      // Road width (SVG units) — will be pixel-magnified by scale
+      roadW:     bothDone  ? 3.2 : anyActive ? 2.8 : 2.0,
+      stripeW:   bothDone  ? 0.9 : anyActive ? 0.8 : 0.55,
+      dashArray: bothDone  ? "3.5 2.2" : "2.8 2.2",
     };
   };
 
@@ -426,8 +431,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
           >
             {/* ── Filters ── */}
             <defs>
-              <filter id="tlcb-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="1" stdDeviation="2.5" floodColor="#000" floodOpacity="0.95" />
+              {/* Dark drop shadow — for text on dark map backgrounds (Act 2, 3) */}
+              <filter id="tlcb-shadow" x="-25%" y="-25%" width="150%" height="150%">
+                <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.98" />
+              </filter>
+              {/* Light halo — for dark text on the light Act 1 map */}
+              <filter id="tlcb-shadow-light" x="-25%" y="-25%" width="150%" height="150%">
+                <feDropShadow dx="0" dy="0" stdDeviation="1.8" floodColor="#fff8e8" floodOpacity="0.85" />
               </filter>
               <filter id="tlcb-glow-green" x="-40%" y="-40%" width="180%" height="180%">
                 <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#50d080" floodOpacity="0.9" />
@@ -494,21 +504,29 @@ export default function TeamQuestBoardPage({ params }: Props) {
               const col = pathColor(fromId, toId);
               return (
                 <g key={i}>
-                  {/* Base road */}
+                  {/* Shadow/outline under road for depth */}
+                  <line
+                    x1={from.cx} y1={from.cy}
+                    x2={to.cx}   y2={to.cy}
+                    stroke="rgba(0,0,0,0.55)"
+                    strokeWidth={col.roadW + 1.4}
+                    strokeLinecap="round"
+                  />
+                  {/* Base road bed */}
                   <line
                     x1={from.cx} y1={from.cy}
                     x2={to.cx}   y2={to.cy}
                     stroke={col.base}
-                    strokeWidth={col.width}
+                    strokeWidth={col.roadW}
                     strokeLinecap="round"
                   />
                   {/* Dashed stripe overlay */}
                   <line
                     x1={from.cx} y1={from.cy}
                     x2={to.cx}   y2={to.cy}
-                    stroke={col.dash}
-                    strokeWidth={0.55}
-                    strokeDasharray="2.6 2.0"
+                    stroke={col.stripe}
+                    strokeWidth={col.stripeW}
+                    strokeDasharray={col.dashArray}
                     strokeLinecap="round"
                   />
                 </g>
@@ -612,10 +630,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     width={sz * 2} height={sz * 2}
                     style={{
                       filter: unlockable
-                        ? "url(#tlcb-glow-green)"
-                        : isDone
-                        ? "drop-shadow(0 1px 3px rgba(0,0,0,0.9))"
-                        : undefined,
+                        ? "url(#tlcb-glow-green) drop-shadow(0 2px 5px rgba(0,0,0,0.85))"
+                        : "drop-shadow(0 2px 5px rgba(0,0,0,0.85))",
                     }}
                   />
 
@@ -638,13 +654,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     fontFamily="Georgia,serif"
                     fontSize={5.8}
                     fill={
-                      isDone      ? "#7ae050" :
-                      unlockable  ? "#90ee90" :
-                      isLocked    ? "rgba(140,110,60,0.5)" :
-                      theme.accent
+                      isDone      ? (theme.darkLabels ? "#2a6400" : "#7ae050") :
+                      unlockable  ? (theme.darkLabels ? "#1a5800" : "#90ee90") :
+                      isLocked    ? (theme.darkLabels ? "rgba(90,60,20,0.55)" : "rgba(140,110,60,0.5)") :
+                      theme.darkLabels ? "#5c3200" : theme.accent
                     }
-                    filter="url(#tlcb-shadow)"
-                    opacity={0.95}
+                    filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
+                    opacity={0.97}
                     letterSpacing={0.4}
                   >
                     {(room?.title ?? id).toUpperCase()}
@@ -653,13 +669,17 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   {/* Sub-label: status */}
                   {isDone && (
                     <text x={cx} y={cy + sz + 17} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
-                      fill="#6ae840" filter="url(#tlcb-shadow)" opacity={0.8}>
+                      fill={theme.darkLabels ? "#2a6400" : "#6ae840"}
+                      filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
+                      opacity={0.85}>
                       ✓ Done
                     </text>
                   )}
                   {unlockable && !isDone && (
                     <text x={cx} y={cy + sz + 17} textAnchor="middle" fontFamily="Georgia,serif" fontSize={4.5}
-                      fill="#50d080" filter="url(#tlcb-shadow)" opacity={0.85}>
+                      fill={theme.darkLabels ? "#1a5800" : "#50d080"}
+                      filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
+                      opacity={0.9}>
                       {room && room.unlockCost > 0 ? `Unlock (${room.unlockCost} Offer)` : "Tap to unlock"}
                     </text>
                   )}
