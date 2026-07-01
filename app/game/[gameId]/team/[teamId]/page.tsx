@@ -172,6 +172,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const seenEventIdsRef = useRef<Set<string>>(new Set());
   const seenClueCountRef = useRef<number | null>(null);
   const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
+  const [forcedClueModal, setForcedClueModal] = useState<Clue[]>([]);
 
   // ── Map scroll refs ───────────────────────────────────────────────────────
   const mapScrollRef = useRef<HTMLDivElement>(null);
@@ -191,6 +192,21 @@ export default function TeamQuestBoardPage({ params }: Props) {
     const dbClues: DbTeamClue[] = data.clues ?? [];
     const resolved = dbClues.map((c) => getClue(c.clue_id)).filter((c): c is Clue => !!c);
     setTeamClues(resolved);
+
+    // ── Detect new clues after returning from a room ──────────────────────────
+    // When the player navigated to a room, we saved their clue IDs in sessionStorage.
+    // On the first fetch after returning, compare and surface any new clues as a forced modal.
+    if (typeof window !== "undefined" && gameId && teamId) {
+      const departKey = `tlcb_depart_clues_${gameId}_${teamId}`;
+      const departed = sessionStorage.getItem(departKey);
+      if (departed) {
+        const departedIds = new Set<string>(JSON.parse(departed) as string[]);
+        const brandNew = resolved.filter((c) => !departedIds.has(c.id));
+        if (brandNew.length > 0) setForcedClueModal(brandNew);
+        sessionStorage.removeItem(departKey);
+        seenClueCountRef.current = resolved.length; // keep badge in sync
+      }
+    }
 
     if (seenClueCountRef.current === null) {
       seenClueCountRef.current = resolved.length;
@@ -315,6 +331,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
     if (!canInteract) return;
     const status = getRoomStatus(roomId);
     if (["complete", "active", "unlocked", "occupied"].includes(status)) {
+      // Snapshot current clue IDs so we can detect new ones when player returns
+      if (typeof window !== "undefined" && gameId && teamId) {
+        sessionStorage.setItem(
+          `tlcb_depart_clues_${gameId}_${teamId}`,
+          JSON.stringify(teamClues.map((c) => c.id))
+        );
+      }
       router.push(`/game/${gameId}/team/${teamId}/room/${roomId}`);
     } else if (canUnlock(roomId)) {
       setPendingUnlock(roomId);
@@ -959,6 +982,66 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          FORCED CLUE MODAL — shown when player returns from a completed room
+          Player MUST dismiss this to continue. No backdrop-click dismiss.
+      ══════════════════════════════════════════════════════════════════════ */}
+      {forcedClueModal.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          style={{ background: "rgba(4,2,0,0.92)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden animate-quest-fade"
+            style={{ background: "rgba(14,10,4,0.99)", border: "1px solid rgba(180,130,50,0.4)" }}>
+            {/* Header */}
+            <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "rgba(180,130,50,0.15)" }}>
+              <div className="text-[9px] uppercase tracking-[0.3em] mb-1" style={{ color: "rgba(180,130,50,0.45)", fontFamily: "Georgia,serif" }}>
+                New Evidence
+              </div>
+              <div className="text-base font-bold" style={{ color: "rgba(245,225,170,0.97)", fontFamily: "Georgia,serif" }}>
+                {forcedClueModal.length === 1 ? "A clue was discovered." : `${forcedClueModal.length} clues were discovered.`}
+              </div>
+            </div>
+
+            {/* Clue list */}
+            <div className="divide-y divide-amber-900/20 px-0" style={{ maxHeight: "52vh", overflowY: "auto" }}>
+              {forcedClueModal.map((clue) => (
+                <div key={clue.id} className="px-5 py-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0 mt-0.5">{clue.icon}</span>
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-sm font-bold" style={{ color: "rgba(245,225,170,0.95)", fontFamily: "Georgia,serif" }}>{clue.title}</span>
+                        {clue.isKeyClue && (
+                          <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(251,191,36,0.6)", fontFamily: "Georgia,serif" }}>Key</span>
+                        )}
+                      </div>
+                      <p className="text-xs leading-relaxed" style={{ color: "rgba(200,175,120,0.8)", fontFamily: "Georgia,serif" }}>{clue.description}</p>
+                      {clue.flavor && (
+                        <p className="text-[11px] italic mt-1.5" style={{ color: "rgba(130,95,35,0.55)", fontFamily: "Georgia,serif" }}>{clue.flavor}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Dismiss */}
+            <div className="px-5 pb-5 pt-3">
+              <button
+                onClick={() => {
+                  seenClueCountRef.current = teamClues.length;
+                  setNewClueCount(0);
+                  setForcedClueModal([]);
+                }}
+                className="w-full py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+                style={{ background: "rgba(120,80,10,0.55)", border: "1px solid rgba(180,130,50,0.4)", color: "rgba(251,191,36,0.95)", fontFamily: "Georgia,serif" }}
+              >
+                Added to Case File →
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

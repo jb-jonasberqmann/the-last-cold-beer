@@ -24,13 +24,36 @@ export const BOSSES: Boss[] = [
       backgroundStyle: "outdoor-carport",
     },
     maxHp: 100,
-    requiredRoomIds: ["terrace", "garden"],
+    requiredRoomIds: ["carport"],
+    counterAttacks: [
+      {
+        id: "defend",
+        label: "Defensive Shuffle",
+        description: "Mads pivots sideways and blocks the path with the cooler. Your next move only deals 75% damage.",
+        weight: 3,
+        effect: { type: "defend", defenseMultiplier: 0.75 },
+      },
+      {
+        id: "attack",
+        label: "Surprise Bag",
+        description: "\"Oh — there's one more bag in the back.\" Mads hands it straight at you. Team drinks 1 sip.",
+        weight: 3,
+        effect: { type: "attack", teamOfferDamage: 1 },
+      },
+      {
+        id: "heal",
+        label: "Hidden Case",
+        description: "\"Wait — I forgot. There's a full case of beer under the sleeping bag.\" Mads perks up visibly. He heals 20% HP.",
+        weight: 1,
+        effect: { type: "heal", healPercent: 0.20, isOnce: true },
+      },
+    ],
     phases: [
       {
         phase: 1,
         title: "The Unloading",
         description:
-          "Mads cannot give you the code while his arms are full. Help him get everything inside.",
+          "Mads cannot give you the code while his arms are full. Help him get everything inside. Each action can only be done once — and Mads always has a response.",
         hpThreshold: 100,
         actions: [
           {
@@ -39,45 +62,37 @@ export const BOSSES: Boss[] = [
             description:
               "The cooler is enormous. Someone needs to grab the other handle. It goes in the utility corner.",
             type: "social",
-            damage: 20,
+            damage: 12,
             rewardText:
-              "The cooler makes it inside. Mads's arms are slightly less full. 20 unpacking progress.",
+              "The cooler makes it inside. Mads's arms are slightly less full.",
             failureText: "It's too heavy for one person. Try again together.",
           },
           {
             id: "mads-beer",
-            label: "Grab the beer cases from the boot",
+            label: "Grab the beer cases",
             description:
-              "Two cases of beer, stacked. Someone takes one, someone takes the other.",
+              "Two cases of beer in the boot. Someone takes one, someone takes the other. Both get carried in.",
             type: "social",
-            damage: 20,
-            rewardText: "Beer inside. One fewer thing Mads is carrying. 20 progress.",
+            damage: 10,
+            rewardText: "Beer inside. One fewer thing Mads is carrying.",
             failureText: "Leave no beer behind.",
           },
           {
             id: "mads-door",
-            label: "Hold the door while he squeezes through",
+            label: "Hold the door open",
             description:
-              "The sleeping bag is awkward. Someone holds the door, someone guides him through the frame.",
+              "The sleeping bag is awkward under his arm. Someone holds the door, someone guides him through the frame.",
             type: "social",
-            damage: 20,
-            rewardText: "Sleeping bag inside. Mads made it through the door. 20 progress.",
-          },
-          {
-            id: "mads-sleeping-bag",
-            label: "Find a spot for the sleeping bag",
-            description: "The bunk room. Someone takes the bag and claims the bunk.",
-            type: "social",
-            damage: 20,
-            rewardText: "Bag stowed. Mads has almost nothing left. 20 progress.",
+            damage: 8,
+            rewardText: "Sleeping bag inside. Mads made it through the door.",
           },
           {
             id: "mads-phone",
-            label: "Help him find his phone",
+            label: "Find his phone",
             description:
-              "His phone is somewhere in the car. Probably under the seat. The code fragment is in his notes app — but first you need the phone.",
+              "His phone is somewhere in the car. The last code fragment is in his notes app — but you need the phone first.",
             type: "puzzle",
-            damage: 20,
+            damage: 22,
             puzzle: {
               prompt:
                 "Mads checks every pocket. Jacket — empty. Jeans — empty. Car seat — nothing. Then he looks at you. \"Check the sun visor,\" he says. \"I always put it there and always forget.\" What do you find?",
@@ -85,17 +100,17 @@ export const BOSSES: Boss[] = [
             },
             hint: "He just told you where he put it.",
             rewardText:
-              "The phone. In the sun visor. He had it the whole time. Mads pulls up his notes app. There — one item. The last code fragment.",
+              "The phone. In the sun visor. He had it the whole time. Mads pulls up his notes app — the last code fragment is right there.",
             failureText: "The car is messier than it looks. Try again.",
           },
           {
             id: "mads-offer-boost",
-            label: "Bribe Mads with an Offer",
-            description: "Pay the ritual cost to speed up the unloading. He's grateful but still needs help.",
+            label: "Bribe Mads",
+            description: "Pay the ritual cost and he stops dragging his feet. One-time only — he won't be bought twice.",
             type: "offer_boost",
             damage: 25,
             offerCost: 2,
-            rewardText: "Mads appreciates the contribution. 25 unpacking progress.",
+            rewardText: "Mads grins. Moves a little faster. 25 unpacking progress.",
           },
         ],
       },
@@ -121,12 +136,11 @@ export const BOSSES: Boss[] = [
           title: "Losningen",
           description: "Mads kan ikke give jer koden mens hans arme er fulde. Hjælp ham med at få alt ind.",
           actions: [
-            { id: "mads-cooler", label: "Bær den tunge køler", rewardText: "Køleren er inde. 20 fremskridt.", failureText: "Den er for tung til én person." },
-            { id: "mads-beer", label: "Tag ølkasserne fra bagagerummet", rewardText: "Øl inde. 20 fremskridt." },
-            { id: "mads-door", label: "Hold døren mens han klemmer sig igennem", rewardText: "Sovepose inde. 20 fremskridt." },
-            { id: "mads-sleeping-bag", label: "Find plads til soveposen", rewardText: "Pose stuvet. 20 fremskridt." },
-            { id: "mads-phone", label: "Hjælp ham med at finde sin telefon", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger den altid der og glemmer det altid.\" Hvad finder du?", hint: "Han fortalte dig netop hvor han lagde den.", rewardText: "Telefonen. I solskærmen. Mads åbner sin noter-app. Der — én post. Det sidste kodefragment.", failureText: "Bilen er rodet end den ser ud." },
-            { id: "mads-offer-boost", label: "Bestik Mads med et Offer", rewardText: "Mads sætter pris på bidraget. 25 fremskridt." },
+            { id: "mads-cooler", label: "Bær den tunge køler", rewardText: "Køleren er inde. Mads' arme er lidt mere fri.", failureText: "Den er for tung til én person." },
+            { id: "mads-beer", label: "Tag ølkasserne", rewardText: "Øl inde. Én ting færre Mads bærer." },
+            { id: "mads-door", label: "Hold døren åben", rewardText: "Sovepose inde. Mads kom igennem døren." },
+            { id: "mads-phone", label: "Find hans telefon", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger den altid der og glemmer det altid.\" Hvad finder du?", hint: "Han fortalte dig netop hvor han lagde den.", rewardText: "Telefonen. I solskærmen. Det sidste kodefragment er lige der.", failureText: "Bilen er mere rodet end den ser ud." },
+            { id: "mads-offer-boost", label: "Bestik Mads", rewardText: "Mads griner. Bevæger sig lidt hurtigere. 25 fremskridt." },
           ],
         },
       ],

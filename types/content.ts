@@ -186,10 +186,25 @@ export interface Boss {
   look: BossLook;
   maxHp: number;
   phases: BossPhase[];
+  counterAttacks?: BossCounterAttack[]; // boss responds after each successful player action
   defeatText: string; // shown when boss is defeated
   victoryAdvantage: string; // advantage granted to the winning team in next chapter
   requiredRoomIds?: string[]; // rooms that must be complete before boss is accessible
   da?: BossDa; // Danish locale overrides
+}
+
+export interface BossCounterAttack {
+  id: string;           // "defend" | "attack" | "heal"
+  label: string;        // short display name
+  description: string;  // narrative shown to players
+  weight: number;       // relative draw weight (integers, e.g. 3/2/1 out of total)
+  effect: {
+    type: "defend" | "attack" | "heal";
+    defenseMultiplier?: number; // 0.75 → next player hit does 75% damage (one-shot, consumed on use)
+    teamOfferDamage?: number;   // sips team must drink (offer cost charged to team)
+    healPercent?: number;       // fraction of maxHp healed (e.g. 0.20 = 20%)
+    isOnce?: boolean;           // can only trigger once per fight
+  };
 }
 
 // Danish locale override — nested by phase number and action id

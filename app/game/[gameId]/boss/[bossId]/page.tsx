@@ -220,6 +220,20 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   );
   const lastBossEvent = bossEvents[bossEvents.length - 1] ?? null;
 
+  // ── Counter-attack display ─────────────────────────────────────────────────
+  // Find the latest counter-attack for this team's fight, and whether defense is still active
+  interface CounterEventData { move: string; label: string; description: string; defense_multiplier?: number; team_offer_damage?: number; heal_amount?: number }
+  const counterEvents = events.filter((e) =>
+    e.event_type === "boss_counter_attacked" && (e.event_data as { boss_id: string })?.boss_id === bossId && e.team_id === teamId
+  );
+  const lastCounter = counterEvents.length > 0
+    ? (counterEvents[counterEvents.length - 1].event_data as unknown as CounterEventData)
+    : null;
+  // Defense is active if last counter was "defend" and no boss_damaged event came after it
+  const lastCounterIdx = counterEvents.length > 0 ? events.indexOf(counterEvents[counterEvents.length - 1]) : -1;
+  const lastDamageIdx = bossEvents.length > 0 ? events.indexOf(bossEvents[bossEvents.length - 1]) : -1;
+  const defenseIsActive = lastCounter?.move === "defend" && lastCounterIdx > lastDamageIdx;
+
   // ── Action helpers ────────────────────────────────────────────────────────
   const getActionIcon = (action: BossAction) => {
     switch (action.type) {
@@ -628,6 +642,54 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                 {phase.description}
               </p>
 
+              {/* ── Boss counter-attack banner ── */}
+              {lastCounter && !isDefeated && (
+                <div
+                  className="rounded-xl border px-3 py-2.5"
+                  style={{
+                    background: lastCounter.move === "defend"
+                      ? "rgba(8,30,8,0.9)"
+                      : lastCounter.move === "heal"
+                      ? "rgba(30,8,8,0.9)"
+                      : "rgba(30,18,4,0.9)",
+                    borderColor: lastCounter.move === "defend"
+                      ? "rgba(40,200,80,0.35)"
+                      : lastCounter.move === "heal"
+                      ? "rgba(200,40,40,0.4)"
+                      : "rgba(220,120,30,0.4)",
+                    fontFamily: "Georgia, serif",
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg flex-shrink-0 mt-0.5">
+                      {lastCounter.move === "defend" ? "🛡️" : lastCounter.move === "heal" ? "🍺" : "💢"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-widest font-bold mb-0.5"
+                        style={{
+                          color: lastCounter.move === "defend" ? "rgba(80,220,100,0.8)"
+                            : lastCounter.move === "heal" ? "rgba(220,80,80,0.8)"
+                            : "rgba(230,140,40,0.8)"
+                        }}>
+                        Boss Counter — {lastCounter.label}
+                      </div>
+                      <p className="text-xs text-stone-400 leading-snug">{lastCounter.description}</p>
+                      {lastCounter.move === "attack" && lastCounter.team_offer_damage && (
+                        <p className="text-xs text-amber-600 mt-1">🍺 Your team drinks {lastCounter.team_offer_damage} sip{lastCounter.team_offer_damage !== 1 ? "s" : ""}.</p>
+                      )}
+                      {lastCounter.move === "heal" && lastCounter.heal_amount && (
+                        <p className="text-xs text-red-500 mt-1">+{lastCounter.heal_amount} HP healed.</p>
+                      )}
+                      {lastCounter.move === "defend" && (
+                        <p className="text-[10px] mt-1" style={{ color: defenseIsActive ? "rgba(80,220,100,0.7)" : "rgba(100,100,100,0.6)" }}>
+                          {defenseIsActive ? "⚡ Defense active — next hit deals 75% damage." : "✓ Defense was consumed by your last hit."}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Feedback */}
               {feedback && (
                 <div
@@ -704,7 +766,10 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                             <h4 className="text-xs font-bold text-amber-100 leading-tight" style={{ fontFamily: "Georgia, serif" }}>
                               {action.label}
                             </h4>
-                            <span className="text-[11px] font-bold text-red-400 flex-shrink-0 ml-1">-{action.damage} HP</span>
+                            <span className="text-[11px] font-bold flex-shrink-0 ml-1" style={{ color: defenseIsActive ? "rgba(130,160,100,0.85)" : "rgb(248,113,113)" }}>
+                              {defenseIsActive ? `-${Math.round(action.damage * 0.75)}` : `-${action.damage}`} HP
+                              {defenseIsActive && <span className="text-[9px] ml-0.5 text-stone-500">🛡</span>}
+                            </span>
                           </div>
                         </div>
                       </div>

@@ -116,6 +116,7 @@ export type GameEventType =
   | "clue_found"
   | "quest_completed"
   | "boss_damaged"
+  | "boss_counter_attacked"
   | "boss_phase_changed"
   | "boss_defeated"
   | "chapter_complete"

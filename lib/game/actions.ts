@@ -520,13 +520,66 @@ export async function dealBossDamage(
     }
   }
 
-  // Offer boost
+  // ── One-time use check for social + offer_boost actions ─────────────────
+  if (foundAction.type === "social" || foundAction.type === "offer_boost") {
+    const priorUse = await sql`
+      SELECT id FROM game_events
+      WHERE game_id = ${gameId}
+        AND team_id = ${teamId}
+        AND event_type = 'boss_damaged'
+        AND event_data->>'action_id' = ${actionId}
+      LIMIT 1
+    `;
+    if (priorUse.length > 0) {
+      return {
+        success: false,
+        error: foundAction.type === "offer_boost"
+          ? "Mads won't be bought twice. The bribe is one-time only."
+          : "Already done — each action can only be used once.",
+      };
+    }
+  }
+
+  // Offer boost cost
   if (foundAction.type === "offer_boost" && foundAction.offerCost && !bypassOfferCost) {
     await _logOffer(gameId, teamId, foundAction.offerCost, `Boss boost: ${foundAction.label}`, bossId);
   }
 
-  const damage = foundAction.damage;
-  const newHp = Math.max(0, bp.current_hp - damage);
+  // ── Defense modifier ──────────────────────────────────────────────────────
+  // Active if last boss_counter_attacked for this fight was "defend" and no
+  // boss_damaged event has occurred since (meaning the buff hasn't been consumed yet).
+  let damageMultiplier = 1.0;
+  const lastCounterEvRows = await sql`
+    SELECT id, event_data, created_at FROM game_events
+    WHERE game_id = ${gameId}
+      AND team_id = ${teamId}
+      AND event_type = 'boss_counter_attacked'
+      AND event_data->>'boss_id' = ${bossId}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  if (lastCounterEvRows.length > 0) {
+    const lastCtr = lastCounterEvRows[0] as { id: string; event_data: { move: string; defense_multiplier?: number }; created_at: string };
+    if (lastCtr.event_data.move === "defend") {
+      // Check if any damage happened AFTER this defense event
+      const damagedAfter = await sql`
+        SELECT id FROM game_events
+        WHERE game_id = ${gameId}
+          AND team_id = ${teamId}
+          AND event_type = 'boss_damaged'
+          AND event_data->>'boss_id' = ${bossId}
+          AND created_at > ${lastCtr.created_at}
+        LIMIT 1
+      `;
+      if (damagedAfter.length === 0) {
+        damageMultiplier = lastCtr.event_data.defense_multiplier ?? 0.75;
+      }
+    }
+  }
+
+  const rawDamage = foundAction.damage;
+  const damage = Math.round(rawDamage * damageMultiplier);
+  let newHp = Math.max(0, bp.current_hp - damage);
   const defeated = newHp === 0;
   const hpPercent = (newHp / boss.maxHp) * 100;
 
@@ -555,8 +608,72 @@ export async function dealBossDamage(
   await sql`
     INSERT INTO game_events (game_id, team_id, event_type, event_data)
     VALUES (${gameId}, ${teamId}, 'boss_damaged',
-            ${JSON.stringify({ boss_id: bossId, damage, new_hp: newHp, action_id: actionId })}::jsonb)
+            ${JSON.stringify({ boss_id: bossId, damage, raw_damage: rawDamage, defense_multiplier: damageMultiplier < 1 ? damageMultiplier : undefined, new_hp: newHp, action_id: actionId })}::jsonb)
   `;
+
+  // ── Boss counter-attack (only when boss survives) ─────────────────────────
+  if (!defeated && boss.counterAttacks && boss.counterAttacks.length > 0) {
+    // Determine last used move (to prevent repeating)
+    const lastMove = lastCounterEvRows.length > 0
+      ? (lastCounterEvRows[0] as { event_data: { move: string } }).event_data.move
+      : null;
+
+    // Check if heal has already been used this fight
+    const healUsedRows = await sql`
+      SELECT id FROM game_events
+      WHERE game_id = ${gameId}
+        AND team_id = ${teamId}
+        AND event_type = 'boss_counter_attacked'
+        AND event_data->>'boss_id' = ${bossId}
+        AND event_data->>'move' = 'heal'
+      LIMIT 1
+    `;
+    const healAlreadyUsed = healUsedRows.length > 0;
+
+    // Filter eligible attacks: no repeat of last move, no once-used "heal"
+    const eligible = boss.counterAttacks.filter((ca) => {
+      if (ca.id === lastMove) return false;
+      if (ca.effect.isOnce && ca.id === "heal" && healAlreadyUsed) return false;
+      return true;
+    });
+
+    if (eligible.length > 0) {
+      // Weighted random selection
+      const totalWeight = eligible.reduce((s, ca) => s + ca.weight, 0);
+      let rand = Math.random() * totalWeight;
+      let chosen = eligible[eligible.length - 1];
+      for (const ca of eligible) {
+        rand -= ca.weight;
+        if (rand <= 0) { chosen = ca; break; }
+      }
+
+      // Apply counter-attack effect
+      let healAmount = 0;
+      if (chosen.effect.type === "heal" && chosen.effect.healPercent) {
+        healAmount = Math.round(boss.maxHp * chosen.effect.healPercent);
+        const healedHp = Math.min(boss.maxHp, newHp + healAmount);
+        newHp = healedHp;
+        await sql`UPDATE boss_progress SET current_hp = ${healedHp}, updated_at = NOW() WHERE id = ${bp.id}`;
+      }
+      if (chosen.effect.type === "attack" && chosen.effect.teamOfferDamage) {
+        await _logOffer(gameId, teamId, chosen.effect.teamOfferDamage, `Boss attack: ${chosen.label}`, bossId);
+      }
+
+      await sql`
+        INSERT INTO game_events (game_id, team_id, event_type, event_data)
+        VALUES (${gameId}, ${teamId}, 'boss_counter_attacked',
+                ${JSON.stringify({
+                  boss_id: bossId,
+                  move: chosen.id,
+                  label: chosen.label,
+                  description: chosen.description,
+                  defense_multiplier: chosen.effect.defenseMultiplier,
+                  team_offer_damage: chosen.effect.teamOfferDamage,
+                  heal_amount: healAmount > 0 ? healAmount : undefined,
+                })}::jsonb)
+      `;
+    }
+  }
 
   if (defeated) {
     await sql`
