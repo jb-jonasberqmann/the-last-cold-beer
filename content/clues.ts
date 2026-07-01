@@ -147,13 +147,13 @@ export const CLUES: Clue[] = [
     chapterId: "act-2",
     title: "The Bunk Room Note",
     description:
-      "Written on the underside of the top bunk mattress. Only visible if you're lying on the bottom bunk looking up. Cold and minimal.\n\n*\"It was taken. It is always taken. The room where everyone gathers holds the rest.\"*\n\nThe clue word: **taken**",
+      "Written on the underside of the top bunk mattress. Two sentences. One word.\n\n*\"It was ______. It is always ______.\"*\n\nYour word to act out: **taken** — you may not say it or write it. In the living room, act it out in silence until your team guesses.",
     icon: "📝",
     flavor: "This person wrote exactly what was needed and nothing more.",
     isKeyClue: true,
     da: {
       title: "Køjestueens Seddel",
-      description: "Skrevet på undersiden af den øverste køje-madras. Kun synlig hvis du ligger i den nederste køje og kigger op. Kold og minimal.\n\n*\"Det blev taget. Det bliver altid taget. Rummet hvor alle samles indeholder resten.\"*\n\nNøgleordet: **taget**",
+      description: "Skrevet på undersiden af den øverste køje-madras. To sætninger. Ét ord.\n\n*\"Det blev ______. Det bliver altid ______.\"*\n\nDit ord der skal fremvises: **taget** — du må ikke sige det eller skrive det. I stuen skal du fremvise det i tavshed indtil holdet gætter.",
       flavor: "Denne person skrev præcis hvad der var nødvendigt og intet mere.",
     },
   },

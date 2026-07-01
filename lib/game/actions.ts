@@ -604,10 +604,14 @@ export async function dealBossDamage(
     WHERE id = ${bp.id}
   `;
 
+  // Free actions (bypassOfferCost) are logged with a "-free" suffix so they don't
+  // consume the one-time slot for the same action used normally later.
+  const logActionId = bypassOfferCost ? `${actionId}-free` : actionId;
+
   await sql`
     INSERT INTO game_events (game_id, team_id, event_type, event_data)
     VALUES (${gameId}, ${teamId}, 'boss_damaged',
-            ${JSON.stringify({ boss_id: bossId, damage, raw_damage: rawDamage, defense_multiplier: damageMultiplier < 1 ? damageMultiplier : undefined, new_hp: newHp, action_id: actionId })}::jsonb)
+            ${JSON.stringify({ boss_id: bossId, damage, raw_damage: rawDamage, defense_multiplier: damageMultiplier < 1 ? damageMultiplier : undefined, new_hp: newHp, action_id: logActionId })}::jsonb)
   `;
 
   // ── Boss counter-attack (only when boss survives) ─────────────────────────

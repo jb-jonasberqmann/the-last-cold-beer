@@ -648,10 +648,10 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
               🌑 The night begins →
             </a>
           )}
-          {/* Mads defeat → back to quest board */}
+          {/* Mads defeat → go directly to the front door */}
           {bossId === "mads" && (
             <a
-              href={`/game/${gameId}/team/${teamId}`}
+              href={`/game/${gameId}/team/${teamId}/room/front-door`}
               className="mt-5 inline-block px-6 py-3 rounded-lg text-sm font-bold"
               style={{ background: "rgba(30,20,8,0.7)", border: "1px solid rgba(180,130,50,0.3)", color: "rgb(245,215,130)", fontFamily: "Georgia,serif" }}
             >

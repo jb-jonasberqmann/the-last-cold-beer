@@ -36,9 +36,20 @@ function CaseFileContent({ gameId }: { gameId: string }) {
   if (!game || !gameId) return null;
 
   const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
+
+  // Act order for "is this clue still active?" check
+  const actNum = (id: string) => parseInt(id.replace("act-", ""), 10) || 0;
+  const currentActNum = actNum(game.current_chapter_id);
+
   const discoveredClues = teamClues
     .map((tc) => ({ clue: getClue(tc.clue_id), discoveredAt: tc.discovered_at }))
-    .filter((c) => c.clue !== undefined);
+    .filter((c) => c.clue !== undefined)
+    // Newest first
+    .sort((a, b) => new Date(b.discoveredAt).getTime() - new Date(a.discoveredAt).getTime());
+
+  // A clue is "spent" (past-act) when its act is strictly earlier than current act
+  const isSpent = (chapterId: string | undefined) =>
+    chapterId ? actNum(chapterId) < currentActNum : false;
 
   const keyClues = discoveredClues.filter((c) => c.clue!.isKeyClue);
   const otherClues = discoveredClues.filter((c) => !c.clue!.isKeyClue);
@@ -77,7 +88,13 @@ function CaseFileContent({ gameId }: { gameId: string }) {
               </h2>
               <div className="space-y-3">
                 {keyClues.map(({ clue, discoveredAt }) => (
-                  <ClueCard key={clue!.id} clue={clue!} discoveredAt={discoveredAt} />
+                  <div
+                    key={clue!.id}
+                    className="transition-opacity"
+                    style={{ opacity: isSpent(clue!.chapterId) ? 0.35 : 1 }}
+                  >
+                    <ClueCard clue={clue!} discoveredAt={discoveredAt} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -89,7 +106,13 @@ function CaseFileContent({ gameId }: { gameId: string }) {
               </h2>
               <div className="space-y-3">
                 {otherClues.map(({ clue, discoveredAt }) => (
-                  <ClueCard key={clue!.id} clue={clue!} discoveredAt={discoveredAt} />
+                  <div
+                    key={clue!.id}
+                    className="transition-opacity"
+                    style={{ opacity: isSpent(clue!.chapterId) ? 0.35 : 1 }}
+                  >
+                    <ClueCard clue={clue!} discoveredAt={discoveredAt} />
+                  </div>
                 ))}
               </div>
             </div>

@@ -80,31 +80,31 @@ const ACT_GEO: Record<string, ActGeo> = {
   },
 
   // ── ACT 2 — indoor / settling ─────────────────────────────────────────────
-  // Spine (cx≈170): bedrooms → bathroom → living-room → kitchen → dining → boss
-  // Branches: sunroom left (optional), kitchen-act2 right
+  // Spine: bedrooms → living-room → kitchen → activity → dining → boss
+  // Sunroom: optional branch from living-room (left)
   "act-2": {
     svgW: 340, svgH: 520, scale: 1.65,
-    bossNode: { cx: 170, cy: 82 },
-    titleCY: 38,
+    bossNode: { cx: 170, cy: 78 },
+    titleCY: 36,
     nodes: [
-      { id: "dining-room",  cx: 170, cy: 162, sz: 14 },
-      { id: "kitchen-act2", cx: 226, cy: 248, sz: 12 },
-      { id: "sunroom",      cx: 114, cy: 248, sz: 11, isOptional: true },
-      { id: "living-room",  cx: 170, cy: 335, sz: 14 },
-      { id: "bathroom",     cx: 170, cy: 400, sz: 12 },
-      { id: "double-room",  cx: 114, cy: 462, sz: 12 },
-      { id: "single-room",  cx: 170, cy: 462, sz: 14 },
-      { id: "bunk-room",    cx: 226, cy: 462, sz: 12 },
+      { id: "dining-room",    cx: 170, cy: 152, sz: 14 },
+      { id: "activity-room",  cx: 230, cy: 228, sz: 12 },
+      { id: "kitchen-act2",   cx: 170, cy: 228, sz: 13 },
+      { id: "sunroom",        cx: 100, cy: 228, sz: 11, isOptional: true },
+      { id: "living-room",    cx: 170, cy: 318, sz: 14 },
+      { id: "double-room",    cx: 100, cy: 428, sz: 12 },
+      { id: "single-room",    cx: 170, cy: 428, sz: 14 },
+      { id: "bunk-room",      cx: 240, cy: 428, sz: 12 },
     ],
     paths: [
-      ["double-room",  "bathroom"],
-      ["single-room",  "bathroom"],
-      ["bunk-room",    "bathroom"],
-      ["bathroom",     "living-room"],
-      ["living-room",  "sunroom"],
-      ["living-room",  "kitchen-act2"],
-      ["kitchen-act2", "dining-room"],
-      ["dining-room",  "boss"],
+      ["double-room",   "living-room"],
+      ["single-room",   "living-room"],
+      ["bunk-room",     "living-room"],
+      ["living-room",   "sunroom"],
+      ["living-room",   "kitchen-act2"],
+      ["kitchen-act2",  "activity-room"],
+      ["kitchen-act2",  "dining-room"],
+      ["dining-room",   "boss"],
     ],
   },
 

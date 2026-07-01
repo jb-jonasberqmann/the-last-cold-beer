@@ -392,7 +392,7 @@ export const QUESTS: Quest[] = [
     description:
       "A note on the desk. It started as a calm observation and ended somewhere else entirely. The clue word is in every sentence — each time slightly larger in scope.",
     prompt:
-      "Read the note from the single room desk. What is the word that escalates through the note — from house to bed to something much larger?\n\n*\"This is not even my house... Borrowed it is... Not even my bed... Borrowed... This... life... borrowed?\"*",
+      "Read the note from the single room desk. One word fills all the blanks — it starts small and ends enormous.\n\n*\"This is not even my house. ______ it is. Not even my bed. ______. This... life... ______?\"*",
     order: 2,
     isRequired: true,
     hints: [
@@ -409,7 +409,7 @@ export const QUESTS: Quest[] = [
     da: {
       title: "Observationen der Blev en Krise",
       description: "En seddel på skrivebordet. Den startede som en rolig observation og endte et helt andet sted.",
-      prompt: "Læs sedlen fra enkeltværelsets skrivebord. Hvad er det ord der eskalerer gennem sedlen?\n\n*\"Det er ikke engang mit hus... Lånt er det... Ikke engang min seng... Lånt... Dette... liv... lånt?\"*",
+      prompt: "Læs sedlen fra enkeltværelsets skrivebord. Ét ord fylder alle blanke — det starter småt og ender enormt.\n\n*\"Det er ikke engang mit hus. ______ er det. Ikke engang min seng. ______. Dette... liv... ______?\"*",
       rewardText: "Lånt. Ordet er i sagsmappen.",
       failureText: "Ordet er i næsten hver sætning. Det vokser.",
     },
@@ -450,9 +450,9 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Underside of the Mattress",
     description:
-      "Written on the underside of the top bunk mattress. Only visible if you're lying in the bottom bunk looking up. Cold. Minimal. Three sentences.",
+      "Written on the underside of the top bunk mattress. Only visible from the bottom bunk. Cold. Minimal. Two sentences with the same blank.",
     prompt:
-      "You're lying in the bottom bunk, looking up. What is the final word of the note — the word that locks the sentence?\n\n*\"It was taken. It is always taken. The room where everyone gathers holds the rest.\"*",
+      "You're lying in the bottom bunk, looking up. One word fills both blanks — that word is yours to carry. But when you leave this room, you may NOT say it or write it. You must act it out for the rest of the team in silence.\n\n*\"It was ______. It is always ______.\"*",
     order: 2,
     isRequired: true,
     hints: [],
@@ -463,14 +463,14 @@ export const QUESTS: Quest[] = [
     rewardClueId: "word-taken",
     setsScaredSilent: true,
     rewardText:
-      "Taken. The word is in the Case File. The note affects you — you are too unsettled to speak in the next room. You will communicate by other means.",
-    failureText: "Read the final sentence.",
+      "Taken. That word is yours — and silence is now yours too. In the living room you cannot type. Act it out. No words. No writing. Your team must guess.",
+    failureText: "The same word fills both blanks.",
     da: {
       title: "Undersiden af Madrassen",
-      description: "Skrevet på undersiden af den øverste køje-madras. Kun synlig hvis du ligger i den nederste køje og kigger op.",
-      prompt: "Du ligger i den nederste køje og kigger op. Hvad er det endelige ord i sedlen?\n\n*\"Det blev taget. Det bliver altid taget. Rummet hvor alle samles indeholder resten.\"*",
-      rewardText: "Taget. Ordet er i sagsmappen. Sedlen påvirker dig — du er for urolig til at tale i det næste rum.",
-      failureText: "Læs den endelige sætning.",
+      description: "Skrevet på undersiden af den øverste køje-madras. Kun synlig fra den nederste køje.",
+      prompt: "Du ligger i den nederste køje og kigger op. Ét ord fylder begge blanke — det ord er dit at bære. Men når du forlader dette rum, må du IKKE sige det eller skrive det. Du skal fremvise det for holdet i tavshed.\n\n*\"Det blev ______. Det bliver altid ______.\"*",
+      rewardText: "Taget. Det ord er dit — og tavsheden er nu også din. I stuen kan du ikke skrive. Fremvis det. Ingen ord. Ingen skrift. Holdet skal gætte.",
+      failureText: "Det samme ord fylder begge blanke.",
     },
   },
 
