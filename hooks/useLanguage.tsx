@@ -71,8 +71,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const DEFAULT_LANG_VALUE: LanguageContextValue = {
+  lang: "en",
+  toggle: () => {},
+  t: (key: string) => translations[key] ?? key,
+};
+
 export function useLanguage(): LanguageContextValue {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used inside LanguageProvider");
-  return ctx;
+  // Fall back gracefully during SSR or if provider is missing — never throw
+  return ctx ?? DEFAULT_LANG_VALUE;
 }
