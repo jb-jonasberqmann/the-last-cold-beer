@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
-const POLL_INTERVAL = 5000; // 5 seconds — fast enough for a party game
+const POLL_INTERVAL       = 5000; // 5 s — in-game polling
+const LOBBY_POLL_INTERVAL = 2000; // 2 s — lobby needs near-instant start detection
 
 type PollCallback = () => void;
 
 /** Shared polling logic — pauses automatically when the tab is hidden. */
-function useVisibilityPoll(gameId: string | undefined, onUpdate: PollCallback) {
+function useVisibilityPoll(gameId: string | undefined, onUpdate: PollCallback, interval = POLL_INTERVAL) {
   const callbackRef = useRef(onUpdate);
   useEffect(() => { callbackRef.current = onUpdate; }, [onUpdate]);
 
@@ -18,7 +19,7 @@ function useVisibilityPoll(gameId: string | undefined, onUpdate: PollCallback) {
 
     const start = () => {
       if (timer) return;
-      timer = setInterval(() => callbackRef.current(), POLL_INTERVAL);
+      timer = setInterval(() => callbackRef.current(), interval);
     };
 
     const stop = () => {
@@ -50,8 +51,8 @@ export function useRealtimeGame(gameId: string | undefined, onUpdate: PollCallba
 
 /**
  * Polls for lobby updates (player joins, game start).
- * Pauses automatically when the browser tab is hidden.
+ * Uses a faster 2-second interval so game start is near-instant for all players.
  */
 export function useRealtimeLobby(gameId: string | undefined, onUpdate: PollCallback) {
-  useVisibilityPoll(gameId, onUpdate);
+  useVisibilityPoll(gameId, onUpdate, LOBBY_POLL_INTERVAL);
 }

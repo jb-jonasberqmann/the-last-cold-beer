@@ -51,30 +51,27 @@ interface ActGeo {
 
 const ACT_GEO: Record<string, ActGeo> = {
   // ── ACT 1 — outdoor / arrival ─────────────────────────────────────────────
-  // Spine (cx≈170): driveway → garden → front-door → boss
-  // Branches: terrace/carport right, shed left, petanque optional right
-  // Scale 1.65 → visible SVG-x ≈ 67–273 → all nodes between cx 112–230 ✓
+  // Layout matches reference: KEYBEARER top → FRONT DOOR center → CARPORT(L)/SHED(R) row
+  // → GARDEN(L)/TERRACE(R) row → DRIVEWAY bottom center
+  // Scale 1.65 → visible SVG-x ≈ 67–273 ✓
   "act-1": {
     svgW: 340, svgH: 520, scale: 1.65,
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "front-door",     cx: 170, cy: 180, sz: 14 },
-      { id: "shed",           cx: 114, cy: 265, sz: 12 },
-      { id: "carport",        cx: 226, cy: 265, sz: 12 },
-      { id: "garden",         cx: 170, cy: 355, sz: 14 },
-      { id: "terrace",        cx: 228, cy: 408, sz: 12 },
-      { id: "petanque-court", cx: 230, cy: 458, sz: 11, isOptional: true },
-      { id: "driveway",       cx: 155, cy: 462, sz: 14 },
+      { id: "front-door",     cx: 170, cy: 195, sz: 14 },
+      { id: "carport",        cx: 115, cy: 288, sz: 13 },  // LEFT
+      { id: "shed",           cx: 255, cy: 288, sz: 12 },  // RIGHT — horizontal from carport
+      { id: "garden",         cx: 108, cy: 372, sz: 14 },  // LEFT — below carport
+      { id: "terrace",        cx: 245, cy: 398, sz: 12 },  // RIGHT — below shed/terrace row
+      { id: "driveway",       cx: 175, cy: 458, sz: 14 },  // bottom center
     ],
     paths: [
       ["driveway",    "garden"],
       ["driveway",    "terrace"],
-      ["terrace",     "carport"],
-      ["garden",      "shed"],
+      ["garden",      "terrace"],    // horizontal connection across bottom row
       ["garden",      "carport"],
-      ["garden",      "petanque-court"],
-      ["shed",        "front-door"],
+      ["carport",     "shed"],       // horizontal
       ["carport",     "front-door"],
       ["front-door",  "boss"],
     ],
