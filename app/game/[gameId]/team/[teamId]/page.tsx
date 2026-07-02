@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { unlockRoom } from "@/lib/game/actions";
+import { unlockRoom, markCluesRead as markCluesReadAction } from "@/lib/game/actions";
 import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue } from "@/types/database";
 import type { TeamId, Clue } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
@@ -171,14 +171,28 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [showCaseFile, setShowCaseFile] = useState(false);
   const [teamClues, setTeamClues] = useState<Clue[]>([]);
   const [selectedClue, setSelectedClue] = useState<Clue | null>(null);
-  const [newClueCount, setNewClueCount] = useState(0);
+  // "Unread" = clue not yet opened in the Case File by ANYONE on the team (server-tracked)
+  const [unreadClueIds, setUnreadClueIds] = useState<Set<string>>(new Set());
   const [offerSpent, setOfferSpent] = useState(0);
   const [teamChapterId, setTeamChapterId] = useState<string | null>(null);
   const [otherCompletedRoomIds, setOtherCompletedRoomIds] = useState<string[] | null>(null);
   const [tollBanners, setTollBanners] = useState<{ msg: string; key: number }[]>([]);
   const tollKeyRef = useRef(0);
   const seenEventIdsRef = useRef<Set<string>>(new Set());
-  const seenClueCountRef = useRef<number | null>(null);
+  // Mark clues read for the WHOLE TEAM — optimistic locally, persisted server-side.
+  // Other devices pick it up on their next poll. locallyReadRef prevents a poll
+  // that raced the server write from flickering the badge back on.
+  const locallyReadRef = useRef<Set<string>>(new Set());
+  const markCluesRead = useCallback((ids: string[]) => {
+    if (ids.length === 0 || !gameId || !teamId) return;
+    ids.forEach((id) => locallyReadRef.current.add(id));
+    setUnreadClueIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    markCluesReadAction(gameId, teamId, ids).catch(() => {});
+  }, [gameId, teamId]);
   const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
   const [forcedClueModal, setForcedClueModal] = useState<Clue[]>([]);
 
@@ -199,11 +213,19 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
     const dbClues: DbTeamClue[] = data.clues ?? [];
     // Newest clues first — the drawer shows them in this order
-    const resolved = [...dbClues]
-      .sort((a, b) => new Date(b.discovered_at).getTime() - new Date(a.discovered_at).getTime())
+    const sortedDb = [...dbClues].sort(
+      (a, b) => new Date(b.discovered_at).getTime() - new Date(a.discovered_at).getTime()
+    );
+    const resolved = sortedDb
       .map((c) => getClue(c.clue_id))
       .filter((c): c is Clue => !!c);
     setTeamClues(resolved);
+    // Team-wide unread state comes straight from the server (read_at is null)
+    setUnreadClueIds(new Set(
+      sortedDb
+        .filter((c) => !c.read_at && !locallyReadRef.current.has(c.clue_id))
+        .map((c) => c.clue_id)
+    ));
 
     // ── Detect new clues after returning from a room ──────────────────────────
     // When the player navigated to a room, we saved their clue IDs in sessionStorage.
@@ -216,14 +238,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
         const brandNew = resolved.filter((c) => !departedIds.has(c.id));
         if (brandNew.length > 0) setForcedClueModal(brandNew);
         sessionStorage.removeItem(departKey);
-        seenClueCountRef.current = resolved.length; // keep badge in sync
       }
-    }
-
-    if (seenClueCountRef.current === null) {
-      seenClueCountRef.current = resolved.length;
-    } else {
-      setNewClueCount(Math.max(0, resolved.length - seenClueCountRef.current));
     }
 
     const myTp = (data.teamProgress ?? []).find(
@@ -778,22 +793,22 @@ export default function TeamQuestBoardPage({ params }: Props) {
         <div className="px-4 pt-5 pb-4 flex items-center gap-3">
           {/* Case File — primary bottom action */}
           <button
-            onClick={() => { setShowCaseFile(true); seenClueCountRef.current = teamClues.length; setNewClueCount(0); }}
-            className={`flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform relative ${newClueCount > 0 ? "animate-pulse-glow" : ""}`}
+            onClick={() => setShowCaseFile(true)}
+            className={`flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform relative ${unreadClueIds.size > 0 ? "animate-pulse-glow" : ""}`}
             style={{
-              background: newClueCount > 0 ? "rgba(120,80,10,0.8)" : "rgba(12,8,3,0.9)",
-              border: `1.5px solid ${newClueCount > 0 ? "rgba(251,191,36,0.65)" : "rgba(180,130,50,0.3)"}`,
-              boxShadow: newClueCount > 0 ? "0 0 18px rgba(251,191,36,0.3)" : "0 2px 12px rgba(0,0,0,0.5)",
+              background: unreadClueIds.size > 0 ? "rgba(120,80,10,0.8)" : "rgba(12,8,3,0.9)",
+              border: `1.5px solid ${unreadClueIds.size > 0 ? "rgba(251,191,36,0.65)" : "rgba(180,130,50,0.3)"}`,
+              boxShadow: unreadClueIds.size > 0 ? "0 0 18px rgba(251,191,36,0.3)" : "0 2px 12px rgba(0,0,0,0.5)",
             }}
           >
             <span style={{ fontSize: "22px" }}>🗂</span>
             <span className="text-base font-bold" style={{ color: teamClues.length > 0 ? "rgba(251,191,36,0.95)" : "rgba(150,110,45,0.6)", fontFamily: "Georgia,serif" }}>
               Case File{teamClues.length > 0 ? ` · ${teamClues.length}` : ""}
             </span>
-            {newClueCount > 0 && (
+            {unreadClueIds.size > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full flex items-center justify-center text-[11px] font-black"
                 style={{ background: "rgb(251,191,36)", color: "#1a0e00", boxShadow: "0 0 10px rgba(251,191,36,0.7)" }}>
-                {newClueCount}
+                {unreadClueIds.size}
               </span>
             )}
           </button>
@@ -944,15 +959,23 @@ export default function TeamQuestBoardPage({ params }: Props) {
                       // Clues from earlier acts are "spent" — dim them to 50%
                       const actNum = (id?: string) => (id ? parseInt(id.replace("act-", ""), 10) || 0 : 0);
                       const isSpent = actNum(clue.chapterId) < actNum(teamChapterId ?? undefined);
+                      const isUnread = unreadClueIds.has(clue.id);
                       return (
-                      <button key={clue.id} onClick={() => setSelectedClue(clue)}
+                      <button key={clue.id} onClick={() => { setSelectedClue(clue); markCluesRead([clue.id]); }}
                         className="w-full text-left rounded-xl px-3 py-3 active:scale-[0.98] transition-transform"
                         style={{ opacity: isSpent ? 0.5 : 1, background: clue.isArtifact ? "rgba(30,20,60,0.4)" : clue.isKeyClue ? "rgba(80,55,10,0.3)" : "rgba(255,255,255,0.04)", border: `1px solid ${clue.isArtifact ? "rgba(160,120,255,0.3)" : clue.isKeyClue ? "rgba(220,160,40,0.35)" : "rgba(180,130,50,0.12)"}` }}>
                         <div className="flex items-center gap-3">
-                          <span className="text-xl flex-shrink-0">{clue.icon}</span>
+                          <span className="text-xl flex-shrink-0 relative">
+                            {clue.icon}
+                            {isUnread && (
+                              <span className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full"
+                                style={{ background: "rgb(251,191,36)", boxShadow: "0 0 8px rgba(251,191,36,0.9)" }} />
+                            )}
+                          </span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold truncate" style={{ color: "rgba(245,225,170,0.92)", fontFamily: "Georgia,serif" }}>{clue.title}</span>
+                              <span className="text-sm font-bold truncate" style={{ color: isUnread ? "rgb(251,215,120)" : "rgba(245,225,170,0.92)", fontFamily: "Georgia,serif" }}>{clue.title}</span>
+                              {isUnread && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgb(251,191,36)", fontFamily: "Georgia,serif" }}>New</span>}
                               {clue.isArtifact && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(160,120,255,0.6)", fontFamily: "Georgia,serif" }}>Artifact</span>}
                               {clue.isKeyClue && !clue.isArtifact && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(251,191,36,0.6)", fontFamily: "Georgia,serif" }}>Key</span>}
                               {isSpent && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(140,110,60,0.5)", fontFamily: "Georgia,serif" }}>Past act</span>}
@@ -1018,8 +1041,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
             <div className="px-5 pb-5 pt-3">
               <button
                 onClick={() => {
-                  seenClueCountRef.current = teamClues.length;
-                  setNewClueCount(0);
+                  // The modal showed the full clue text — that counts as read for the team
+                  markCluesRead(forcedClueModal.map((c) => c.id));
                   setForcedClueModal([]);
                 }}
                 className="w-full py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform"

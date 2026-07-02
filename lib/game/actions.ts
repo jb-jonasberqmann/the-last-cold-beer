@@ -1129,16 +1129,24 @@ async function _assignCulprit(gameId: string) {
     const witnessId = players[0].id as string;
     await sql`UPDATE players SET is_culprit = TRUE WHERE id = ${witnessId}`;
 
-    // Record the witness for the ritual photo flow (non-fatal on un-migrated DBs)
-    try {
+    // Record the witness for the ritual photo flow (self-heals missing table)
+    const insertWitness = async () => {
       await sql`
         INSERT INTO team_photos (game_id, team_id, witness_player_id)
         VALUES (${gameId}, ${teamId}, ${witnessId})
         ON CONFLICT (game_id, team_id)
         DO UPDATE SET witness_player_id = ${witnessId}
       `;
-    } catch (e) {
-      console.error("team_photos insert failed (non-fatal — run the Neon migration):", e);
+    };
+    try {
+      await insertWitness();
+    } catch {
+      try {
+        await _ensureTeamPhotosTable();
+        await insertWitness();
+      } catch (e) {
+        console.error("team_photos insert failed (non-fatal):", e);
+      }
     }
   }
 }
@@ -1146,6 +1154,24 @@ async function _assignCulprit(gameId: string) {
 // ==========================================
 // RITUAL PHOTO (the disguised culprit mechanic)
 // ==========================================
+
+/**
+ * Self-healing DDL: creates the team_photos table if it doesn't exist yet.
+ * This removes the dependency on running the migration manually in Neon.
+ */
+async function _ensureTeamPhotosTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS team_photos (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      team_id TEXT NOT NULL CHECK (team_id IN ('team-a', 'team-b')),
+      witness_player_id TEXT,
+      photo TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE(game_id, team_id)
+    )
+  `;
+}
 
 /** Witness/photo metadata for a team. Photo payload only included when requested. */
 export async function getTeamPhoto(
@@ -1203,22 +1229,39 @@ export async function saveRitualPhoto(
   if (!player) return { success: false, error: "Player not found." };
   if (player.is_host) return { success: false, error: "The host cannot take the ritual photo — hand the phone to a team member." };
 
-  try {
+  const persist = async () => {
     await sql`
       INSERT INTO team_photos (game_id, team_id, witness_player_id, photo)
       VALUES (${gameId}, ${teamId}, ${playerId}, ${photoDataUrl})
       ON CONFLICT (game_id, team_id)
       DO UPDATE SET witness_player_id = ${playerId}, photo = ${photoDataUrl}
     `;
-    // Reassign the team's culprit to the actual photographer
-    await sql`
-      UPDATE players SET is_culprit = FALSE
-      WHERE game_id = ${gameId} AND team_id = ${teamId}
-    `;
-    await sql`
-      UPDATE players SET is_culprit = TRUE
-      WHERE id = ${playerId} AND game_id = ${gameId}
-    `;
+  };
+
+  try {
+    try {
+      await persist();
+    } catch (e) {
+      // Most likely the table doesn't exist yet — create it and retry once.
+      console.error("saveRitualPhoto: first attempt failed, ensuring table exists:", e);
+      await _ensureTeamPhotosTable();
+      await persist();
+    }
+
+    // Reassign the team's culprit to the actual photographer (non-fatal)
+    try {
+      await sql`
+        UPDATE players SET is_culprit = FALSE
+        WHERE game_id = ${gameId} AND team_id = ${teamId}
+      `;
+      await sql`
+        UPDATE players SET is_culprit = TRUE
+        WHERE id = ${playerId} AND game_id = ${gameId}
+      `;
+    } catch (e) {
+      console.error("saveRitualPhoto: culprit reassignment failed (non-fatal):", e);
+    }
+
     await sql`
       INSERT INTO game_events (game_id, team_id, event_type, event_data)
       VALUES (${gameId}, ${teamId}, 'ritual_photo_taken', ${JSON.stringify({ team_id: teamId })}::jsonb)
@@ -1228,6 +1271,40 @@ export async function saveRitualPhoto(
     console.error("saveRitualPhoto failed:", e);
     return { success: false, error: "Could not save the photo." };
   }
+}
+
+// ==========================================
+// MARK CLUES READ (team-wide)
+// A clue counts as "read" for the whole team once ANY player opens it
+// in the Case File. Self-heals the read_at column on older databases.
+// ==========================================
+
+export async function markCluesRead(
+  gameId: string,
+  teamId: TeamId,
+  clueIds: string[]
+): Promise<ActionResult> {
+  if (clueIds.length === 0) return { success: true, data: undefined };
+  const doUpdate = async () => {
+    await sql`
+      UPDATE team_clues SET read_at = NOW()
+      WHERE game_id = ${gameId} AND team_id = ${teamId}
+        AND clue_id = ANY(${clueIds}::text[])
+        AND read_at IS NULL
+    `;
+  };
+  try {
+    await doUpdate();
+  } catch {
+    try {
+      await sql`ALTER TABLE team_clues ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ`;
+      await doUpdate();
+    } catch (e) {
+      console.error("markCluesRead failed (non-fatal):", e);
+      return { success: false, error: "Could not mark clues read." };
+    }
+  }
+  return { success: true, data: undefined };
 }
 
 // ==========================================

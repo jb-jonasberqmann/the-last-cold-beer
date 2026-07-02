@@ -56,3 +56,10 @@ CREATE TABLE IF NOT EXISTS team_photos (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(game_id, team_id)
 );
+
+-- ============================================================
+-- ADDITION: team-wide "read" state for clues (Case File pulse).
+-- Self-healing — the app also adds this column automatically,
+-- so running it here is optional but tidy.
+-- ============================================================
+ALTER TABLE team_clues ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;

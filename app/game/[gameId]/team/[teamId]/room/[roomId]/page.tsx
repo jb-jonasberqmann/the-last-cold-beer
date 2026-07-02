@@ -1033,6 +1033,8 @@ function PhotoQuestBlock({
     }
   };
 
+  const [failCount, setFailCount] = useState(0);
+
   const handleFile = async (file: File) => {
     if (!session?.playerId) return;
     setLoading(true);
@@ -1041,11 +1043,13 @@ function PhotoQuestBlock({
       const dataUrl = await fileToJpegDataUrl(file);
       const saveRes = await saveRitualPhoto(gameId, teamId, session.playerId, dataUrl);
       if (!saveRes.success) {
+        setFailCount((n) => n + 1);
         setFeedback({ type: "error", text: saveRes.error ?? "The photo failed — try again." });
         return;
       }
       await finishQuest();
     } catch {
+      setFailCount((n) => n + 1);
       setFeedback({ type: "error", text: "The photo failed — try again." });
     } finally {
       setLoading(false);
@@ -1145,16 +1149,32 @@ function PhotoQuestBlock({
               fontFamily: "Georgia,serif",
             }}
           >
-            {loading ? "Recording…" : "📷 Take the photo"}
+            {loading ? "Recording…" : failCount > 0 ? "📷 Try the photo again" : "📷 Take the photo"}
           </button>
-          <button
-            onClick={handleSkip}
-            disabled={loading}
-            className="w-full py-2 text-xs disabled:opacity-50"
-            style={{ color: "rgba(140,100,40,0.55)", fontFamily: "Georgia,serif" }}
-          >
-            The camera won&apos;t cooperate — continue without the record
-          </button>
+          {failCount > 0 ? (
+            <button
+              onClick={handleSkip}
+              disabled={loading}
+              className="w-full py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform disabled:opacity-50"
+              style={{
+                background: "rgba(40,30,12,0.8)",
+                border: "1px solid rgba(180,130,50,0.35)",
+                color: "rgba(220,180,110,0.9)",
+                fontFamily: "Georgia,serif",
+              }}
+            >
+              Skip the photo — continue without the record →
+            </button>
+          ) : (
+            <button
+              onClick={handleSkip}
+              disabled={loading}
+              className="w-full py-2 text-xs disabled:opacity-50"
+              style={{ color: "rgba(140,100,40,0.55)", fontFamily: "Georgia,serif" }}
+            >
+              The camera won&apos;t cooperate — continue without the record
+            </button>
+          )}
         </div>
       )}
     </div>

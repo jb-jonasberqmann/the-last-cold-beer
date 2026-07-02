@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS team_clues (
   team_id TEXT NOT NULL CHECK (team_id IN ('team-a', 'team-b')),
   clue_id TEXT NOT NULL,
   discovered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  read_at TIMESTAMPTZ, -- team-wide: set when ANY player opens the clue in the Case File
   UNIQUE(game_id, team_id, clue_id)
 );
 

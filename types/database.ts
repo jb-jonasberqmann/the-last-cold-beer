@@ -81,6 +81,7 @@ export interface DbTeamClue {
   team_id: TeamId;
   clue_id: string;
   discovered_at: string;
+  read_at?: string | null; // team-wide: set when ANY player opens the clue in the Case File
 }
 
 export interface DbTeamOfferLog {

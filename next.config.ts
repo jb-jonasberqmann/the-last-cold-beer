@@ -1,10 +1,2 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  eslint: {
-    // ESLint checked separately — don't block Vercel builds
-    ignoreDuringBuilds: true,
-  },
-};
-
-export default nextConfig;
+// NOT USED — Next.js 14 only reads next.config.js; all config lives there.
+export {};

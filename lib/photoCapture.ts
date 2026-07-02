@@ -1,7 +1,7 @@
 // Client-side photo helper — downscale a camera capture to a compact JPEG data-URL
 // small enough to store in the database (~150-300 KB).
 
-export async function fileToJpegDataUrl(file: File, maxW = 1280): Promise<string> {
+export async function fileToJpegDataUrl(file: File, maxW = 1024): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -18,8 +18,9 @@ export async function fileToJpegDataUrl(file: File, maxW = 1280): Promise<string
       }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      let out = canvas.toDataURL("image/jpeg", 0.72);
-      if (out.length > 850_000) out = canvas.toDataURL("image/jpeg", 0.5);
+      let out = canvas.toDataURL("image/jpeg", 0.68);
+      if (out.length > 600_000) out = canvas.toDataURL("image/jpeg", 0.5);
+      if (out.length > 600_000) out = canvas.toDataURL("image/jpeg", 0.35);
       resolve(out);
     };
     img.onerror = () => {
