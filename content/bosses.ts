@@ -13,12 +13,12 @@ export const BOSSES: Boss[] = [
     title: "The Keybearer",
     subtitle: "Late. Unapologetic. Arms completely full.",
     description:
-      "Mads arrives just as you're heading to the front door. Arms completely full — a cooler, a sleeping bag, two cases of beer, something wrapped in a garbage bag. He grins. He does not apologize. His phone was on silent. He had the code the whole time. He won't give it to you until his arms are empty.",
+      "Mads arrives just as you're heading to the front door. Arms completely full — a cooler, a sleeping bag, two cases of beer, something wrapped in a garbage bag. He grins. He does not apologize. His phone was on silent. And now he — and everything he brought — is parked right in front of the door. Nobody gets inside until it's all unloaded.",
     icon: "🙋",
     look: {
       icon: "🙋",
       atmosphere:
-        "Mads's car is blocking the path. The boot is open. Bags, towels, loose items — he needs help unloading. The code fragment is somewhere in that jacket. You cannot get to it while his arms are full.",
+        "Mads's car is blocking the path. The boot is open. Bags, towels, loose items — he needs help unloading. You have the code. You just can't get to the door while all of this is in the way.",
       colorFrom: "from-amber-800",
       colorTo: "to-stone-900",
       backgroundStyle: "outdoor-carport",
@@ -53,7 +53,7 @@ export const BOSSES: Boss[] = [
         phase: 1,
         title: "The Unloading",
         description:
-          "Mads cannot give you the code while his arms are full. Help him get everything inside. Each action can only be done once — and Mads always has a response.",
+          "Nobody reaches the front door while Mads's arms are full. Help him get everything inside. Each action can only be done once — and Mads always has a response.",
         hpThreshold: 100,
         actions: [
           {
@@ -90,7 +90,7 @@ export const BOSSES: Boss[] = [
             id: "mads-phone",
             label: "Mads is missing something",
             description:
-              "Mads stops mid-unload, suddenly distracted. \"Hang on — I can't find my sunglasses. I'm not carrying another box until I find them.\"",
+              "Mads stops mid-unload, suddenly distracted. He pats his pockets, checks the car, pats his pockets again. \"Hang on. I'm missing something. I'm not carrying another box until I find it.\"",
             type: "puzzle",
             damage: 22,
             puzzle: {
@@ -98,9 +98,9 @@ export const BOSSES: Boss[] = [
                 "Mads checks every pocket. Jacket — empty. Jeans — empty. Car seat — nothing. Then he looks at you. \"Check the sun visor,\" he says. \"I always put them there and always forget.\" What do you find?",
               answer: ["sunglasses", "his sunglasses", "the sunglasses", "shades", "solbriller", "solbrillerne", "hans solbriller"],
             },
-            hint: "He just told you where he put them.",
+            hint: "Sun. Visor. What do you reach for when the evening sun hits the windscreen?",
             rewardText:
-              "The sunglasses. In the sun visor. He had them the whole time. Mads puts them on, grins — and finally digs his phone out of his pocket. The last code fragment is right there in his notes app.",
+              "The sunglasses. In the sun visor. He had them the whole time. Mads puts them on, grins, and picks up the pace considerably.",
             failureText: "The car is messier than it looks. Try again.",
           },
           {
@@ -116,30 +116,30 @@ export const BOSSES: Boss[] = [
       },
     ],
     defeatText:
-      "Mads is finally empty-handed. He grins. He pulls out his phone and opens his notes app. \"This is it,\" he says, turning the screen to face you. The last code fragment. Now combine all five and try the front door.",
+      "Mads is finally empty-handed. He grins and steps aside. \"The code? You went through the shed, right? Then you've already got everything.\" The path to the front door is clear. Combine all five fragments and open the key box.",
     victoryAdvantage:
-      "Final fragment: Mads gives your team the last piece of the key box code. Head to the front door.",
+      "The way is clear: head to the front door and enter the five-digit code.",
     da: {
       title: "The Keybearer",
       subtitle: "Forsinket. Uundskyldende. Armene fuldstændig fulde.",
       description:
-        "Mads kører ind på carporten, døren åben inden motoren er slukket. Han bærer mere end det er fysisk rimeligt — en køler, en sovepose, to kasser øl, noget pakket ind i en skraldpose. Han griner. Han undskyldes ikke. Hans telefon var på lydløs. Han havde koden hele tiden.",
+        "Mads kører ind på carporten, døren åben inden motoren er slukket. Han bærer mere end det er fysisk rimeligt — en køler, en sovepose, to kasser øl, noget pakket ind i en skraldpose. Han griner. Han undskyldes ikke. Hans telefon var på lydløs. Og nu står han — og alt han har med — lige foran døren.",
       atmosphere:
         "Carporten. Mads' bil er skæv i parkeringspladsen. Bagagerummet er åbent. Indersiden af bilen er et kaos af tasker, håndklæder og løse genstande.",
       defeatText:
-        "Mads er endelig tomhændet. Han griner. Han trækker sin telefon op og åbner sin noter-app. \"Det er det,\" siger han og vender skærmen mod jer. Det sidste kodefragment.",
+        "Mads er endelig tomhændet. Han griner og træder til side. \"Koden? I var i skuret, ikke? Så har I allerede det hele.\" Vejen til hoveddøren er fri.",
       victoryAdvantage:
-        "Sidste fragment: Mads giver jeres hold det sidste stykke af nøgleboks-koden.",
+        "Vejen er fri: gå til hoveddøren og indtast den femcifrede kode.",
       phases: [
         {
           phase: 1,
           title: "Losningen",
-          description: "Mads kan ikke give jer koden mens hans arme er fulde. Hjælp ham med at få alt ind.",
+          description: "Ingen når hoveddøren mens Mads' arme er fulde. Hjælp ham med at få alt ind.",
           actions: [
             { id: "mads-cooler", label: "Bær den tunge køler", rewardText: "Køleren er inde. Mads' arme er lidt mere fri.", failureText: "Den er for tung til én person." },
             { id: "mads-beer", label: "Tag ølkasserne", rewardText: "Øl inde. Én ting færre Mads bærer." },
             { id: "mads-door", label: "Hold døren åben", rewardText: "Sovepose inde. Mads kom igennem døren." },
-            { id: "mads-phone", label: "Mads mangler noget", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger dem altid der og glemmer det altid.\" Hvad finder du?", hint: "Han fortalte dig netop hvor han lagde dem.", rewardText: "Solbrillerne. I solskærmen. Han havde dem hele tiden. Mads tager dem på, griner — og finder endelig sin telefon frem. Det sidste kodefragment er lige der i hans noter-app.", failureText: "Bilen er mere rodet end den ser ud." },
+            { id: "mads-phone", label: "Mads mangler noget", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger dem altid der og glemmer det altid.\" Hvad finder du?", hint: "Solskærm. Hvad rækker man ud efter når aftensolen rammer forruden?", rewardText: "Solbrillerne. I solskærmen. Han havde dem hele tiden. Mads tager dem på, griner, og sætter tempoet betydeligt op.", failureText: "Bilen er mere rodet end den ser ud." },
             { id: "mads-offer-boost", label: "Bestik Mads", rewardText: "Mads griner. Bevæger sig lidt hurtigere. 25 fremskridt." },
           ],
         },

@@ -462,6 +462,10 @@ export async function dealBossDamage(
   const bp = bpRows[0] as DbBossProgress;
   if (bp.status === "defeated") return { success: false, error: "Boss is already defeated." };
 
+  // Choice actions arrive from the UI as "<actionId>:<choiceId>" — split off the choice.
+  const [baseActionId, chosenChoiceId] = actionId.split(":");
+  actionId = baseActionId;
+
   // Find the action across all phases
   let foundAction = null;
   for (const phase of boss.phases) {
@@ -469,6 +473,21 @@ export async function dealBossDamage(
     if (foundAction) break;
   }
   if (!foundAction) return { success: false, error: "Boss action not found." };
+
+  // Choice actions are one-time: once a choice has dealt damage, the action locks.
+  if (foundAction.type === "choice") {
+    const priorChoiceUse = await sql`
+      SELECT id FROM game_events
+      WHERE game_id = ${gameId}
+        AND team_id = ${teamId}
+        AND event_type = 'boss_damaged'
+        AND event_data->>'action_id' = ${actionId}
+      LIMIT 1
+    `;
+    if (priorChoiceUse.length > 0) {
+      return { success: false, error: "The house has already registered your answer. It only asks once." };
+    }
+  }
 
   // Clue check
   if (foundAction.type === "clue_check" && foundAction.requiredClueId) {
@@ -534,19 +553,24 @@ export async function dealBossDamage(
 
   // ── One-time use check for offer_boost actions only ─────────────────────
   // Social actions are repeatable; only the bribe (offer_boost) is locked after first use.
+  // The free (advantage) use and the paid use are tracked separately:
+  // free uses are logged as "<actionId>-free", paid uses as "<actionId>".
   if (foundAction.type === "offer_boost") {
+    const usageId = bypassOfferCost ? `${actionId}-free` : actionId;
     const priorUse = await sql`
       SELECT id FROM game_events
       WHERE game_id = ${gameId}
         AND team_id = ${teamId}
         AND event_type = 'boss_damaged'
-        AND event_data->>'action_id' = ${actionId}
+        AND event_data->>'action_id' = ${usageId}
       LIMIT 1
     `;
     if (priorUse.length > 0) {
       return {
         success: false,
-        error: "Mads won't be bought twice. The bribe is one-time only.",
+        error: bypassOfferCost
+          ? "The advantage has already been used this fight."
+          : "This one won't work twice. The boost is one-time only.",
       };
     }
   }
@@ -623,14 +647,18 @@ export async function dealBossDamage(
   await sql`
     INSERT INTO game_events (game_id, team_id, event_type, event_data)
     VALUES (${gameId}, ${teamId}, 'boss_damaged',
-            ${JSON.stringify({ boss_id: bossId, damage, raw_damage: rawDamage, defense_multiplier: damageMultiplier < 1 ? damageMultiplier : undefined, new_hp: newHp, action_id: logActionId })}::jsonb)
+            ${JSON.stringify({ boss_id: bossId, damage, raw_damage: rawDamage, defense_multiplier: damageMultiplier < 1 ? damageMultiplier : undefined, new_hp: newHp, action_id: logActionId, choice_id: chosenChoiceId })}::jsonb)
   `;
 
   // ── Boss counter-attack (only when boss survives) ─────────────────────────
   let chosenCounter: { move: string; label: string; description: string; defense_multiplier?: number; team_offer_damage?: number; heal_amount?: number } | null = null;
 
-  if (!defeated && boss.counterAttacks && boss.counterAttacks.length > 0) {
-    // Determine last used move (to prevent repeating)
+  // ~40% of hits draw NO counter at all — keeps the rhythm unpredictable
+  // instead of a strict buff/attack alternation.
+  const counterRoll = Math.random();
+
+  if (!defeated && counterRoll >= 0.4 && boss.counterAttacks && boss.counterAttacks.length > 0) {
+    // Determine last used move (to prevent immediate repeats)
     const lastMove = lastCounterEvRows.length > 0
       ? (lastCounterEvRows[0] as { event_data: { move: string } }).event_data.move
       : null;
@@ -647,10 +675,17 @@ export async function dealBossDamage(
     `;
     const healAlreadyUsed = healUsedRows.length > 0;
 
-    // Filter eligible attacks: no repeat of last move, no once-used "heal"
+    // Heal is a late-fight desperation move: only eligible when the boss is
+    // below 50% HP AND the strike that just landed was heavy (≥20 damage).
+    // Combined with the once-per-fight rule and the no-counter roll above,
+    // some fights it triggers — many fights it never does.
+    const hpPercentAfterHit = (newHp / boss.maxHp) * 100;
+    const healEligible = !healAlreadyUsed && hpPercentAfterHit < 50 && damage >= 20;
+
+    // Filter eligible attacks: no immediate repeat, heal only when desperate
     const eligible = boss.counterAttacks.filter((ca) => {
       if (ca.id === lastMove) return false;
-      if (ca.effect.isOnce && ca.id === "heal" && healAlreadyUsed) return false;
+      if (ca.effect.type === "heal" && !healEligible) return false;
       return true;
     });
 
@@ -703,13 +738,13 @@ export async function dealBossDamage(
     `;
     const bossContent = getBoss(bossId);
 
-    // Act 1 boss (Mads) defeated → record chapter winner + award code fragment
+    // Act 1 boss (Mads) defeated → record chapter winner + clear the way to the front door
     if (bossContent?.chapterId === "act-1") {
       await sql`
         UPDATE games SET chapter_1_winner = ${teamId}
         WHERE id = ${gameId} AND chapter_1_winner IS NULL
       `;
-      await _awardClue(gameId, teamId, "fragment-mads");
+      await _awardClue(gameId, teamId, "mads-unloaded");
     }
 
     // Act 2 boss (The Radio) defeated → trigger Act 2→3 transition for this team
@@ -802,9 +837,29 @@ export async function hostForceRoomStatus(
   gameId: string,
   teamId: TeamId,
   roomId: string,
-  status: "unlocked" | "complete"
+  status: "locked" | "unlocked" | "complete"
 ): Promise<ActionResult> {
   const now = new Date().toISOString();
+
+  // "locked" = full reset: wipe the team's quest progress for the room and lock it again.
+  if (status === "locked") {
+    await sql`
+      DELETE FROM quest_progress
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND room_id = ${roomId}
+    `;
+    await sql`
+      INSERT INTO room_progress (game_id, team_id, room_id, status)
+      VALUES (${gameId}, ${teamId}, ${roomId}, 'locked')
+      ON CONFLICT (game_id, team_id, room_id)
+      DO UPDATE SET
+        status = 'locked',
+        unlocked_at = NULL,
+        completed_at = NULL,
+        occupant_player_id = NULL
+    `;
+    return { success: true, data: undefined };
+  }
+
   await sql`
     INSERT INTO room_progress (game_id, team_id, room_id, status, unlocked_at, completed_at)
     VALUES (

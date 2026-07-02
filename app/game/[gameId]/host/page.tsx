@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole, rebalanceTeams } from "@/lib/game/actions";
 import { Button } from "@/components/ui/Button";
+import { CHAPTERS } from "@/content/chapters";
+import { BOSSES } from "@/content/bosses";
 import type { DbGame, DbPlayer, DbTeamProgress, DbBossProgress } from "@/types/database";
 
 interface Props {
@@ -81,13 +83,17 @@ export default function HostPage({ params }: Props) {
     fetchAll();
   };
 
-  const handleResetBoss = async (teamId: "team-a" | "team-b") => {
-    await hostResetBoss(gameId, teamId, "mads", 100);
-    showMessage(`Boss reset for ${teamId}`);
+  const handleResetRoom = async (roomId: string, teamId: "team-a" | "team-b") => {
+    await hostForceRoomStatus(gameId, teamId, roomId, "locked");
+    showMessage(`Room ${roomId} reset (locked, quest progress cleared) for ${teamId}`);
     fetchAll();
   };
 
-  const allRooms = ["driveway", "terrace", "garden", "carport", "shed", "front-door"];
+  const handleResetBoss = async (teamId: "team-a" | "team-b", bossId: string, maxHp: number) => {
+    await hostResetBoss(gameId, teamId, bossId, maxHp);
+    showMessage(`Boss ${bossId} reset for ${teamId}`);
+    fetchAll();
+  };
 
   return (
     <div className="min-h-screen bg-stone-950 text-white">
@@ -191,63 +197,82 @@ export default function HostPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Force room actions */}
-        <div className="rounded-xl bg-stone-800 border border-stone-600 p-4">
-          <h2 className="font-bold text-white mb-1">Force Room State</h2>
-          <p className="text-xs text-stone-500 mb-3">Use if game state gets stuck.</p>
-          <div className="space-y-2">
-            {allRooms.map((roomId) => (
-              <div key={roomId} className="flex items-center gap-2 text-xs">
-                <span className="text-stone-300 flex-1 font-mono">{roomId}</span>
-                <button
-                  onClick={() => handleForceUnlock(roomId, "team-a")}
-                  className="bg-stone-700 hover:bg-stone-600 px-2 py-1 rounded text-stone-300"
-                >A:unlock</button>
-                <button
-                  onClick={() => handleForceComplete(roomId, "team-a")}
-                  className="bg-stone-700 hover:bg-stone-600 px-2 py-1 rounded text-green-400"
-                >A:done</button>
-                <button
-                  onClick={() => handleForceUnlock(roomId, "team-b")}
-                  className="bg-stone-700 hover:bg-stone-600 px-2 py-1 rounded text-stone-300"
-                >B:unlock</button>
-                <button
-                  onClick={() => handleForceComplete(roomId, "team-b")}
-                  className="bg-stone-700 hover:bg-stone-600 px-2 py-1 rounded text-green-400"
-                >B:done</button>
-              </div>
-            ))}
+        {/* Force room actions — all acts */}
+        {CHAPTERS.map((chapter) => (
+          <div key={chapter.id} className="rounded-xl bg-stone-800 border border-stone-600 p-4">
+            <h2 className="font-bold text-white mb-1">
+              Force Room State — {chapter.title}
+              {game.current_chapter_id === chapter.id && (
+                <span className="ml-2 text-xs text-amber-400">(current act)</span>
+              )}
+            </h2>
+            <p className="text-xs text-stone-500 mb-3">
+              unlock = open room · done = force complete · reset = lock again + clear quest progress
+            </p>
+            <div className="space-y-2">
+              {chapter.roomIds.map((roomId) => (
+                <div key={roomId} className="flex items-center gap-1.5 text-xs flex-wrap">
+                  <span className="text-stone-300 flex-1 font-mono min-w-[110px]">{roomId}</span>
+                  <button
+                    onClick={() => handleForceUnlock(roomId, "team-a")}
+                    className="bg-stone-700 hover:bg-stone-600 px-1.5 py-1 rounded text-stone-300"
+                  >A:unlock</button>
+                  <button
+                    onClick={() => handleForceComplete(roomId, "team-a")}
+                    className="bg-stone-700 hover:bg-stone-600 px-1.5 py-1 rounded text-green-400"
+                  >A:done</button>
+                  <button
+                    onClick={() => handleResetRoom(roomId, "team-a")}
+                    className="bg-stone-700 hover:bg-stone-600 px-1.5 py-1 rounded text-red-400"
+                  >A:reset</button>
+                  <button
+                    onClick={() => handleForceUnlock(roomId, "team-b")}
+                    className="bg-stone-700 hover:bg-stone-600 px-1.5 py-1 rounded text-stone-300"
+                  >B:unlock</button>
+                  <button
+                    onClick={() => handleForceComplete(roomId, "team-b")}
+                    className="bg-stone-700 hover:bg-stone-600 px-1.5 py-1 rounded text-green-400"
+                  >B:done</button>
+                  <button
+                    onClick={() => handleResetRoom(roomId, "team-b")}
+                    className="bg-stone-700 hover:bg-stone-600 px-1.5 py-1 rounded text-red-400"
+                  >B:reset</button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ))}
 
-        {/* Boss controls */}
+        {/* Boss controls — all bosses */}
         <div className="rounded-xl bg-stone-800 border border-stone-600 p-4">
-          <h2 className="font-bold text-white mb-3">Boss Controls</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <h2 className="font-bold text-white mb-1">Boss Controls</h2>
+          <p className="text-xs text-stone-500 mb-3">
+            Current HP shown for the current act&apos;s boss. Reset restores full HP and re-activates the fight.
+          </p>
+          <div className="grid grid-cols-2 gap-3 mb-4 text-xs">
             <div>
               <div className="text-sm text-stone-300 mb-1">{game.team_a_name}</div>
-              <div className="text-xs text-stone-400 mb-2">
-                HP: {bossA?.current_hp ?? "Not started"} | Status: {bossA?.status ?? "—"}
-              </div>
-              <button
-                onClick={() => handleResetBoss("team-a")}
-                className="text-xs bg-red-900/50 hover:bg-red-900 border border-red-800 text-red-300 px-2 py-1 rounded"
-              >
-                Reset Boss
-              </button>
+              <div className="text-stone-400">HP: {bossA?.current_hp ?? "Not started"} | Status: {bossA?.status ?? "—"}</div>
             </div>
             <div>
               <div className="text-sm text-stone-300 mb-1">{game.team_b_name}</div>
-              <div className="text-xs text-stone-400 mb-2">
-                HP: {bossB?.current_hp ?? "Not started"} | Status: {bossB?.status ?? "—"}
-              </div>
-              <button
-                onClick={() => handleResetBoss("team-b")}
-                className="text-xs bg-red-900/50 hover:bg-red-900 border border-red-800 text-red-300 px-2 py-1 rounded"
-              >
-                Reset Boss
-              </button>
+              <div className="text-stone-400">HP: {bossB?.current_hp ?? "Not started"} | Status: {bossB?.status ?? "—"}</div>
             </div>
+          </div>
+          <div className="space-y-2">
+            {BOSSES.map((boss) => (
+              <div key={boss.id} className="flex items-center gap-2 text-xs">
+                <span className="text-stone-300 flex-1 font-mono">{boss.id} ({boss.maxHp} HP)</span>
+                <button
+                  onClick={() => handleResetBoss("team-a", boss.id, boss.maxHp)}
+                  className="bg-red-900/50 hover:bg-red-900 border border-red-800 text-red-300 px-2 py-1 rounded"
+                >A:reset</button>
+                <button
+                  onClick={() => handleResetBoss("team-b", boss.id, boss.maxHp)}
+                  className="bg-red-900/50 hover:bg-red-900 border border-red-800 text-red-300 px-2 py-1 rounded"
+                >B:reset</button>
+              </div>
+            ))}
           </div>
         </div>
 

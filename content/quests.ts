@@ -200,7 +200,7 @@ export const QUESTS: Quest[] = [
     isRequired: true,
     hints: [],
     rewardClueId: "shed-date-list",
-    rewardText: "The list is in the Case File. It seemed easy to explain in Act 1. It will not seem easy later.",
+    rewardText: "The list is in the Case File. It seemed easy to explain in Act 1. It will not seem easy later. And one more thing — someone wrote a small digit in the corner, next to tonight's date. That looks like a code fragment.",
     da: {
       title: "Datolisten",
       description: "På indervæggen i skuret, lamineret og fastgjort: en liste af datoer. Alle overstreget undtagen én.",
@@ -279,31 +279,31 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Key Box",
     description:
-      "Five digits. Open your Case File and find the five Code Fragments — one from each location. The order is the order you found them: Driveway first, then Terrace, Garden, Shed, and Mads last. Each fragment is a single digit. Read them in that order and enter the five-digit code.",
+      "Five digits. Open your Case File and find the five Code Fragments. The order is the order you found them: Driveway first, then Terrace, Garden, Shed, and the Date List last. Each fragment is a single digit. Read them in that order and enter the five-digit code.",
     prompt:
       "Ask one of your team members to open the Case File (🗂 top right on the map screen — you can't access it from inside a room). Find the five Code Fragment clues and read out each digit:\n\n" +
       "1. Code Fragment — Driveway\n" +
       "2. Code Fragment — Terrace\n" +
       "3. Code Fragment — Garden\n" +
       "4. Code Fragment — Shed\n" +
-      "5. Code Fragment — Mads\n\n" +
+      "5. Code Fragment — The Date List\n\n" +
       "Combine the five digits in that order. Enter the five-digit code below.",
     order: 1,
     isRequired: true,
     hints: [
       { order: 1, offerCost: 1, text: "The digit for each location is written in bold inside each Code Fragment clue in your Case File. Open 🗂, find all five 'Code Fragment' entries, read the bold number in each." },
-      { order: 2, offerCost: 2, text: "Driveway: 3. Terrace: 7. Garden: 1. Shed: 9. Mads: 4. Code: 37194." },
+      { order: 2, offerCost: 2, text: "Driveway: 3. Terrace: 7. Garden: 1. Shed: 9. Date list: 4. Code: 37194." },
     ],
     answer: {
       correct: ["37194", "3 7 1 9 4"],
       normalized: true,
     },
     rewardText: "Click. The key box opens. The door unlocks. Act 2 begins.",
-    failureText: "The key box rejects it. Open your Case File and double-check each Code Fragment — the order is Driveway → Terrace → Garden → Shed → Mads.",
+    failureText: "The key box rejects it. Open your Case File and double-check each Code Fragment — the order is Driveway → Terrace → Garden → Shed → Date List.",
     da: {
       title: "Nøgleboksen",
-      description: "Fem cifre. Åbn din sagsmappen og find de fem Kodefragmenter — ét fra hvert sted. Rækkefølgen er den du fandt dem: Indkørslen først, så Terrassen, Haven, Skuret og Mads sidst.",
-      prompt: "Bed et af jeres holdmedlemmer om at åbne sagsmappen (🗂 øverst til højre på kortskærmen — I kan ikke åbne den inde i et rum). Find de fem Kodefragment-ledetråde og læs hvert ciffer:\n\n1. Kodefragment — Indkørslen\n2. Kodefragment — Terrassen\n3. Kodefragment — Haven\n4. Kodefragment — Skuret\n5. Kodefragment — Mads\n\nKombiner de fem cifre i den rækkefølge. Indtast den femsifrede kode.",
+      description: "Fem cifre. Åbn din sagsmappen og find de fem Kodefragmenter. Rækkefølgen er den du fandt dem: Indkørslen først, så Terrassen, Haven, Skuret og Datolisten sidst.",
+      prompt: "Bed et af jeres holdmedlemmer om at åbne sagsmappen (🗂 øverst til højre på kortskærmen — I kan ikke åbne den inde i et rum). Find de fem Kodefragment-ledetråde og læs hvert ciffer:\n\n1. Kodefragment — Indkørslen\n2. Kodefragment — Terrassen\n3. Kodefragment — Haven\n4. Kodefragment — Skuret\n5. Kodefragment — Datolisten\n\nKombiner de fem cifre i den rækkefølge. Indtast den femsifrede kode.",
       rewardText: "Klik. Nøgleboksen åbner. Døren låses op. Akt 2 begynder.",
       failureText: "Nøgleboksen afviser det. Tjek rækkefølgen.",
     },

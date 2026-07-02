@@ -76,16 +76,31 @@ export const CLUES: Clue[] = [
   {
     id: "fragment-mads",
     chapterId: "act-1",
-    title: "Code Fragment — Mads",
+    title: "Code Fragment — The Date List",
     description:
-      "Mads pulls his phone out of his jacket — finally — and shows you his notes app. One item: **4**. \"That's it,\" he says. \"That's the last one.\"",
+      "Written small in the corner of the laminated date list on the shed wall, right next to tonight's uncrossed date: **4**. The last digit was in the shed all along.",
     icon: "🔢",
-    flavor: "He had it all along. Of course he did.",
+    flavor: "Mads swears he texted everyone about this. He did not.",
     isKeyClue: true,
     da: {
-      title: "Kodefragment — Mads",
-      description: "Mads trækker sin telefon op af jakken — endelig — og viser dig hans noter. Ét punkt: **4**. \"Det er det,\" siger han. \"Det er det sidste.\"",
-      flavor: "Han havde det hele tiden. Selvfølgelig havde han det.",
+      title: "Kodefragment — Datolisten",
+      description: "Skrevet småt i hjørnet af den laminerede datoliste på skurvæggen, lige ved siden af aftenens ikke-overstregede dato: **4**. Det sidste ciffer var i skuret hele tiden.",
+      flavor: "Mads sværger han skrev det til alle. Det gjorde han ikke.",
+    },
+  },
+  {
+    id: "mads-unloaded",
+    chapterId: "act-1",
+    title: "The Way Is Clear",
+    description:
+      "Mads is finally empty-handed — and no longer blocking the path to the front door. Nothing stands between you and the key box now.",
+    icon: "🙌",
+    flavor: "He grins like this was the plan all along.",
+    isKeyClue: true,
+    da: {
+      title: "Vejen Er Fri",
+      description: "Mads er endelig tomhændet — og blokerer ikke længere vejen til hoveddøren. Intet står mellem jer og nøgleboksen nu.",
+      flavor: "Han griner som om det var planen hele tiden.",
     },
   },
 

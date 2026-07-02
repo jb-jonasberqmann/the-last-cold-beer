@@ -124,7 +124,7 @@ export const ROOMS: Room[] = [
     unlockCost: 1,
     unlockRequires: ["garden"],
     questIds: ["shed-door-search", "shed-date-list-quest"],
-    rewardClueIds: ["fragment-shed", "shed-date-list"],
+    rewardClueIds: ["fragment-shed", "shed-date-list", "fragment-mads"],
     isOptional: false,
     order: 4,
     da: {
@@ -181,11 +181,11 @@ export const ROOMS: Room[] = [
       colorTo: "to-stone-950",
     },
     description:
-      "The front door, at last. The key box requires a five-digit code. Your team has collected all the fragments — from the driveway, the terrace, the garden, the shed, and finally from Mads. Combine them in the right order and enter.",
-    lockedDescription: "The front door. You need all five code fragments first.",
+      "The front door, at last. The key box requires a five-digit code. Your team has collected all the fragments — from the driveway, the terrace, the garden, and two from the shed. Combine them in the right order and enter.",
+    lockedDescription: "The front door. Help Mads unload first — he's blocking the way.",
     unlockCost: 0,
     unlockRequires: ["shed"],
-    unlockRequiresArtifacts: ["fragment-mads"],
+    unlockRequiresArtifacts: ["mads-unloaded"],
     questIds: ["front-door-keybox"],
     rewardClueIds: [],
     isOptional: false,
@@ -193,7 +193,7 @@ export const ROOMS: Room[] = [
     da: {
       title: "Hoveddøren",
       description: "Hoveddøren, endelig. Nøgleboksen kræver en femsifret kode. Jeres hold har samlet alle fragmenterne.",
-      lockedDescription: "Hoveddøren. I skal bruge alle fem kodefragmenter først.",
+      lockedDescription: "Hoveddøren. Hjælp Mads med at losse først — han blokerer vejen.",
       atmosphere: "Nøgleboksen er monteret til højre for døren. Fem cifre. Huset venter.",
     },
   },

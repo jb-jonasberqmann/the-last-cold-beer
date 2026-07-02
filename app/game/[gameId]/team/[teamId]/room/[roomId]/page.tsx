@@ -209,9 +209,21 @@ export default function RoomPage({ params }: Props) {
   const activeQuest = quests.find((q) => !isComplete(q.id));
   const offerDef = game.offer_definition;
 
-  // Scared silent: current player's status
+  // Scared silent: current player's status.
+  // Only block typing when another (non-host) teammate exists who CAN type —
+  // otherwise a solo player could never complete the living room.
   const myPlayer = players.find((p) => p.id === session?.playerId);
-  const isScaredSilent = myPlayer?.player_status === "scared_silent" && roomId === "living-room";
+  const hasSpeakingTeammate = players.some(
+    (p) =>
+      p.id !== session?.playerId &&
+      p.team_id === teamId &&
+      !p.is_host &&
+      p.player_status !== "scared_silent"
+  );
+  const isScaredSilent =
+    myPlayer?.player_status === "scared_silent" &&
+    roomId === "living-room" &&
+    hasSpeakingTeammate;
 
   // Clues for this room that team has found
   const roomClueCount = room.rewardClueIds.filter(
