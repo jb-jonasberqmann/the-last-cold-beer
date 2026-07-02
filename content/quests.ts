@@ -345,6 +345,7 @@ export const QUESTS: Quest[] = [
       "Read the note from the double room bedside table. What word appears twice and seems to carry the most weight?\n\n*\"We owed it to each other. We owed it to the house. I know we said we'd come back and finish what we—\"*",
     order: 2,
     isRequired: true,
+    isPrivate: true,
     hints: [
       { order: 1, offerCost: 1, text: "The word appears in the first two sentences." },
     ],
@@ -396,6 +397,7 @@ export const QUESTS: Quest[] = [
       "Read the note from the single room desk. The same word repeats — each time slightly bigger in scope. What fills the final blank?\n\n*\"This is not even my house. Borrowed it is. Not even my bed. Borrowed. This... life... ______?\"*",
     order: 2,
     isRequired: true,
+    isPrivate: true,
     hints: [
       { order: 1, offerCost: 1, text: "The word appears in almost every line." },
     ],
@@ -456,6 +458,7 @@ export const QUESTS: Quest[] = [
       "You're lying in the bottom bunk, looking up. One word fills the last blank — that word is yours to carry. But when you leave this room, you may NOT say it or write it. You must act it out for the rest of the team in silence.\n\n*\"It was taken. It is always ______.\"*",
     order: 2,
     isRequired: true,
+    isPrivate: true,
     hints: [],
     answer: {
       correct: ["taken", "taget"],
@@ -464,13 +467,13 @@ export const QUESTS: Quest[] = [
     rewardClueId: "word-taken",
     setsScaredSilent: true,
     rewardText:
-      "Taken. That word is yours — and something about this room has scared you silent. When you walk out, hand over what you found without saying a single word. Don't explain why. In the living room you cannot type — act your word out in silence until your team guesses. Keep this message to yourself.",
+      "The word is yours now — and something about this room has scared you silent. When you walk out, hand over what you found without saying a single word. Don't explain why. In the living room you cannot type — act your word out in silence until your team guesses. Keep this message to yourself.",
     failureText: "The same word that fills the first sentence fills the blank.",
     da: {
       title: "Undersiden af Madrassen",
       description: "Skrevet på undersiden af den øverste køje-madras. Kun synlig fra den nederste køje.",
       prompt: "Du ligger i den nederste køje og kigger op. Ét ord udfylder det sidste blanke felt — det ord er dit at bære. Men når du forlader dette rum, må du IKKE sige det eller skrive det. Du skal fremvise det for holdet i tavshed.\n\n*\"Det blev taget. Det bliver altid ______.\"*",
-      rewardText: "Taget. Det ord er dit — og noget ved dette rum har skræmt dig til tavshed. Når du går ud, afleverer du hvad du fandt uden at sige et eneste ord. Forklar ikke hvorfor. I stuen kan du ikke skrive — fremvis dit ord i tavshed indtil holdet gætter. Behold denne besked for dig selv.",
+      rewardText: "Ordet er dit nu — og noget ved dette rum har skræmt dig til tavshed. Når du går ud, afleverer du hvad du fandt uden at sige et eneste ord. Forklar ikke hvorfor. I stuen kan du ikke skrive — fremvis dit ord i tavshed indtil holdet gætter. Behold denne besked for dig selv.",
       failureText: "Det samme ord som i den første sætning udfylder det blanke felt.",
     },
   },
@@ -754,6 +757,57 @@ export const QUESTS: Quest[] = [
       title: "En Halvleg",
       description: "Spil en halvleg fodboldspil, 5 minutter, trods den bøjede stang.",
       prompt: "Spil en 5-minutters halvleg fodboldspil.",
+    },
+  },
+
+  // --- DINING ROOM (identify the boss) ---
+  {
+    id: "dining-room-static",
+    roomId: "dining-room",
+    type: "social_challenge",
+    title: "Louder in Here",
+    description:
+      "The static you've been hearing all evening is louder in this room. Much louder. It isn't coming from the walls. It's coming from something IN here.",
+    prompt:
+      "Everyone quiet. One player closes their eyes and points to where the sound is coming from. The group confirms the direction: high or low? Corner or center? Follow it.",
+    order: 1,
+    isRequired: true,
+    hints: [],
+    rewardText: "The shelf. It's coming from the shelf.",
+    da: {
+      title: "Højere Herinde",
+      description: "Statikken I har hørt hele aftenen er højere i dette rum. Meget højere. Den kommer ikke fra væggene. Den kommer fra noget HERINDE.",
+      prompt: "Alle stille. Én spiller lukker øjnene og peger mod hvor lyden kommer fra. Gruppen bekræfter retningen: højt eller lavt? Hjørne eller midte? Følg den.",
+      rewardText: "Hylden. Den kommer fra hylden.",
+    },
+  },
+  {
+    id: "dining-room-source",
+    roomId: "dining-room",
+    type: "puzzle",
+    title: "The Source",
+    description:
+      "On the shelf: candle stubs, a stack of board games, a carafe — and one thing that has no business making noise. Old. Brown. Bakelite. A green dial, glowing, though nothing in this house should be broadcasting tonight.",
+    prompt:
+      "Name the thing that has been talking to you all evening. What is broadcasting?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Green dial. Brown bakelite. Your grandparents had one on their kitchen counter." },
+    ],
+    answer: {
+      correct: ["radio", "the radio", "a radio", "the old radio", "bakelite radio", "radioen", "en radio", "den gamle radio"],
+      normalized: true,
+    },
+    rewardText:
+      "The radio. Of course it's the radio. It has been trying to say something all evening — through every wall of this house. And it will not stop until someone makes it speak clearly. Face it.",
+    failureText: "It's on the shelf. It hums. It glows green. Look closer.",
+    da: {
+      title: "Kilden",
+      description: "På hylden: stearinlysstumper, en stak brætspil, en karaffel — og én ting der ikke har noget at gøre med at lave lyd. Gammel. Brun. Bakelit. En grøn skive der gløder, selvom intet i dette hus burde sende i aften.",
+      prompt: "Navngiv tingen der har talt til jer hele aftenen. Hvad er det der sender?",
+      rewardText: "Radioen. Selvfølgelig er det radioen. Den har forsøgt at sige noget hele aftenen — gennem alle husets vægge. Og den stopper ikke før nogen får den til at tale klart. Mød den.",
+      failureText: "Den står på hylden. Den brummer. Den gløder grønt. Kig nærmere.",
     },
   },
 

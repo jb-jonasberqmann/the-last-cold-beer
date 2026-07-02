@@ -169,7 +169,30 @@ export const BOSSES: Boss[] = [
       backgroundStyle: "warm-dining-radio",
     },
     maxHp: 120,
-    requiredRoomIds: ["living-room", "kitchen-act2", "activity-room"],
+    requiredRoomIds: ["living-room", "kitchen-act2", "activity-room", "dining-room"],
+    counterAttacks: [
+      {
+        id: "defend",
+        label: "Static Surge",
+        description: "The static thickens into a wall of noise. Your next move only deals 75% damage.",
+        weight: 3,
+        effect: { type: "defend", defenseMultiplier: 0.75 },
+      },
+      {
+        id: "attack",
+        label: "Feedback Shriek",
+        description: "The speaker screams — a burst of feedback that makes everyone flinch. Team drinks 1 sip.",
+        weight: 3,
+        effect: { type: "attack", teamOfferDamage: 1 },
+      },
+      {
+        id: "heal",
+        label: "Signal Drop",
+        description: "The green light gutters. The signal collapses back into noise — everything you fixed slips. The radio regains 20% Signal Strength.",
+        weight: 1,
+        effect: { type: "heal", healPercent: 0.20, isOnce: true },
+      },
+    ],
     phases: [
       {
         phase: 1,
@@ -187,6 +210,23 @@ export const BOSSES: Boss[] = [
             rewardText:
               "The antenna finds a position. The static thins slightly. Signal strength climbing. 25 HP restored.",
             failureText: "The static is unchanged. Try a different angle.",
+          },
+          {
+            id: "radio-panel",
+            label: "Open the back panel",
+            description:
+              "The back panel is held on by four tiny screws. Nobody's fingernails will do it. Somewhere in this house there is exactly one tool for this.",
+            type: "puzzle",
+            damage: 20,
+            puzzle: {
+              prompt:
+                "The kitchen junk drawer rattles with odds and ends: rubber bands, birthday candles, a corkscrew, batteries — and the one thing that turns four tiny screws. What do you fetch?",
+              answer: ["screwdriver", "a screwdriver", "the screwdriver", "skruetrækker", "en skruetrækker", "skruetrækkeren"],
+            },
+            hint: "Flat head. Lives in every junk drawer in the country.",
+            rewardText:
+              "The screwdriver. Four screws out, panel off. The radio's insides glow faintly — now you can actually work on it. 20 HP restored.",
+            failureText: "Fingernails won't do it. Fetch the right tool.",
           },
           {
             id: "radio-fuse",
@@ -257,6 +297,17 @@ export const BOSSES: Boss[] = [
               "The wire clicks in. The green light holds steady. The radio is ready to speak.",
           },
           {
+            id: "radio-needle",
+            label: "Free the stuck needle",
+            description:
+              "The dial glass is cracked, and the tuner needle catches on the crack — it can't reach the frequency it wants. Tilt the radio. Tap the glass. Gently. Let the needle swing free.",
+            type: "social",
+            damage: 35,
+            rewardText:
+              "One careful tap. The needle jumps the crack and swings true. The dial hums under your fingers. 35 HP restored.",
+            failureText: "Too hard and the glass gives way. Gently.",
+          },
+          {
             id: "radio-full-volume",
             label: "Turn the volume to full",
             description:
@@ -299,6 +350,7 @@ export const BOSSES: Boss[] = [
           phase: 1, title: "Statisk", description: "Signalet er næppe der. Start med at gendanne.",
           actions: [
             { id: "radio-antenna", label: "Juster antennen", rewardText: "Antennen finder en position. Signalstyrken stiger. 25 HP genoprettet.", failureText: "Statikken er uændret." },
+            { id: "radio-panel", label: "Åbn bagpanelet", puzzlePrompt: "Køkkenets rodeskuffe rasler med løsdele: elastikker, fødselsdagslys, en proptrækker, batterier — og den ene ting der kan dreje fire bittesmå skruer. Hvad henter du?", hint: "Fladt hoved. Bor i enhver rodeskuffe i landet.", rewardText: "Skruetrækkeren. Fire skruer ude, panelet af. Radioens indre gløder svagt. 20 HP genoprettet.", failureText: "Negle duer ikke. Hent det rigtige værktøj." },
             { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Erstatningssikringen er klistret til indersiden af paneldøren. En seddel ved siden af den: \"Ikke første gang. Vil ikke være den sidste. Match vurderingen præcis.\" Hvad gør du?", hint: "Begge sikringer matcher. Svaret er indlysende.", rewardText: "Sikringen er udskiftet. Den grønne skive lyser op. 30 HP genoprettet.", failureText: "Panelet lukker. Statikken fortsætter." },
             { id: "radio-frequency", label: "Stem frekvensen", rewardText: "Skiven låser. Det grønne lys blusser. 35 HP genoprettet.", failureText: "Du har brug for alle tre radiofragmenter først." },
             { id: "radio-offer-boost", label: "Hæld en ud til radioen", rewardText: "Statikken dæmpes. 20 HP genoprettet." },
@@ -309,6 +361,7 @@ export const BOSSES: Boss[] = [
           actions: [
             { id: "radio-speaker", label: "Rens højttalergitteret", rewardText: "Gitteret er rent. Radioen er klar.", failureText: "Gitteret modstår." },
             { id: "radio-wire", label: "Genopret det løse kabel", rewardText: "Kablet klikker på plads. Det grønne lys holder stabil." },
+            { id: "radio-needle", label: "Befri den fastlåste nål", rewardText: "Ét forsigtigt slag. Nålen springer over revnen og svinger frit. 35 HP genoprettet.", failureText: "For hårdt og glasset giver efter. Forsigtigt." },
             { id: "radio-full-volume", label: "Skru helt op for lyden", rewardText: "Knappen drejer. Statikken skræller af. Det grønne lys brænder klarere end det burde. Radioen trækker hver watt i huset — udsendelsen kommer.", failureText: "Knappen gør modstand. Drej hårdere." },
             { id: "radio-final-offer", label: "Stoffer til Signalet", rewardText: "Signalet låser. Udsendelsen begynder." },
           ],

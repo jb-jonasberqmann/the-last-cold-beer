@@ -622,7 +622,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
                     opacity={0.95}
                   >
-                    {(boss?.title ?? "BOSS").toUpperCase()}
+                    {(bossUnlockable ? boss?.title ?? "BOSS" : "???").toUpperCase()}
                   </text>
                 </g>
               );
@@ -903,10 +903,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   <span className="text-xl">{bossUnlockable ? "⚔️" : "🔒"}</span>
                   <div>
                     <div className="text-sm font-bold" style={{ color: bossUnlockable ? "rgb(252,165,165)" : "rgba(120,80,40,0.6)", fontFamily: "Georgia,serif" }}>
-                      {boss?.title ?? chapter.bossId}
+                      {bossUnlockable ? boss?.title ?? chapter.bossId : "???"}
                     </div>
                     <div className="text-xs" style={{ color: bossUnlockable ? "rgba(220,100,100,0.6)" : "rgba(100,60,20,0.4)", fontFamily: "Georgia,serif" }}>
-                      {bossUnlockable ? "Ready for battle" : `${completedCount}/${totalRooms} rooms to unlock`}
+                      {bossUnlockable ? "Ready for battle" : "Something is waiting. Keep exploring."}
                     </div>
                   </div>
                 </a>

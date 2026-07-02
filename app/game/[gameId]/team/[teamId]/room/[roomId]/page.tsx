@@ -1293,6 +1293,46 @@ interface ArtifactProps {
   offerDefinition: string;
 }
 
+// ─── Hold-to-reveal wrapper (private notes) ──────────────────
+// The text only shows while the finger/mouse is held down — makes
+// shoulder-surfing the bedroom notes much harder.
+function HoldToReveal({ children }: { children: React.ReactNode }) {
+  const [held, setHeld] = useState(false);
+  return (
+    <div
+      onMouseDown={() => setHeld(true)}
+      onMouseUp={() => setHeld(false)}
+      onMouseLeave={() => setHeld(false)}
+      onTouchStart={() => setHeld(true)}
+      onTouchEnd={() => setHeld(false)}
+      onTouchCancel={() => setHeld(false)}
+      onContextMenu={(e) => e.preventDefault()}
+      className="select-none"
+      style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none", cursor: "pointer" } as React.CSSProperties}
+    >
+      {held ? (
+        children
+      ) : (
+        <div
+          className="rounded px-3 py-5 text-center"
+          style={{
+            background: "rgba(255,240,180,0.03)",
+            border: "1px dashed rgba(180,130,50,0.4)",
+          }}
+        >
+          <div className="text-xl mb-1.5">🤫</div>
+          <p className="text-sm italic" style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.85)" }}>
+            Hold to read. Release to hide.
+          </p>
+          <p className="text-[11px] mt-1" style={{ fontFamily: "Georgia,serif", color: "rgba(140,100,40,0.6)" }}>
+            What this room shows you is for your eyes only.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Puzzle card ────────────────────────────────────────────
 function StickyNoteArtifact({
   quest, isComplete, feedback, shownHints, answer, loading, isReadOnly,
@@ -1340,22 +1380,52 @@ function StickyNoteArtifact({
         {quest.description}
       </p>
 
+      {!isComplete && quest.isPrivate && (
+        <p className="text-[11px] mb-2 flex items-center gap-1.5"
+          style={{ fontFamily: "Georgia,serif", color: "rgba(200,140,60,0.75)" }}>
+          <span>🤫</span>
+          <span className="italic">For your eyes only — make sure no one can see your screen.</span>
+        </p>
+      )}
+
       {!isComplete && (
-        <div
-          className="rounded px-3 py-3 mb-3"
-          style={{
-            background: "rgba(255,240,180,0.03)",
-            border: "1px solid rgba(180,130,50,0.22)",
-            borderLeft: "2px solid rgba(180,130,50,0.4)",
-          }}
-        >
-          <p
-            className="text-sm italic leading-relaxed"
-            style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}
+        quest.isPrivate ? (
+          <div className="mb-3">
+            <HoldToReveal>
+              <div
+                className="rounded px-3 py-3"
+                style={{
+                  background: "rgba(255,240,180,0.03)",
+                  border: "1px solid rgba(180,130,50,0.22)",
+                  borderLeft: "2px solid rgba(180,130,50,0.4)",
+                }}
+              >
+                <p
+                  className="text-sm italic leading-relaxed"
+                  style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}
+                >
+                  {quest.prompt}
+                </p>
+              </div>
+            </HoldToReveal>
+          </div>
+        ) : (
+          <div
+            className="rounded px-3 py-3 mb-3"
+            style={{
+              background: "rgba(255,240,180,0.03)",
+              border: "1px solid rgba(180,130,50,0.22)",
+              borderLeft: "2px solid rgba(180,130,50,0.4)",
+            }}
           >
-            {quest.prompt}
-          </p>
-        </div>
+            <p
+              className="text-sm italic leading-relaxed"
+              style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}
+            >
+              {quest.prompt}
+            </p>
+          </div>
+        )
       )}
 
       {feedback && (

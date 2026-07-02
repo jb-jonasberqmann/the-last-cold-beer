@@ -222,11 +222,13 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
       (rid) => !roomProgress.some((rp) => rp.room_id === rid && rp.status === "complete")
     );
     return (
-      <GameLayout gameId={gameId} teamId={teamId} backHref={`/game/${gameId}/team/${teamId}`} backLabel="Quest Board" title={boss.title}>
+      <GameLayout gameId={gameId} teamId={teamId} backHref={`/game/${gameId}/team/${teamId}`} backLabel="Quest Board" title="???">
         <div className="rounded-xl bg-stone-950 border border-red-900/50 p-6 text-center mt-6" style={{ fontFamily: "Georgia, serif" }}>
           <div className="text-4xl mb-3">🔒</div>
           <h2 className="text-xl font-bold text-red-300 mb-2">Not Yet</h2>
-          <p className="text-sm text-stone-400 mb-4">Complete the required rooms first to challenge this boss.</p>
+          <p className="text-sm text-stone-400 mb-4">
+            Something in the house is waiting for you. You don&apos;t know what it is yet — complete the required rooms to find out.
+          </p>
           <div className="text-xs text-amber-800">Missing: {missing.join(", ")}</div>
         </div>
       </GameLayout>
