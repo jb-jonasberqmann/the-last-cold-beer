@@ -15,20 +15,21 @@ export const QUESTS: Quest[] = [
   {
     id: "driveway-arrival",
     roomId: "driveway",
-    type: "social_challenge",
-    title: "Arrival Protocol",
+    type: "photo",
+    title: "The Ritual Record",
     description:
-      "Everyone's here. Someone has to call it. Name the three things that feel different about this summerhouse versus last year.",
+      "The house keeps a record of everyone who visits. Tonight is no different. Before anything else, your arrival must be documented.",
     prompt:
-      "One player lists three things that feel different about this year's trip versus previous trips. The group votes on whether they count. All three must be accepted.",
+      "One of you holds the camera. Gather the rest of your team in front of the house and take ONE photo of them — everyone, together, all in frame. The house will not accept anything less.",
     order: 1,
     isRequired: true,
     hints: [],
-    rewardText: "Arrival registered. The house takes note of who notices things.",
+    rewardText: "The record is taken. The house is satisfied — for now. Arrival registered.",
     da: {
-      title: "Ankomst-protokol",
-      description: "Alle er her. Nogen skal nævne det. Navngiv de tre ting der føles anderledes ved dette sommerhus versus sidste år.",
-      prompt: "Én spiller nævner tre ting der føles anderledes ved dette år versus tidligere ture. Gruppen stemmer.",
+      title: "Ritualets Optegnelse",
+      description: "Huset fører optegnelser over alle der besøger det. I aften er ingen undtagelse. Inden noget andet skal jeres ankomst dokumenteres.",
+      prompt: "Én af jer holder kameraet. Saml resten af holdet foran huset og tag ÉT billede af dem — alle sammen, i samme billede. Huset accepterer ikke mindre.",
+      rewardText: "Optegnelsen er taget. Huset er tilfreds — indtil videre. Ankomst registreret.",
     },
   },
   {

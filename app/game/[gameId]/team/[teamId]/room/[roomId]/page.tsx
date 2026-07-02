@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, enterBedroom, setScaredSilent, advanceAct } from "@/lib/game/actions";
+import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, enterBedroom, setScaredSilent, advanceAct, saveRitualPhoto } from "@/lib/game/actions";
+import { fileToJpegDataUrl } from "@/lib/photoCapture";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { usePlayer } from "@/hooks/usePlayer";
 import { Button } from "@/components/ui/Button";
@@ -980,6 +981,19 @@ function QuestBlock({
     );
   }
 
+  if (quest.type === "photo") {
+    return (
+      <PhotoQuestBlock
+        quest={quest}
+        isComplete={isComplete}
+        isReadOnly={isReadOnly}
+        gameId={gameId}
+        teamId={teamId}
+        onDone={onComplete}
+      />
+    );
+  }
+
   return (
     <div
       className="rounded-xl border p-4 space-y-2"
@@ -989,6 +1003,160 @@ function QuestBlock({
         {quest.title}
       </h3>
       <p className="text-sm text-stone-300 leading-relaxed">{quest.description}</p>
+    </div>
+  );
+}
+
+// ─── Photo quest (the Ritual Record) ─────────────────────────
+// Whoever takes the photo becomes the team's witness — and, unknown to
+// everyone, the team's culprit. The UI must never hint at this.
+function PhotoQuestBlock({
+  quest, isComplete, isReadOnly, gameId, teamId, onDone,
+}: {
+  quest: Quest;
+  isComplete: boolean;
+  isReadOnly: boolean;
+  gameId: string;
+  teamId: TeamId;
+  onDone: (clueId?: string) => void;
+}) {
+  const { session } = usePlayer();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const finishQuest = async () => {
+    const result = await completeQuest(gameId, teamId, quest.id);
+    if (result.success) {
+      setFeedback({ type: "success", text: result.data.rewardText ?? "The record is taken." });
+      onDone(result.data.clueId);
+    }
+  };
+
+  const handleFile = async (file: File) => {
+    if (!session?.playerId) return;
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const dataUrl = await fileToJpegDataUrl(file);
+      const saveRes = await saveRitualPhoto(gameId, teamId, session.playerId, dataUrl);
+      if (!saveRes.success) {
+        setFeedback({ type: "error", text: saveRes.error ?? "The photo failed — try again." });
+        return;
+      }
+      await finishQuest();
+    } catch {
+      setFeedback({ type: "error", text: "The photo failed — try again." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      await finishQuest();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={cn("transition-all duration-300", isComplete && "opacity-55")}>
+      <div className="flex items-center gap-1.5 mb-2">
+        {isComplete && <span style={{ color: "rgba(140,100,40,0.8)", fontSize: "11px" }}>✓</span>}
+        <span
+          className="text-[10px] uppercase tracking-[0.24em]"
+          style={{ fontFamily: "Georgia,serif", color: isComplete ? "rgba(120,80,20,0.55)" : "rgba(160,110,40,0.6)" }}
+        >
+          {isComplete ? "✓ Done" : quest.isRequired ? "Required" : "Bonus"}
+        </span>
+      </div>
+
+      <h3
+        className="font-bold mb-2 leading-tight"
+        style={{
+          fontFamily: "Georgia,serif",
+          fontSize: "1.15rem",
+          color: isComplete ? "rgba(160,120,50,0.65)" : "rgba(245,235,205,0.97)",
+        }}
+      >
+        📷 {quest.title}
+      </h3>
+
+      <p
+        className="text-sm mb-3 leading-relaxed"
+        style={{ fontFamily: "Georgia,serif", color: isComplete ? "rgba(140,100,50,0.55)" : "rgba(205,185,145,0.85)" }}
+      >
+        {quest.description}
+      </p>
+
+      {!isComplete && (
+        <div
+          className="rounded px-3 py-3 mb-3"
+          style={{
+            background: "rgba(255,240,180,0.03)",
+            border: "1px solid rgba(180,130,50,0.22)",
+            borderLeft: "2px solid rgba(180,130,50,0.4)",
+          }}
+        >
+          <p className="text-sm italic leading-relaxed" style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}>
+            {quest.prompt}
+          </p>
+        </div>
+      )}
+
+      {feedback && (
+        <div
+          className={cn(
+            "rounded px-3 py-2 text-sm mb-3",
+            feedback.type === "success"
+              ? "bg-green-950/40 border border-green-800/40 text-green-300"
+              : "bg-red-950/30 border border-red-900/40 text-red-300"
+          )}
+          style={{ fontFamily: "Georgia,serif" }}
+        >
+          {feedback.text}
+        </div>
+      )}
+
+      {!isComplete && !isReadOnly && (
+        <div className="space-y-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl font-bold text-sm active:scale-95 transition-transform disabled:opacity-50"
+            style={{
+              background: "rgba(120,80,10,0.65)",
+              border: "1px solid rgba(180,130,50,0.5)",
+              color: "rgba(251,191,36,0.97)",
+              fontFamily: "Georgia,serif",
+            }}
+          >
+            {loading ? "Recording…" : "📷 Take the photo"}
+          </button>
+          <button
+            onClick={handleSkip}
+            disabled={loading}
+            className="w-full py-2 text-xs disabled:opacity-50"
+            style={{ color: "rgba(140,100,40,0.55)", fontFamily: "Georgia,serif" }}
+          >
+            The camera won&apos;t cooperate — continue without the record
+          </button>
+        </div>
+      )}
     </div>
   );
 }

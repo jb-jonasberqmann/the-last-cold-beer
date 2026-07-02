@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { unlockRoom, getTeamPhoto, saveRitualPhoto } from "@/lib/game/actions";
+import { unlockRoom } from "@/lib/game/actions";
 import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue } from "@/types/database";
 import type { TeamId, Clue } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
@@ -88,7 +88,9 @@ const ACT_GEO: Record<string, ActGeo> = {
     titleCY: 36,
     nodes: [
       { id: "dining-room",    cx: 170, cy: 152, sz: 14 },
+      { id: "darts-board",    cx: 252, cy: 165, sz: 10, isOptional: true },
       { id: "activity-room",  cx: 230, cy: 228, sz: 12 },
+      { id: "foosball-table", cx: 254, cy: 292, sz: 10, isOptional: true },
       { id: "kitchen-act2",   cx: 170, cy: 228, sz: 13 },
       { id: "sunroom",        cx: 100, cy: 228, sz: 11, isOptional: true },
       { id: "living-room",    cx: 170, cy: 318, sz: 14 },
@@ -103,6 +105,8 @@ const ACT_GEO: Record<string, ActGeo> = {
       ["living-room",   "sunroom"],
       ["living-room",   "kitchen-act2"],
       ["kitchen-act2",  "activity-room"],
+      ["activity-room", "darts-board"],
+      ["activity-room", "foosball-table"],
       ["kitchen-act2",  "dining-room"],
       ["dining-room",   "boss"],
     ],
@@ -178,13 +182,6 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
   const [forcedClueModal, setForcedClueModal] = useState<Clue[]>([]);
 
-  // ── Ritual Record (team photo — secretly the culprit mechanic) ────────────
-  const [ritualWitnessId, setRitualWitnessId] = useState<string | null>(null);
-  const [ritualHasPhoto, setRitualHasPhoto] = useState(true); // assume done until we know otherwise
-  const [ritualDismissed, setRitualDismissed] = useState(false);
-  const [ritualUploading, setRitualUploading] = useState(false);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-
   // ── Map scroll refs ───────────────────────────────────────────────────────
   const mapScrollRef = useRef<HTMLDivElement>(null);
   const scrollSetupActRef = useRef<string | null>(null);  // which act we've already set up scroll for
@@ -201,7 +198,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
     setRoomProgress(rp);
 
     const dbClues: DbTeamClue[] = data.clues ?? [];
-    const resolved = dbClues.map((c) => getClue(c.clue_id)).filter((c): c is Clue => !!c);
+    // Newest clues first — the drawer shows them in this order
+    const resolved = [...dbClues]
+      .sort((a, b) => new Date(b.discovered_at).getTime() - new Date(a.discovered_at).getTime())
+      .map((c) => getClue(c.clue_id))
+      .filter((c): c is Clue => !!c);
     setTeamClues(resolved);
 
     // ── Detect new clues after returning from a room ──────────────────────────
@@ -279,57 +280,6 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // ── Ritual Record: check witness + photo state once on mount ──────────────
-  useEffect(() => {
-    if (!gameId || !teamId) return;
-    getTeamPhoto(gameId, teamId).then((res) => {
-      if (res.success) {
-        setRitualWitnessId(res.data.witnessPlayerId);
-        setRitualHasPhoto(res.data.hasPhoto);
-      }
-    });
-  }, [gameId, teamId]);
-
-  // Downscale + save the ritual photo
-  const handleRitualPhotoFile = async (file: File) => {
-    if (!session?.playerId) return;
-    setRitualUploading(true);
-    try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-          const maxW = 1280;
-          const scale = Math.min(1, maxW / img.width);
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          const ctx = canvas.getContext("2d");
-          if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas unavailable")); return; }
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
-          let out = canvas.toDataURL("image/jpeg", 0.72);
-          if (out.length > 850_000) out = canvas.toDataURL("image/jpeg", 0.5);
-          resolve(out);
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read image")); };
-        img.src = url;
-      });
-      const res = await saveRitualPhoto(gameId!, teamId!, session.playerId, dataUrl);
-      if (res.success) {
-        setRitualHasPhoto(true);
-        setMessage("The record is taken. The house is satisfied.");
-      } else {
-        setMessage(res.error ?? "The photo failed — try again.");
-      }
-    } catch {
-      setMessage("The photo failed — try again.");
-    } finally {
-      setRitualUploading(false);
-      setTimeout(() => setMessage(null), 3500);
-    }
-  };
-
   // ── Scroll setup — runs once per act ──────────────────────────────────────
   useEffect(() => {
     if (!game || !gameId || !teamId || !teamChapterId) return;
@@ -399,6 +349,12 @@ export default function TeamQuestBoardPage({ params }: Props) {
     if (!canInteract) return;
     const status = getRoomStatus(roomId);
     if (["complete", "active", "unlocked", "occupied"].includes(status)) {
+      // Boss rooms (e.g. the dining room in Act 2) lead straight to the fight
+      const clickedRoom = getRoom(roomId);
+      if (clickedRoom?.type === "boss_room" && chapter) {
+        router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`);
+        return;
+      }
       // Snapshot current clue IDs so we can detect new ones when player returns
       if (typeof window !== "undefined" && gameId && teamId) {
         sessionStorage.setItem(
@@ -444,7 +400,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const totalSipsDrunk = offerSpent * sipsPerOffer;
 
   const roomIds = chapter?.roomIds ?? [];
-  const mainRooms = roomIds.map((id) => getRoom(id)).filter(Boolean);
+  // Boss rooms (dining room, living room in Act 3) have no quests and are
+  // "completed" by defeating the boss — exclude them from the room counter.
+  const mainRooms = roomIds.map((id) => getRoom(id)).filter((r) => !!r && r.type !== "boss_room");
   const completedCount = mainRooms.filter((r) => getRoomStatus(r!.id) === "complete").length;
   const totalRooms = mainRooms.length;
   // Opponent progress compared within THIS team's act only (acts can diverge)
@@ -775,63 +733,29 @@ export default function TeamQuestBoardPage({ params }: Props) {
       >
         {/* Team name + act label — pointer-events-none on parent, re-enable on children */}
         <div className="flex-1 min-w-0 pointer-events-auto">
-          <div className="text-[9px] uppercase tracking-[0.3em] mb-0.5" style={{ color: theme.accent, fontFamily: "Georgia,serif", opacity: 0.6 }}>
+          <div className="text-[10px] uppercase tracking-[0.3em] mb-0.5" style={{ color: theme.accent, fontFamily: "Georgia,serif", opacity: 0.65 }}>
             {theme.emoji} {theme.label}
           </div>
-          <div className="font-bold text-lg leading-tight truncate" style={{ color: "rgba(245,225,170,0.97)", fontFamily: "Georgia,serif" }}>
+          <div className="font-bold text-xl leading-tight truncate" style={{ color: "rgba(245,225,170,0.97)", fontFamily: "Georgia,serif" }}>
             {teamName}
           </div>
         </div>
 
         {/* VS progress pill */}
-        <div className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] pointer-events-auto"
+        <div className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm pointer-events-auto"
           style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(180,130,50,0.22)", fontFamily: "Georgia,serif" }}>
-          <span style={{ color: bossUnlockable ? "rgb(248,113,113)" : theme.accent }}>
+          <span className="font-bold" style={{ color: bossUnlockable ? "rgb(248,113,113)" : theme.accent }}>
             {completedCount}/{totalRooms}
           </span>
           <span style={{ color: "rgba(120,80,30,0.5)", margin: "0 2px" }}>vs</span>
           <span style={{ color: "rgba(180,160,100,0.55)" }}>{otherRoomsCompleted ?? "·"}/{totalRooms}</span>
         </div>
 
-        {/* Sips counter */}
-        {totalSipsDrunk > 0 && (
-          <div className="flex items-center gap-1 h-8 px-2.5 rounded-full pointer-events-auto"
-            style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(180,130,50,0.18)", fontFamily: "Georgia,serif" }}>
-            <span style={{ fontSize: "12px" }}>🍺</span>
-            <span className="text-[11px] font-bold" style={{ color: "rgba(180,130,50,0.75)" }}>{totalSipsDrunk}</span>
-          </div>
-        )}
-
-        {/* Case File */}
-        <button
-          onClick={() => { setShowCaseFile(true); seenClueCountRef.current = teamClues.length; setNewClueCount(0); }}
-          className={`flex items-center gap-1.5 h-8 px-2.5 rounded-full active:scale-95 transition-transform relative pointer-events-auto ${newClueCount > 0 ? "animate-pulse-glow" : ""}`}
-          style={{
-            background: newClueCount > 0 ? "rgba(120,80,10,0.7)" : "rgba(0,0,0,0.55)",
-            border: `1px solid ${newClueCount > 0 ? "rgba(251,191,36,0.55)" : "rgba(180,130,50,0.2)"}`,
-            color: teamClues.length > 0 ? "rgba(251,191,36,0.9)" : "rgba(120,90,30,0.4)",
-            fontSize: "13px",
-          }}
-        >
-          🗂
-          {teamClues.length > 0 && (
-            <span className="text-[10px] font-bold" style={{ color: newClueCount > 0 ? "rgba(255,220,80,0.95)" : "rgba(251,191,36,0.75)", fontFamily: "Georgia,serif" }}>
-              {teamClues.length}
-            </span>
-          )}
-          {newClueCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black"
-              style={{ background: "rgb(251,191,36)", color: "#1a0e00" }}>
-              {newClueCount}
-            </span>
-          )}
-        </button>
-
         {/* Settings */}
         <button
           onClick={() => setShowPanel(true)}
-          className="w-8 h-8 flex items-center justify-center rounded-full active:scale-95 transition-transform pointer-events-auto"
-          style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(180,130,50,0.2)", color: "rgba(180,130,50,0.7)", fontSize: "14px" }}
+          className="w-11 h-11 flex items-center justify-center rounded-full active:scale-95 transition-transform pointer-events-auto"
+          style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(180,130,50,0.2)", color: "rgba(180,130,50,0.8)", fontSize: "18px" }}
         >
           ⚙
         </button>
@@ -846,57 +770,42 @@ export default function TeamQuestBoardPage({ params }: Props) {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          BOSS STRIP — fixed bottom
+          BOTTOM HUD — Case File (large, pulses on new clues) + sips counter.
+          Boss access lives on the map (boss node) and in the control panel.
       ══════════════════════════════════════════════════════════════════════ */}
-      {chapter && (
-        <div className="fixed bottom-0 left-0 right-0 z-20"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", background: "linear-gradient(180deg, transparent 0%, rgba(6,2,2,0.98) 38%)" }}>
-          <div className="px-4 pt-3 pb-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
-                style={{
-                  background: "radial-gradient(circle, #3f0808 0%, #1a0303 100%)",
-                  border: `1px solid rgba(180,40,40,${bossUnlockable ? 0.65 : 0.3})`,
-                  boxShadow: bossUnlockable ? "0 0 14px rgba(180,40,40,0.35)" : "none",
-                }}>
-                {bossUnlockable ? "☠️" : "🔒"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold truncate" style={{ color: "rgb(254,202,202)", fontFamily: "Georgia,serif" }}>
-                  {(boss?.title ?? chapter.bossId).toUpperCase()}
-                </div>
-                <div className="mt-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(40,10,10,0.9)", border: "1px solid rgba(100,30,30,0.3)" }}>
-                  <div className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${(completedCount / Math.max(totalRooms, 1)) * 100}%`, background: bossUnlockable ? "linear-gradient(90deg, #dc2626, #ef4444)" : "linear-gradient(90deg, #7f1d1d, #b91c1c)" }} />
-                </div>
-                <div className="text-[10px] mt-0.5" style={{ color: "rgba(180,80,80,0.6)", fontFamily: "Georgia,serif" }}>
-                  {completedCount}/{totalRooms} rooms cleared
-                </div>
-              </div>
-              {canInteract && (
-                <a href={`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`}
-                  className="flex-shrink-0 px-4 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-95"
-                  style={bossUnlockable ? {
-                    background: "linear-gradient(160deg, #7f1d1d, #450a0a)",
-                    border: "1px solid rgba(220,50,50,0.5)",
-                    color: "rgb(254,202,202)",
-                    boxShadow: "0 2px 10px rgba(185,28,28,0.3)",
-                    fontFamily: "Georgia,serif",
-                  } : {
-                    background: "rgba(30,10,10,0.6)",
-                    border: "1px solid rgba(100,30,30,0.25)",
-                    color: "rgba(180,80,80,0.32)",
-                    cursor: "not-allowed",
-                    fontFamily: "Georgia,serif",
-                  }}
-                  onClick={!bossUnlockable ? (e) => e.preventDefault() : undefined}>
-                  {bossUnlockable ? "⚔️ Fight" : "🔒"}
-                </a>
-              )}
-            </div>
+      <div className="fixed bottom-0 left-0 right-0 z-20"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", background: "linear-gradient(180deg, transparent 0%, rgba(6,4,2,0.97) 45%)" }}>
+        <div className="px-4 pt-5 pb-4 flex items-center gap-3">
+          {/* Case File — primary bottom action */}
+          <button
+            onClick={() => { setShowCaseFile(true); seenClueCountRef.current = teamClues.length; setNewClueCount(0); }}
+            className={`flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 active:scale-[0.97] transition-transform relative ${newClueCount > 0 ? "animate-pulse-glow" : ""}`}
+            style={{
+              background: newClueCount > 0 ? "rgba(120,80,10,0.8)" : "rgba(12,8,3,0.9)",
+              border: `1.5px solid ${newClueCount > 0 ? "rgba(251,191,36,0.65)" : "rgba(180,130,50,0.3)"}`,
+              boxShadow: newClueCount > 0 ? "0 0 18px rgba(251,191,36,0.3)" : "0 2px 12px rgba(0,0,0,0.5)",
+            }}
+          >
+            <span style={{ fontSize: "22px" }}>🗂</span>
+            <span className="text-base font-bold" style={{ color: teamClues.length > 0 ? "rgba(251,191,36,0.95)" : "rgba(150,110,45,0.6)", fontFamily: "Georgia,serif" }}>
+              Case File{teamClues.length > 0 ? ` · ${teamClues.length}` : ""}
+            </span>
+            {newClueCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full flex items-center justify-center text-[11px] font-black"
+                style={{ background: "rgb(251,191,36)", color: "#1a0e00", boxShadow: "0 0 10px rgba(251,191,36,0.7)" }}>
+                {newClueCount}
+              </span>
+            )}
+          </button>
+
+          {/* Sips counter — large */}
+          <div className="h-14 px-5 rounded-2xl flex items-center gap-2"
+            style={{ background: "rgba(12,8,3,0.9)", border: "1.5px solid rgba(180,130,50,0.25)", fontFamily: "Georgia,serif" }}>
+            <span style={{ fontSize: "22px" }}>🍺</span>
+            <span className="text-lg font-bold" style={{ color: "rgba(220,165,70,0.9)" }}>{totalSipsDrunk}</span>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── Physical challenge banners ── */}
       {Object.entries(activeChallenges).map(([questId, startedAt]) => (
@@ -1031,10 +940,14 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {teamClues.map((clue) => (
+                    {teamClues.map((clue) => {
+                      // Clues from earlier acts are "spent" — dim them to 50%
+                      const actNum = (id?: string) => (id ? parseInt(id.replace("act-", ""), 10) || 0 : 0);
+                      const isSpent = actNum(clue.chapterId) < actNum(teamChapterId ?? undefined);
+                      return (
                       <button key={clue.id} onClick={() => setSelectedClue(clue)}
                         className="w-full text-left rounded-xl px-3 py-3 active:scale-[0.98] transition-transform"
-                        style={{ background: clue.isArtifact ? "rgba(30,20,60,0.4)" : clue.isKeyClue ? "rgba(80,55,10,0.3)" : "rgba(255,255,255,0.04)", border: `1px solid ${clue.isArtifact ? "rgba(160,120,255,0.3)" : clue.isKeyClue ? "rgba(220,160,40,0.35)" : "rgba(180,130,50,0.12)"}` }}>
+                        style={{ opacity: isSpent ? 0.5 : 1, background: clue.isArtifact ? "rgba(30,20,60,0.4)" : clue.isKeyClue ? "rgba(80,55,10,0.3)" : "rgba(255,255,255,0.04)", border: `1px solid ${clue.isArtifact ? "rgba(160,120,255,0.3)" : clue.isKeyClue ? "rgba(220,160,40,0.35)" : "rgba(180,130,50,0.12)"}` }}>
                         <div className="flex items-center gap-3">
                           <span className="text-xl flex-shrink-0">{clue.icon}</span>
                           <div className="flex-1 min-w-0">
@@ -1042,84 +955,20 @@ export default function TeamQuestBoardPage({ params }: Props) {
                               <span className="text-sm font-bold truncate" style={{ color: "rgba(245,225,170,0.92)", fontFamily: "Georgia,serif" }}>{clue.title}</span>
                               {clue.isArtifact && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(160,120,255,0.6)", fontFamily: "Georgia,serif" }}>Artifact</span>}
                               {clue.isKeyClue && !clue.isArtifact && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(251,191,36,0.6)", fontFamily: "Georgia,serif" }}>Key</span>}
+                              {isSpent && <span className="text-[9px] uppercase tracking-widest flex-shrink-0" style={{ color: "rgba(140,110,60,0.5)", fontFamily: "Georgia,serif" }}>Past act</span>}
                             </div>
                             <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(160,120,60,0.6)", fontFamily: "Georgia,serif" }}>{clue.flavor}</p>
                           </div>
                           <span className="text-xs flex-shrink-0" style={{ color: "rgba(120,90,30,0.4)" }}>›</span>
                         </div>
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          RITUAL RECORD — the chosen witness takes the team photo.
-          (Secretly: the photographer is the culprit. Never hint at this.)
-      ══════════════════════════════════════════════════════════════════════ */}
-      {canInteract &&
-        session?.playerId &&
-        ritualWitnessId === session.playerId &&
-        !ritualHasPhoto &&
-        !ritualDismissed && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-5"
-          style={{ background: "rgba(4,2,0,0.94)", backdropFilter: "blur(8px)" }}>
-          <div className="w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden animate-quest-fade"
-            style={{ background: "rgba(14,10,4,0.99)", border: "1px solid rgba(180,130,50,0.4)" }}>
-            <div className="px-5 pt-6 pb-4 text-center">
-              <div className="text-4xl mb-3">📷</div>
-              <div className="text-[9px] uppercase tracking-[0.3em] mb-2"
-                style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}>
-                The Ritual Record
-              </div>
-              <p className="text-sm leading-relaxed mb-2"
-                style={{ color: "rgba(230,205,150,0.92)", fontFamily: "Georgia,serif" }}>
-                The house keeps a record of everyone who visits. Tonight is no different.
-              </p>
-              <p className="text-sm leading-relaxed"
-                style={{ color: "rgba(230,205,150,0.92)", fontFamily: "Georgia,serif" }}>
-                <strong>You</strong> have been chosen as your team&apos;s witness. Gather your
-                teammates and take <strong>one photo of them — all of them, together</strong>.
-              </p>
-              <p className="text-xs italic mt-3"
-                style={{ color: "rgba(140,100,40,0.6)", fontFamily: "Georgia,serif" }}>
-                The house will not accept anything less.
-              </p>
-            </div>
-            <div className="px-5 pb-5 space-y-2">
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleRitualPhotoFile(f);
-                  e.target.value = "";
-                }}
-              />
-              <button
-                onClick={() => photoInputRef.current?.click()}
-                disabled={ritualUploading}
-                className="w-full py-3.5 rounded-xl font-bold text-sm active:scale-95 transition-transform disabled:opacity-50"
-                style={{ background: "rgba(120,80,10,0.65)", border: "1px solid rgba(180,130,50,0.5)", color: "rgba(251,191,36,0.97)", fontFamily: "Georgia,serif" }}
-              >
-                {ritualUploading ? "Recording…" : "📷 Take the photo"}
-              </button>
-              <button
-                onClick={() => setRitualDismissed(true)}
-                className="w-full py-2 text-xs"
-                style={{ color: "rgba(140,100,40,0.55)", fontFamily: "Georgia,serif" }}
-              >
-                Not everyone is here yet — remind me later
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

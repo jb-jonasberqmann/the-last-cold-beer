@@ -890,6 +890,27 @@ export async function hostResetBoss(
   bossId: string,
   maxHp: number
 ): Promise<ActionResult> {
+  // Wipe this boss's fight history for the team so one-time actions
+  // (puzzles, boosts, clue checks, choices) become usable again.
+  await sql`
+    DELETE FROM game_events
+    WHERE game_id = ${gameId} AND team_id = ${teamId}
+      AND event_type IN ('boss_damaged', 'boss_counter_attacked', 'boss_defeated')
+      AND event_data->>'boss_id' = ${bossId}
+  `;
+
+  // Resetting the final boss also un-completes the game and clears the reveal event
+  if (bossId === "yourselves") {
+    await sql`
+      DELETE FROM game_events
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND event_type = 'culprit_revealed'
+    `;
+    await sql`
+      UPDATE games SET status = 'active', updated_at = NOW()
+      WHERE id = ${gameId} AND status = 'complete'
+    `;
+  }
+
   const existing = await sql`
     SELECT id FROM boss_progress
     WHERE game_id = ${gameId} AND team_id = ${teamId} AND boss_id = ${bossId}
@@ -1155,7 +1176,12 @@ export async function getTeamPhoto(
   }
 }
 
-/** Save the ritual photo. Only the chosen witness may submit it. */
+/**
+ * Save the ritual photo (driveway quest).
+ * The player who takes the photo becomes the team's witness — and, secretly,
+ * the team's culprit: the reveal points at "the one missing from the photo",
+ * which is by definition the photographer. Never hint at this in UI copy.
+ */
 export async function saveRitualPhoto(
   gameId: string,
   teamId: TeamId,
@@ -1168,19 +1194,30 @@ export async function saveRitualPhoto(
   if (photoDataUrl.length > 900_000) {
     return { success: false, error: "Photo too large — try again." };
   }
+
+  // Hosts are spectators — they can't be the witness/culprit.
+  const playerRows = await sql`
+    SELECT is_host FROM players WHERE id = ${playerId} AND game_id = ${gameId} LIMIT 1
+  `;
+  const player = playerRows[0] as { is_host: boolean } | undefined;
+  if (!player) return { success: false, error: "Player not found." };
+  if (player.is_host) return { success: false, error: "The host cannot take the ritual photo — hand the phone to a team member." };
+
   try {
-    const rows = await sql`
-      SELECT witness_player_id FROM team_photos
-      WHERE game_id = ${gameId} AND team_id = ${teamId}
-      LIMIT 1
-    `;
-    const witnessId = (rows[0] as { witness_player_id: string | null } | undefined)?.witness_player_id;
-    if (!witnessId || witnessId !== playerId) {
-      return { success: false, error: "Only the chosen witness can take the ritual photo." };
-    }
     await sql`
-      UPDATE team_photos SET photo = ${photoDataUrl}
+      INSERT INTO team_photos (game_id, team_id, witness_player_id, photo)
+      VALUES (${gameId}, ${teamId}, ${playerId}, ${photoDataUrl})
+      ON CONFLICT (game_id, team_id)
+      DO UPDATE SET witness_player_id = ${playerId}, photo = ${photoDataUrl}
+    `;
+    // Reassign the team's culprit to the actual photographer
+    await sql`
+      UPDATE players SET is_culprit = FALSE
       WHERE game_id = ${gameId} AND team_id = ${teamId}
+    `;
+    await sql`
+      UPDATE players SET is_culprit = TRUE
+      WHERE id = ${playerId} AND game_id = ${gameId}
     `;
     await sql`
       INSERT INTO game_events (game_id, team_id, event_type, event_data)

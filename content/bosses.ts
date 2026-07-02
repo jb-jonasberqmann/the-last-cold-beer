@@ -257,6 +257,17 @@ export const BOSSES: Boss[] = [
               "The wire clicks in. The green light holds steady. The radio is ready to speak.",
           },
           {
+            id: "radio-full-volume",
+            label: "Turn the volume to full",
+            description:
+              "The signal is there — locked, waiting, under the last of the static. The volume knob is stiff with age. Turn it all the way. Let the house hear what the radio has been trying to say all evening.",
+            type: "social",
+            damage: 45,
+            rewardText:
+              "The knob turns. The static peels away. The green light burns brighter than it should. The radio draws every watt in the house — the broadcast is coming.",
+            failureText: "The knob resists. Turn harder.",
+          },
+          {
             id: "radio-final-offer",
             label: "Grand Offering to the Signal",
             description: "Pay the maximum tribute. The radio will respond.",
@@ -298,6 +309,7 @@ export const BOSSES: Boss[] = [
           actions: [
             { id: "radio-speaker", label: "Rens højttalergitteret", rewardText: "Gitteret er rent. Radioen er klar.", failureText: "Gitteret modstår." },
             { id: "radio-wire", label: "Genopret det løse kabel", rewardText: "Kablet klikker på plads. Det grønne lys holder stabil." },
+            { id: "radio-full-volume", label: "Skru helt op for lyden", rewardText: "Knappen drejer. Statikken skræller af. Det grønne lys brænder klarere end det burde. Radioen trækker hver watt i huset — udsendelsen kommer.", failureText: "Knappen gør modstand. Drej hårdere." },
             { id: "radio-final-offer", label: "Stoffer til Signalet", rewardText: "Signalet låser. Udsendelsen begynder." },
           ],
         },

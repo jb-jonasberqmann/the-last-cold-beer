@@ -31,6 +31,17 @@ const PUZZLE_CLUE_HINTS: Record<string, string> = {
   "yourselves-a2":   "Requires both team artifacts combined.",
 };
 
+// Free action: Act 1 boss — complete "carport" (optional branch) unlocks a free boost
+// Act 2 boss — completing "tool-shed" unlocks a free radio sabotage action
+const FREE_ACTION_ROOM: Record<string, string> = {
+  "mads":       "carport",
+  "the-radio":  "tool-shed",
+};
+const FREE_ACTION_ID: Record<string, string> = {
+  "mads":      "mads-offer-boost",
+  "the-radio": "radio-offer-boost",
+};
+
 interface Props {
   params: { gameId: string; bossId: string };
 }
@@ -122,8 +133,27 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
     setGame(data.game);
     setTeamClues(data.clues ?? []);
     setRoomProgress(data.roomProgress ?? []);
-    setUsedBossActionIds(data.usedBossActionIds ?? []);
+    const used: string[] = data.usedBossActionIds ?? [];
+    setUsedBossActionIds(used);
     setEvents(data.events ?? []);
+
+    // Self-heal after a GM boss reset: drop local flags the server no longer knows about
+    if (autoApplied.current.size > 0) {
+      const pruned = new Set(Array.from(autoApplied.current).filter((id) => used.includes(id)));
+      if (pruned.size !== autoApplied.current.size) {
+        autoApplied.current = pruned;
+        try { localStorage.setItem(autoAppliedKey, JSON.stringify(Array.from(pruned))); } catch {}
+      }
+    }
+    const freeId = `${FREE_ACTION_ID[bossId] ?? "offer-boost"}-free`;
+    if (!used.includes(freeId)) {
+      try {
+        if (localStorage.getItem(freeActionUsedKey)) {
+          localStorage.removeItem(freeActionUsedKey);
+          setFreeActionUsed(false);
+        }
+      } catch {}
+    }
 
     const bossRows: DbBossProgress[] = data.bossProgress ?? [];
     setBossProgressA(bossRows.find((b) => b.team_id === "team-a") ?? null);
@@ -221,21 +251,11 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const isActionUsed  = (actionId: string) => usedBossActionIds.includes(actionId);
   const bossImage     = BOSS_ARTWORK[bossId] ?? null;
 
-  // Free action: Act 1 boss — complete "carport" (optional branch) unlocks a free boost
-  // Act 2 boss — completing "tool-shed" unlocks a free radio sabotage action
-  const FREE_ACTION_ROOM: Record<string, string> = {
-    "mads":       "carport",
-    "the-radio":  "tool-shed",
-  };
   const freeActionRoom = FREE_ACTION_ROOM[bossId] ?? null;
   const hasBossFreeAction = freeActionRoom
     ? roomProgress.some((rp) => rp.room_id === freeActionRoom && rp.status === "complete")
     : false;
 
-  const FREE_ACTION_ID: Record<string, string> = {
-    "mads":      "mads-offer-boost",
-    "the-radio": "radio-offer-boost",
-  };
   const freeActionId = FREE_ACTION_ID[bossId] ?? "offer-boost";
   // Server-derived used-state (free uses are logged as "<id>-free") — works across
   // all devices, unlike the localStorage flag which is per-device only.

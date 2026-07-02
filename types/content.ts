@@ -79,7 +79,8 @@ export type QuestType =
   | "clue_check" // requires a specific previously found clue
   | "boss_phase" // used inside boss encounters
   | "sliding_puzzle" // interactive tile-sliding puzzle
-  | "physical_challenge"; // real-world timed activity broadcast to all players
+  | "physical_challenge" // real-world timed activity broadcast to all players
+  | "photo"; // take a team photo (the Ritual Record — secretly the culprit mechanic)
 
 export interface Quest {
   id: string;
