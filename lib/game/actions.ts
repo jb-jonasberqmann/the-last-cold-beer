@@ -269,31 +269,38 @@ export async function submitQuestAnswer(
             ${JSON.stringify({ quest_id: questId, room_id: quest.roomId })}::jsonb)
   `;
 
-  // Scared Silent: the bunk-room quest sets the answering player's flag
-  if (quest.setsScaredSilent) {
-    // We don't have playerId here — the flag will be set by the UI layer when it calls
-    // a dedicated setScaredSilent(gameId, playerId) helper below. Flag on quest for reference.
-    await sql`
-      INSERT INTO game_events (game_id, team_id, event_type, event_data)
-      VALUES (${gameId}, ${teamId}, 'scared_silent_set',
-              ${JSON.stringify({ quest_id: questId })}::jsonb)
-    `;
-  }
-
-  // Scared Silent cleared: living-room quest completion clears the whole team
-  if (quest.clearsScaredSilent) {
-    await sql`
-      UPDATE players SET player_status = 'normal'
-      WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'scared_silent'
-    `;
-    await sql`
-      INSERT INTO game_events (game_id, team_id, event_type, event_data)
-      VALUES (${gameId}, ${teamId}, 'scared_silent_cleared',
-              ${JSON.stringify({ quest_id: questId })}::jsonb)
-    `;
-  }
-
+  // Complete the room FIRST — side effects below must never block room completion.
   await _checkAndCompleteRoom(gameId, teamId, quest.roomId);
+
+  // Scared Silent side effects — non-fatal: a failure here (e.g. missing DB column
+  // on an un-migrated database) must not break quest/room completion.
+  try {
+    // Scared Silent: the bunk-room quest sets the answering player's flag
+    if (quest.setsScaredSilent) {
+      // We don't have playerId here — the flag will be set by the UI layer when it calls
+      // a dedicated setScaredSilent(gameId, playerId) helper below. Flag on quest for reference.
+      await sql`
+        INSERT INTO game_events (game_id, team_id, event_type, event_data)
+        VALUES (${gameId}, ${teamId}, 'scared_silent_set',
+                ${JSON.stringify({ quest_id: questId })}::jsonb)
+      `;
+    }
+
+    // Scared Silent cleared: living-room quest completion clears the whole team
+    if (quest.clearsScaredSilent) {
+      await sql`
+        UPDATE players SET player_status = 'normal'
+        WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'scared_silent'
+      `;
+      await sql`
+        INSERT INTO game_events (game_id, team_id, event_type, event_data)
+        VALUES (${gameId}, ${teamId}, 'scared_silent_cleared',
+                ${JSON.stringify({ quest_id: questId })}::jsonb)
+      `;
+    }
+  } catch (e) {
+    console.error("Scared-silent side effect failed (non-fatal):", e);
+  }
 
   return {
     success: true,
@@ -348,27 +355,32 @@ export async function completeQuest(
             ${JSON.stringify({ quest_id: questId, room_id: quest.roomId, choice_id: choiceId })}::jsonb)
   `;
 
-  // Scared Silent: social/choice quests can also set or clear the flag
-  if (quest.setsScaredSilent) {
-    await sql`
-      INSERT INTO game_events (game_id, team_id, event_type, event_data)
-      VALUES (${gameId}, ${teamId}, 'scared_silent_set',
-              ${JSON.stringify({ quest_id: questId })}::jsonb)
-    `;
-  }
-  if (quest.clearsScaredSilent) {
-    await sql`
-      UPDATE players SET player_status = 'normal'
-      WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'scared_silent'
-    `;
-    await sql`
-      INSERT INTO game_events (game_id, team_id, event_type, event_data)
-      VALUES (${gameId}, ${teamId}, 'scared_silent_cleared',
-              ${JSON.stringify({ quest_id: questId })}::jsonb)
-    `;
-  }
-
+  // Complete the room FIRST — side effects below must never block room completion.
   await _checkAndCompleteRoom(gameId, teamId, quest.roomId);
+
+  // Scared Silent: social/choice quests can also set or clear the flag (non-fatal)
+  try {
+    if (quest.setsScaredSilent) {
+      await sql`
+        INSERT INTO game_events (game_id, team_id, event_type, event_data)
+        VALUES (${gameId}, ${teamId}, 'scared_silent_set',
+                ${JSON.stringify({ quest_id: questId })}::jsonb)
+      `;
+    }
+    if (quest.clearsScaredSilent) {
+      await sql`
+        UPDATE players SET player_status = 'normal'
+        WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'scared_silent'
+      `;
+      await sql`
+        INSERT INTO game_events (game_id, team_id, event_type, event_data)
+        VALUES (${gameId}, ${teamId}, 'scared_silent_cleared',
+                ${JSON.stringify({ quest_id: questId })}::jsonb)
+      `;
+    }
+  } catch (e) {
+    console.error("Scared-silent side effect failed (non-fatal):", e);
+  }
 
   return {
     success: true,
@@ -929,11 +941,16 @@ export async function applyBossDamage(
 // ==========================================
 
 export async function setScaredSilent(gameId: string, playerId: string): Promise<ActionResult> {
-  await sql`
-    UPDATE players SET player_status = 'scared_silent'
-    WHERE id = ${playerId} AND game_id = ${gameId}
-  `;
-  return { success: true, data: undefined };
+  try {
+    await sql`
+      UPDATE players SET player_status = 'scared_silent'
+      WHERE id = ${playerId} AND game_id = ${gameId}
+    `;
+    return { success: true, data: undefined };
+  } catch (e) {
+    console.error("setScaredSilent failed (non-fatal):", e);
+    return { success: false, error: "Could not set scared-silent status." };
+  }
 }
 
 // ==========================================

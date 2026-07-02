@@ -392,7 +392,7 @@ export const QUESTS: Quest[] = [
     description:
       "A note on the desk. It started as a calm observation and ended somewhere else entirely. The clue word is in every sentence — each time slightly larger in scope.",
     prompt:
-      "Read the note from the single room desk. One word fills all the blanks — it starts small and ends enormous.\n\n*\"This is not even my house. ______ it is. Not even my bed. ______. This... life... ______?\"*",
+      "Read the note from the single room desk. The same word repeats — each time slightly bigger in scope. What fills the final blank?\n\n*\"This is not even my house. Borrowed it is. Not even my bed. Borrowed. This... life... ______?\"*",
     order: 2,
     isRequired: true,
     hints: [
@@ -409,7 +409,7 @@ export const QUESTS: Quest[] = [
     da: {
       title: "Observationen der Blev en Krise",
       description: "En seddel på skrivebordet. Den startede som en rolig observation og endte et helt andet sted.",
-      prompt: "Læs sedlen fra enkeltværelsets skrivebord. Ét ord fylder alle blanke — det starter småt og ender enormt.\n\n*\"Det er ikke engang mit hus. ______ er det. Ikke engang min seng. ______. Dette... liv... ______?\"*",
+      prompt: "Læs sedlen fra enkeltværelsets skrivebord. Det samme ord gentager sig — hver gang lidt større. Hvad udfylder det sidste blanke felt?\n\n*\"Det er ikke engang mit hus. Lånt er det. Ikke engang min seng. Lånt. Dette... liv... ______?\"*",
       rewardText: "Lånt. Ordet er i sagsmappen.",
       failureText: "Ordet er i næsten hver sætning. Det vokser.",
     },
@@ -452,7 +452,7 @@ export const QUESTS: Quest[] = [
     description:
       "Written on the underside of the top bunk mattress. Only visible from the bottom bunk. Cold. Minimal. Two sentences with the same blank.",
     prompt:
-      "You're lying in the bottom bunk, looking up. One word fills both blanks — that word is yours to carry. But when you leave this room, you may NOT say it or write it. You must act it out for the rest of the team in silence.\n\n*\"It was ______. It is always ______.\"*",
+      "You're lying in the bottom bunk, looking up. One word fills the last blank — that word is yours to carry. But when you leave this room, you may NOT say it or write it. You must act it out for the rest of the team in silence.\n\n*\"It was taken. It is always ______.\"*",
     order: 2,
     isRequired: true,
     hints: [],
@@ -463,14 +463,14 @@ export const QUESTS: Quest[] = [
     rewardClueId: "word-taken",
     setsScaredSilent: true,
     rewardText:
-      "Taken. That word is yours — and silence is now yours too. In the living room you cannot type. Act it out. No words. No writing. Your team must guess.",
-    failureText: "The same word fills both blanks.",
+      "Taken. That word is yours — and something about this room has scared you silent. When you walk out, hand over what you found without saying a single word. Don't explain why. In the living room you cannot type — act your word out in silence until your team guesses. Keep this message to yourself.",
+    failureText: "The same word that fills the first sentence fills the blank.",
     da: {
       title: "Undersiden af Madrassen",
       description: "Skrevet på undersiden af den øverste køje-madras. Kun synlig fra den nederste køje.",
-      prompt: "Du ligger i den nederste køje og kigger op. Ét ord fylder begge blanke — det ord er dit at bære. Men når du forlader dette rum, må du IKKE sige det eller skrive det. Du skal fremvise det for holdet i tavshed.\n\n*\"Det blev ______. Det bliver altid ______.\"*",
-      rewardText: "Taget. Det ord er dit — og tavsheden er nu også din. I stuen kan du ikke skrive. Fremvis det. Ingen ord. Ingen skrift. Holdet skal gætte.",
-      failureText: "Det samme ord fylder begge blanke.",
+      prompt: "Du ligger i den nederste køje og kigger op. Ét ord udfylder det sidste blanke felt — det ord er dit at bære. Men når du forlader dette rum, må du IKKE sige det eller skrive det. Du skal fremvise det for holdet i tavshed.\n\n*\"Det blev taget. Det bliver altid ______.\"*",
+      rewardText: "Taget. Det ord er dit — og noget ved dette rum har skræmt dig til tavshed. Når du går ud, afleverer du hvad du fandt uden at sige et eneste ord. Forklar ikke hvorfor. I stuen kan du ikke skrive — fremvis dit ord i tavshed indtil holdet gætter. Behold denne besked for dig selv.",
+      failureText: "Det samme ord som i den første sætning udfylder det blanke felt.",
     },
   },
 

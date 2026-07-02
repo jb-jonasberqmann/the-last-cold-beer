@@ -88,19 +88,19 @@ export const BOSSES: Boss[] = [
           },
           {
             id: "mads-phone",
-            label: "Find his phone",
+            label: "Mads is missing something",
             description:
-              "His phone is somewhere in the car. The last code fragment is in his notes app — but you need the phone first.",
+              "Mads stops mid-unload, suddenly distracted. \"Hang on — I can't find my sunglasses. I'm not carrying another box until I find them.\"",
             type: "puzzle",
             damage: 22,
             puzzle: {
               prompt:
-                "Mads checks every pocket. Jacket — empty. Jeans — empty. Car seat — nothing. Then he looks at you. \"Check the sun visor,\" he says. \"I always put it there and always forget.\" What do you find?",
-              answer: ["phone", "his phone", "the phone", "telefon", "mobil", "mobilen"],
+                "Mads checks every pocket. Jacket — empty. Jeans — empty. Car seat — nothing. Then he looks at you. \"Check the sun visor,\" he says. \"I always put them there and always forget.\" What do you find?",
+              answer: ["sunglasses", "his sunglasses", "the sunglasses", "shades", "solbriller", "solbrillerne", "hans solbriller"],
             },
-            hint: "He just told you where he put it.",
+            hint: "He just told you where he put them.",
             rewardText:
-              "The phone. In the sun visor. He had it the whole time. Mads pulls up his notes app — the last code fragment is right there.",
+              "The sunglasses. In the sun visor. He had them the whole time. Mads puts them on, grins — and finally digs his phone out of his pocket. The last code fragment is right there in his notes app.",
             failureText: "The car is messier than it looks. Try again.",
           },
           {
@@ -139,7 +139,7 @@ export const BOSSES: Boss[] = [
             { id: "mads-cooler", label: "Bær den tunge køler", rewardText: "Køleren er inde. Mads' arme er lidt mere fri.", failureText: "Den er for tung til én person." },
             { id: "mads-beer", label: "Tag ølkasserne", rewardText: "Øl inde. Én ting færre Mads bærer." },
             { id: "mads-door", label: "Hold døren åben", rewardText: "Sovepose inde. Mads kom igennem døren." },
-            { id: "mads-phone", label: "Find hans telefon", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger den altid der og glemmer det altid.\" Hvad finder du?", hint: "Han fortalte dig netop hvor han lagde den.", rewardText: "Telefonen. I solskærmen. Det sidste kodefragment er lige der.", failureText: "Bilen er mere rodet end den ser ud." },
+            { id: "mads-phone", label: "Mads mangler noget", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger dem altid der og glemmer det altid.\" Hvad finder du?", hint: "Han fortalte dig netop hvor han lagde dem.", rewardText: "Solbrillerne. I solskærmen. Han havde dem hele tiden. Mads tager dem på, griner — og finder endelig sin telefon frem. Det sidste kodefragment er lige der i hans noter-app.", failureText: "Bilen er mere rodet end den ser ud." },
             { id: "mads-offer-boost", label: "Bestik Mads", rewardText: "Mads griner. Bevæger sig lidt hurtigere. 25 fremskridt." },
           ],
         },

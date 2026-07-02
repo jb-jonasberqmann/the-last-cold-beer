@@ -745,12 +745,13 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                   return true;
                 }).map((action) => {
                   const isUsedPuzzle  = action.type === "puzzle" && isActionUsed(action.id);
+                  const isUsedBoost   = action.type === "offer_boost" && isActionUsed(action.id);
                   const isClueApplied = action.type === "clue_check" && isActionUsed(action.id);
                   const needsClue     = action.type === "clue_check" && !!action.requiredClueId && !hasClue(action.requiredClueId) && !isClueApplied;
                   const isAutoApplied = isClueApplied || autoApplied.current.has(action.id);
                   const isExpanded    = activeActionId === action.id;
                   const clueHint      = PUZZLE_CLUE_HINTS[action.id] ?? null;
-                  const isDimmed      = isUsedPuzzle || needsClue || isAutoApplied;
+                  const isDimmed      = isUsedPuzzle || isUsedBoost || needsClue || isAutoApplied;
 
                   return (
                     <div
@@ -790,7 +791,7 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                       )}
 
                       {/* Offer cost badge */}
-                      {action.offerCost && !needsClue && (
+                      {action.offerCost && !needsClue && !isUsedBoost && (
                         <div className="text-[10px] text-amber-700 mb-1.5">🍺 {formatOfferCost(action.offerCost, game.offer_definition)}</div>
                       )}
 
@@ -798,6 +799,10 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                       {isUsedPuzzle ? (
                         <div className="flex items-center gap-1 text-[10px] text-emerald-700" style={{ fontFamily: "Georgia, serif" }}>
                           <span>✓</span><span className="italic">Puzzle solved</span>
+                        </div>
+                      ) : isUsedBoost ? (
+                        <div className="flex items-center gap-1 text-[10px] text-stone-500" style={{ fontFamily: "Georgia, serif" }}>
+                          <span>✓</span><span className="italic">Used — one-time only</span>
                         </div>
                       ) : isAutoApplied ? (
                         <div className="flex items-center gap-1 text-[10px] text-amber-800" style={{ fontFamily: "Georgia, serif" }}>
