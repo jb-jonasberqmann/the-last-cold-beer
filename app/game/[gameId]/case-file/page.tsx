@@ -21,6 +21,7 @@ function CaseFileContent({ gameId }: { gameId: string }) {
 
   const [game, setGame] = useState<DbGame | null>(null);
   const [teamClues, setTeamClues] = useState<DbTeamClue[]>([]);
+  const [teamChapterId, setTeamChapterId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!gameId) return;
@@ -29,6 +30,11 @@ function CaseFileContent({ gameId }: { gameId: string }) {
     const data = await res.json();
     setGame(data.game);
     setTeamClues(data.clues ?? []);
+    // Use THIS team's act (acts can diverge between teams)
+    const myTp = (data.teamProgress ?? []).find(
+      (tp: { team_id: string; current_chapter_id?: string }) => tp.team_id === teamId
+    );
+    setTeamChapterId(myTp?.current_chapter_id ?? data.game?.current_chapter_id ?? null);
   }, [gameId, teamId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -37,9 +43,9 @@ function CaseFileContent({ gameId }: { gameId: string }) {
 
   const teamName = teamId === "team-a" ? game.team_a_name : game.team_b_name;
 
-  // Act order for "is this clue still active?" check
+  // Act order for "is this clue still active?" check — based on the TEAM's act
   const actNum = (id: string) => parseInt(id.replace("act-", ""), 10) || 0;
-  const currentActNum = actNum(game.current_chapter_id);
+  const currentActNum = actNum(teamChapterId ?? game.current_chapter_id);
 
   const discoveredClues = teamClues
     .map((tc) => ({ clue: getClue(tc.clue_id), discoveredAt: tc.discovered_at }))

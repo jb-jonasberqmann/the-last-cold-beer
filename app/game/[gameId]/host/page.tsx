@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
-import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole, rebalanceTeams } from "@/lib/game/actions";
+import { assignPlayerToTeam, hostForceRoomStatus, hostResetBoss, assignRandomRole, rebalanceTeams, hostForceGameComplete } from "@/lib/game/actions";
 import { Button } from "@/components/ui/Button";
 import { CHAPTERS } from "@/content/chapters";
 import { BOSSES } from "@/content/bosses";
@@ -121,7 +121,13 @@ export default function HostPage({ params }: Props) {
           <div className="text-sm text-stone-300 space-y-1">
             <div>Code: <span className="font-mono text-amber-400">{game.code}</span></div>
             <div>Status: <span className="text-amber-400">{game.status}</span></div>
-            <div>Chapter: <span className="text-amber-400">{game.current_chapter_id}</span></div>
+            <div>Furthest act: <span className="text-amber-400">{game.current_chapter_id}</span></div>
+            <div>
+              Team acts:{" "}
+              <span className="text-amber-400">A: {teamProgressA?.current_chapter_id ?? "—"}</span>
+              {" · "}
+              <span className="text-amber-400">B: {teamProgressB?.current_chapter_id ?? "—"}</span>
+            </div>
             <div>1 Offer = <span className="text-amber-300">{game.offer_definition}</span></div>
           </div>
         </div>
@@ -273,6 +279,21 @@ export default function HostPage({ params }: Props) {
                 >B:reset</button>
               </div>
             ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-stone-700">
+            <p className="text-xs text-stone-500 mb-2">
+              The game only completes when BOTH teams defeat the final boss. Use this if one team never finishes.
+            </p>
+            <button
+              onClick={async () => {
+                await hostForceGameComplete(gameId);
+                showMessage("Game marked complete — finale unlocked.");
+                fetchAll();
+              }}
+              className="text-xs bg-amber-900/50 hover:bg-amber-900 border border-amber-800 text-amber-300 px-3 py-1.5 rounded font-bold"
+            >
+              🏁 Force finale (end game)
+            </button>
           </div>
         </div>
 

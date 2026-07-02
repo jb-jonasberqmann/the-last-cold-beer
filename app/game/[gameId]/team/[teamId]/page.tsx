@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { unlockRoom } from "@/lib/game/actions";
+import { unlockRoom, getTeamPhoto, saveRitualPhoto } from "@/lib/game/actions";
 import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue } from "@/types/database";
 import type { TeamId, Clue } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
@@ -169,13 +169,21 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const [selectedClue, setSelectedClue] = useState<Clue | null>(null);
   const [newClueCount, setNewClueCount] = useState(0);
   const [offerSpent, setOfferSpent] = useState(0);
-  const [otherRoomsCompleted, setOtherRoomsCompleted] = useState<number | null>(null);
+  const [teamChapterId, setTeamChapterId] = useState<string | null>(null);
+  const [otherCompletedRoomIds, setOtherCompletedRoomIds] = useState<string[] | null>(null);
   const [tollBanners, setTollBanners] = useState<{ msg: string; key: number }[]>([]);
   const tollKeyRef = useRef(0);
   const seenEventIdsRef = useRef<Set<string>>(new Set());
   const seenClueCountRef = useRef<number | null>(null);
   const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
   const [forcedClueModal, setForcedClueModal] = useState<Clue[]>([]);
+
+  // ── Ritual Record (team photo — secretly the culprit mechanic) ────────────
+  const [ritualWitnessId, setRitualWitnessId] = useState<string | null>(null);
+  const [ritualHasPhoto, setRitualHasPhoto] = useState(true); // assume done until we know otherwise
+  const [ritualDismissed, setRitualDismissed] = useState(false);
+  const [ritualUploading, setRitualUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // ── Map scroll refs ───────────────────────────────────────────────────────
   const mapScrollRef = useRef<HTMLDivElement>(null);
@@ -218,9 +226,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
     }
 
     const myTp = (data.teamProgress ?? []).find(
-      (tp: { team_id: string; offer_spent: number }) => tp.team_id === teamId
+      (tp: { team_id: string; offer_spent: number; current_chapter_id?: string }) => tp.team_id === teamId
     );
     if (myTp) setOfferSpent(myTp.offer_spent ?? 0);
+    // Each team plays its OWN act — never the game-wide (furthest) one.
+    setTeamChapterId(myTp?.current_chapter_id ?? g.current_chapter_id);
 
     const events: DbGameEvent[] = data.events ?? [];
     const isFirstLoad = seenEventIdsRef.current.size === 0;
@@ -258,10 +268,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
         if (!d) return;
-        const done = (d.roomProgress ?? []).filter(
-          (rp: { status: string }) => rp.status === "complete"
-        ).length;
-        setOtherRoomsCompleted(done);
+        const ids = (d.roomProgress ?? [])
+          .filter((rp: { status: string }) => rp.status === "complete")
+          .map((rp: { room_id: string }) => rp.room_id);
+        setOtherCompletedRoomIds(ids);
       })
       .catch(() => {});
   }, [gameId, teamId]);
@@ -269,10 +279,61 @@ export default function TeamQuestBoardPage({ params }: Props) {
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
+  // ── Ritual Record: check witness + photo state once on mount ──────────────
+  useEffect(() => {
+    if (!gameId || !teamId) return;
+    getTeamPhoto(gameId, teamId).then((res) => {
+      if (res.success) {
+        setRitualWitnessId(res.data.witnessPlayerId);
+        setRitualHasPhoto(res.data.hasPhoto);
+      }
+    });
+  }, [gameId, teamId]);
+
+  // Downscale + save the ritual photo
+  const handleRitualPhotoFile = async (file: File) => {
+    if (!session?.playerId) return;
+    setRitualUploading(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const maxW = 1280;
+          const scale = Math.min(1, maxW / img.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas unavailable")); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          let out = canvas.toDataURL("image/jpeg", 0.72);
+          if (out.length > 850_000) out = canvas.toDataURL("image/jpeg", 0.5);
+          resolve(out);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read image")); };
+        img.src = url;
+      });
+      const res = await saveRitualPhoto(gameId!, teamId!, session.playerId, dataUrl);
+      if (res.success) {
+        setRitualHasPhoto(true);
+        setMessage("The record is taken. The house is satisfied.");
+      } else {
+        setMessage(res.error ?? "The photo failed — try again.");
+      }
+    } catch {
+      setMessage("The photo failed — try again.");
+    } finally {
+      setRitualUploading(false);
+      setTimeout(() => setMessage(null), 3500);
+    }
+  };
+
   // ── Scroll setup — runs once per act ──────────────────────────────────────
   useEffect(() => {
-    if (!game || !gameId || !teamId) return;
-    const actId = game.current_chapter_id;
+    if (!game || !gameId || !teamId || !teamChapterId) return;
+    const actId = teamChapterId;
     if (scrollSetupActRef.current === actId) return;  // already set up for this act
     scrollSetupActRef.current = actId;
 
@@ -304,18 +365,18 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
       return () => { clearTimeout(timeoutId); cancelAnimationFrame(rafId); };
     }
-  }, [game, gameId, teamId]);
+  }, [game, gameId, teamId, teamChapterId]);
 
   // Save scroll position on every scroll
   useEffect(() => {
     const el = mapScrollRef.current;
-    if (!el || !game?.current_chapter_id || !gameId || !teamId) return;
-    const actId = game.current_chapter_id;
+    if (!el || !teamChapterId || !gameId || !teamId) return;
+    const actId = teamChapterId;
     const storageKey = `tlcb_scroll_${gameId}_${teamId}_${actId}`;
     const onScroll = () => sessionStorage.setItem(storageKey, String(el.scrollTop));
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
-  }, [game?.current_chapter_id, gameId, teamId]);
+  }, [teamChapterId, gameId, teamId]);
 
   // ── Room helpers ─────────────────────────────────────────────────────────
   const canInteract = !session?.isHost;
@@ -368,13 +429,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
   };
 
   // ── Guard ─────────────────────────────────────────────────────────────────
-  if (!game || !gameId || !teamId) return null;
+  if (!game || !gameId || !teamId || !teamChapterId) return null;
 
-  // ── Derived values ────────────────────────────────────────────────────────
-  const chapter    = getChapter(game.current_chapter_id);
-  const theme      = ACT_THEMES[game.current_chapter_id] ?? ACT_THEMES["act-1"];
-  const geo        = ACT_GEO[game.current_chapter_id] ?? ACT_GEO["act-1"];
-  const actFolder  = game.current_chapter_id.replace(/-/g, "");  // "act-1" → "act1"
+  // ── Derived values — always based on THIS team's act ─────────────────────
+  const chapter    = getChapter(teamChapterId);
+  const theme      = ACT_THEMES[teamChapterId] ?? ACT_THEMES["act-1"];
+  const geo        = ACT_GEO[teamChapterId] ?? ACT_GEO["act-1"];
+  const actFolder  = teamChapterId.replace(/-/g, "");  // "act-1" → "act1"
   const teamName   = teamId === "team-a" ? game.team_a_name : game.team_b_name;
   const pendingRoom = pendingUnlock ? getRoom(pendingUnlock) : null;
 
@@ -386,6 +447,10 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const mainRooms = roomIds.map((id) => getRoom(id)).filter(Boolean);
   const completedCount = mainRooms.filter((r) => getRoomStatus(r!.id) === "complete").length;
   const totalRooms = mainRooms.length;
+  // Opponent progress compared within THIS team's act only (acts can diverge)
+  const otherRoomsCompleted = otherCompletedRoomIds === null
+    ? null
+    : otherCompletedRoomIds.filter((id) => roomIds.includes(id)).length;
   const boss = chapter ? getBoss(chapter.bossId) : null;
   const bossUnlockable = boss?.requiredRoomIds
     ? boss.requiredRoomIds.every((r) => getRoomStatus(r) === "complete")
@@ -989,6 +1054,72 @@ export default function TeamQuestBoardPage({ params }: Props) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          RITUAL RECORD — the chosen witness takes the team photo.
+          (Secretly: the photographer is the culprit. Never hint at this.)
+      ══════════════════════════════════════════════════════════════════════ */}
+      {canInteract &&
+        session?.playerId &&
+        ritualWitnessId === session.playerId &&
+        !ritualHasPhoto &&
+        !ritualDismissed && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          style={{ background: "rgba(4,2,0,0.94)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden animate-quest-fade"
+            style={{ background: "rgba(14,10,4,0.99)", border: "1px solid rgba(180,130,50,0.4)" }}>
+            <div className="px-5 pt-6 pb-4 text-center">
+              <div className="text-4xl mb-3">📷</div>
+              <div className="text-[9px] uppercase tracking-[0.3em] mb-2"
+                style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}>
+                The Ritual Record
+              </div>
+              <p className="text-sm leading-relaxed mb-2"
+                style={{ color: "rgba(230,205,150,0.92)", fontFamily: "Georgia,serif" }}>
+                The house keeps a record of everyone who visits. Tonight is no different.
+              </p>
+              <p className="text-sm leading-relaxed"
+                style={{ color: "rgba(230,205,150,0.92)", fontFamily: "Georgia,serif" }}>
+                <strong>You</strong> have been chosen as your team&apos;s witness. Gather your
+                teammates and take <strong>one photo of them — all of them, together</strong>.
+              </p>
+              <p className="text-xs italic mt-3"
+                style={{ color: "rgba(140,100,40,0.6)", fontFamily: "Georgia,serif" }}>
+                The house will not accept anything less.
+              </p>
+            </div>
+            <div className="px-5 pb-5 space-y-2">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleRitualPhotoFile(f);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={ritualUploading}
+                className="w-full py-3.5 rounded-xl font-bold text-sm active:scale-95 transition-transform disabled:opacity-50"
+                style={{ background: "rgba(120,80,10,0.65)", border: "1px solid rgba(180,130,50,0.5)", color: "rgba(251,191,36,0.97)", fontFamily: "Georgia,serif" }}
+              >
+                {ritualUploading ? "Recording…" : "📷 Take the photo"}
+              </button>
+              <button
+                onClick={() => setRitualDismissed(true)}
+                className="w-full py-2 text-xs"
+                style={{ color: "rgba(140,100,40,0.55)", fontFamily: "Georgia,serif" }}
+              >
+                Not everyone is here yet — remind me later
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

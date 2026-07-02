@@ -197,3 +197,18 @@ CREATE TRIGGER set_updated_at_team_progress
 CREATE TRIGGER set_updated_at_boss_progress
   BEFORE UPDATE ON boss_progress
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ==========================================
+-- TEAM PHOTOS (the Ritual Record)
+-- One row per team. The "witness" (photographer) is secretly the team's culprit.
+-- Photo stored as a downscaled base64 JPEG data-URL (~150-300 KB).
+-- ==========================================
+CREATE TABLE IF NOT EXISTS team_photos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  team_id TEXT NOT NULL CHECK (team_id IN ('team-a', 'team-b')),
+  witness_player_id TEXT,
+  photo TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(game_id, team_id)
+);

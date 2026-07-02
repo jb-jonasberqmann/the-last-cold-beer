@@ -139,8 +139,11 @@ export default function DashboardPage({ params }: Props) {
   // Most recent game_started event for the top banner
   const gameStartedEvent = events.find((e) => e.event_type === "game_started");
 
-  // Current act boss (dynamic — changes as act advances)
-  const currentChapter = getChapter(game.current_chapter_id);
+  // Current act boss (dynamic — per-team act; host falls back to the game-wide furthest act)
+  const myTeamChapterId = myTeamId
+    ? teamProgress.find((t) => t.team_id === myTeamId)?.current_chapter_id ?? game.current_chapter_id
+    : game.current_chapter_id;
+  const currentChapter = getChapter(myTeamChapterId);
   const currentBoss = currentChapter ? getBoss(currentChapter.bossId) : null;
 
   return (

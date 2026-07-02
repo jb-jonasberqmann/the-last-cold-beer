@@ -747,18 +747,26 @@ export async function dealBossDamage(
       await _awardClue(gameId, teamId, "mads-unloaded");
     }
 
-    // Act 2 boss (The Radio) defeated → trigger Act 2→3 transition for this team
+    // Act 2 boss (The Radio) defeated → trigger Act 2→3 transition for THIS team only
     if (bossContent?.chapterId === "act-2") {
-      await advanceAct(gameId, "act-2", "act-3");
+      await advanceAct(gameId, "act-2", "act-3", teamId);
     }
 
-    // Act 3 boss (YOURSELVES) defeated → emit culprit_revealed event; UI reads getCulpritReveal()
+    // Act 3 boss (YOURSELVES) defeated → per-team culprit reveal.
+    // The game only ends when BOTH teams have defeated their final boss.
     if (bossContent?.chapterId === "act-3") {
       await sql`
         INSERT INTO game_events (game_id, team_id, event_type, event_data)
-        VALUES (${gameId}, ${teamId}, 'culprit_revealed', ${JSON.stringify({ boss_id: bossId })}::jsonb)
+        VALUES (${gameId}, ${teamId}, 'culprit_revealed', ${JSON.stringify({ boss_id: bossId, team_id: teamId })}::jsonb)
       `;
-      await sql`UPDATE games SET status = 'complete', updated_at = ${now} WHERE id = ${gameId}`;
+      const defeatedRows = await sql`
+        SELECT COUNT(*)::int AS n FROM boss_progress
+        WHERE game_id = ${gameId} AND boss_id = ${bossId} AND status = 'defeated'
+      `;
+      const defeatedTeams = (defeatedRows[0] as { n: number } | undefined)?.n ?? 0;
+      if (defeatedTeams >= 2) {
+        await sql`UPDATE games SET status = 'complete', updated_at = ${now} WHERE id = ${gameId}`;
+      }
     }
   }
 
@@ -1081,20 +1089,122 @@ export async function enterBedroom(
 }
 
 // ==========================================
-// ASSIGN CULPRIT
+// ASSIGN CULPRIT (per team)
 // Called at game start once all players are assigned to teams.
-// One random non-host player is flagged is_culprit = true.
+// ONE player PER TEAM becomes the "witness" — publicly they're asked to take
+// the ritual team photo; secretly they are that team's culprit (the one
+// missing from the photo is the one who took the last cold beer).
 // ==========================================
 
 async function _assignCulprit(gameId: string) {
-  const players = await sql`
-    SELECT id FROM players
-    WHERE game_id = ${gameId} AND is_host = FALSE AND team_id IS NOT NULL
-    ORDER BY random()
-    LIMIT 1
+  for (const teamId of ["team-a", "team-b"] as TeamId[]) {
+    const players = await sql`
+      SELECT id FROM players
+      WHERE game_id = ${gameId} AND is_host = FALSE AND team_id = ${teamId}
+      ORDER BY random()
+      LIMIT 1
+    `;
+    if (players.length === 0) continue;
+    const witnessId = players[0].id as string;
+    await sql`UPDATE players SET is_culprit = TRUE WHERE id = ${witnessId}`;
+
+    // Record the witness for the ritual photo flow (non-fatal on un-migrated DBs)
+    try {
+      await sql`
+        INSERT INTO team_photos (game_id, team_id, witness_player_id)
+        VALUES (${gameId}, ${teamId}, ${witnessId})
+        ON CONFLICT (game_id, team_id)
+        DO UPDATE SET witness_player_id = ${witnessId}
+      `;
+    } catch (e) {
+      console.error("team_photos insert failed (non-fatal — run the Neon migration):", e);
+    }
+  }
+}
+
+// ==========================================
+// RITUAL PHOTO (the disguised culprit mechanic)
+// ==========================================
+
+/** Witness/photo metadata for a team. Photo payload only included when requested. */
+export async function getTeamPhoto(
+  gameId: string,
+  teamId: TeamId,
+  includePhoto = false
+): Promise<ActionResult<{ witnessPlayerId: string | null; hasPhoto: boolean; photo: string | null }>> {
+  try {
+    const rows = await sql`
+      SELECT witness_player_id, (photo IS NOT NULL) AS has_photo,
+             CASE WHEN ${includePhoto} THEN photo ELSE NULL END AS photo
+      FROM team_photos
+      WHERE game_id = ${gameId} AND team_id = ${teamId}
+      LIMIT 1
+    `;
+    const row = rows[0] as { witness_player_id: string | null; has_photo: boolean; photo: string | null } | undefined;
+    return {
+      success: true,
+      data: {
+        witnessPlayerId: row?.witness_player_id ?? null,
+        hasPhoto: row?.has_photo ?? false,
+        photo: row?.photo ?? null,
+      },
+    };
+  } catch {
+    // Table missing (un-migrated DB) — behave as if no photo flow exists
+    return { success: true, data: { witnessPlayerId: null, hasPhoto: false, photo: null } };
+  }
+}
+
+/** Save the ritual photo. Only the chosen witness may submit it. */
+export async function saveRitualPhoto(
+  gameId: string,
+  teamId: TeamId,
+  playerId: string,
+  photoDataUrl: string
+): Promise<ActionResult> {
+  if (!photoDataUrl.startsWith("data:image/")) {
+    return { success: false, error: "Invalid image data." };
+  }
+  if (photoDataUrl.length > 900_000) {
+    return { success: false, error: "Photo too large — try again." };
+  }
+  try {
+    const rows = await sql`
+      SELECT witness_player_id FROM team_photos
+      WHERE game_id = ${gameId} AND team_id = ${teamId}
+      LIMIT 1
+    `;
+    const witnessId = (rows[0] as { witness_player_id: string | null } | undefined)?.witness_player_id;
+    if (!witnessId || witnessId !== playerId) {
+      return { success: false, error: "Only the chosen witness can take the ritual photo." };
+    }
+    await sql`
+      UPDATE team_photos SET photo = ${photoDataUrl}
+      WHERE game_id = ${gameId} AND team_id = ${teamId}
+    `;
+    await sql`
+      INSERT INTO game_events (game_id, team_id, event_type, event_data)
+      VALUES (${gameId}, ${teamId}, 'ritual_photo_taken', ${JSON.stringify({ team_id: teamId })}::jsonb)
+    `;
+    return { success: true, data: undefined };
+  } catch (e) {
+    console.error("saveRitualPhoto failed:", e);
+    return { success: false, error: "Could not save the photo." };
+  }
+}
+
+// ==========================================
+// HOST: FORCE FINALE
+// Ends the game (e.g. if one team never finishes Act 3).
+// ==========================================
+
+export async function hostForceGameComplete(gameId: string): Promise<ActionResult> {
+  await sql`UPDATE games SET status = 'complete', updated_at = NOW() WHERE id = ${gameId}`;
+  await sql`
+    INSERT INTO game_events (game_id, event_type, event_data)
+    VALUES (${gameId}, 'game_completed', ${JSON.stringify({ forced_by_host: true })}::jsonb)
   `;
-  if (players.length === 0) return;
-  await sql`UPDATE players SET is_culprit = TRUE WHERE id = ${players[0].id}`;
+  return { success: true, data: undefined };
 }
 
 // ==========================================
@@ -1106,50 +1216,60 @@ async function _assignCulprit(gameId: string) {
 export async function advanceAct(
   gameId: string,
   fromActId: string,
-  toActId: string
+  toActId: string,
+  teamId: TeamId
 ): Promise<ActionResult> {
   const now = new Date().toISOString();
   const nextAct = getChapter(toActId);
   if (!nextAct) return { success: false, error: `Act ${toActId} not found.` };
 
-  // Update game's current_chapter_id
-  await sql`UPDATE games SET current_chapter_id = ${toActId}, updated_at = ${now} WHERE id = ${gameId}`;
+  // PER-TEAM advance: only the triggering team moves to the new act.
+  // The other team keeps playing its current act until it earns its own transition.
+  await sql`
+    UPDATE team_progress SET current_chapter_id = ${toActId}, updated_at = ${now}
+    WHERE game_id = ${gameId} AND team_id = ${teamId}
+  `;
 
-  // Update both teams' current_chapter_id
-  await sql`UPDATE team_progress SET current_chapter_id = ${toActId}, updated_at = ${now} WHERE game_id = ${gameId}`;
+  // games.current_chapter_id tracks the FURTHEST act reached by any team
+  // (used for the host overview only — never for a team's own view).
+  const gameRows = await sql`SELECT current_chapter_id FROM games WHERE id = ${gameId} LIMIT 1`;
+  const currentOrder = getChapter((gameRows[0] as { current_chapter_id: string } | undefined)?.current_chapter_id ?? "act-1")?.order ?? 1;
+  if (nextAct.order > currentOrder) {
+    await sql`UPDATE games SET current_chapter_id = ${toActId}, updated_at = ${now} WHERE id = ${gameId}`;
+  }
 
-  // Unlock starting rooms for both teams in new act
-  for (const teamId of ["team-a", "team-b"] as TeamId[]) {
-    for (const roomId of nextAct.startingRoomIds) {
-      await sql`
-        INSERT INTO room_progress (game_id, team_id, room_id, status, unlocked_at)
-        VALUES (${gameId}, ${teamId}, ${roomId}, 'unlocked', ${now})
-        ON CONFLICT (game_id, team_id, room_id) DO NOTHING
-      `;
-    }
+  // Unlock starting rooms for THIS team only
+  for (const roomId of nextAct.startingRoomIds) {
+    await sql`
+      INSERT INTO room_progress (game_id, team_id, room_id, status, unlocked_at)
+      VALUES (${gameId}, ${teamId}, ${roomId}, 'unlocked', ${now})
+      ON CONFLICT (game_id, team_id, room_id) DO NOTHING
+    `;
   }
 
   await sql`
-    INSERT INTO game_events (game_id, event_type, event_data)
-    VALUES (${gameId}, 'act_advanced',
-            ${ JSON.stringify({ from: fromActId, to: toActId }) }::jsonb)
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (${gameId}, ${teamId}, 'act_advanced',
+            ${ JSON.stringify({ from: fromActId, to: toActId, team_id: teamId }) }::jsonb)
   `;
 
   return { success: true, data: undefined };
 }
 
 // ==========================================
-// GET CULPRIT REVEAL
-// Only returns data after YOURSELVES boss is defeated.
+// GET CULPRIT REVEAL (per team)
+// Only returns data after THAT team's YOURSELVES boss is defeated.
+// Includes the team's ritual photo — the culprit is the one not in it.
 // ==========================================
 
 export async function getCulpritReveal(
-  gameId: string
-): Promise<ActionResult<{ culpritName: string; culpritPlayerId: string } | null>> {
-  // Check boss is defeated
+  gameId: string,
+  teamId: TeamId
+): Promise<ActionResult<{ culpritName: string; culpritPlayerId: string; photo: string | null } | null>> {
+  // Check THIS team's boss is defeated
   const bossRows = await sql`
     SELECT status FROM boss_progress
-    WHERE game_id = ${gameId} AND boss_id = 'yourselves' AND status = 'defeated'
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND boss_id = 'yourselves' AND status = 'defeated'
     LIMIT 1
   `;
   if (bossRows.length === 0) {
@@ -1158,13 +1278,25 @@ export async function getCulpritReveal(
 
   const culpritRows = await sql`
     SELECT id, name FROM players
-    WHERE game_id = ${gameId} AND is_culprit = TRUE
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND is_culprit = TRUE
     LIMIT 1
   `;
-  if (culpritRows.length === 0) return { success: false, error: "No culprit assigned." };
+  if (culpritRows.length === 0) return { success: false, error: "No culprit assigned for this team." };
+
+  let photo: string | null = null;
+  try {
+    const photoRows = await sql`
+      SELECT photo FROM team_photos
+      WHERE game_id = ${gameId} AND team_id = ${teamId}
+      LIMIT 1
+    `;
+    photo = (photoRows[0] as { photo: string | null } | undefined)?.photo ?? null;
+  } catch {
+    // team_photos table missing — reveal works without the photo
+  }
 
   const culprit = culpritRows[0] as { id: string; name: string };
-  return { success: true, data: { culpritName: culprit.name, culpritPlayerId: culprit.id } };
+  return { success: true, data: { culpritName: culprit.name, culpritPlayerId: culprit.id, photo } };
 }
 
 // ==========================================

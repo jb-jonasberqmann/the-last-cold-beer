@@ -41,3 +41,18 @@ WHERE qp.game_id = rp.game_id
   AND qp.status = 'completed'
   AND rp.room_id = 'living-room'
   AND rp.status <> 'complete';
+
+-- ============================================================
+-- ADDITION (run this part if you already ran the section above):
+-- Ritual Record photos — one per team; the photographer ("witness")
+-- is secretly that team's culprit.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS team_photos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  team_id TEXT NOT NULL CHECK (team_id IN ('team-a', 'team-b')),
+  witness_player_id TEXT,
+  photo TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(game_id, team_id)
+);

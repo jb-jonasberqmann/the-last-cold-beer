@@ -679,7 +679,7 @@ export default function RoomPage({ params }: Props) {
                         await setScaredSilent(gameId, session.playerId);
                       }
                       if (activeQuest.id === "front-door-keybox") {
-                        await advanceAct(gameId, "act-1", "act-2");
+                        await advanceAct(gameId, "act-1", "act-2", teamId);
                       }
                       fetchData();
                     }}

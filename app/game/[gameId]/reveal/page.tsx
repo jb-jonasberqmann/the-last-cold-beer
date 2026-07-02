@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { getCulpritReveal } from "@/lib/game/actions";
+import { AgedPhoto } from "@/components/game/AgedPhoto";
+import type { TeamId } from "@/types/content";
 
 type RevealStage = "loading" | "radio-words" | "building" | "culprit" | "done";
 
@@ -14,25 +16,29 @@ const RADIO_LINES = [
   "You know who.",
 ];
 
-export default function RevealPage() {
+function RevealContent() {
   const { gameId } = useParams<{ gameId: string }>();
+  const searchParams = useSearchParams();
   const { session } = usePlayer();
   const playerId = session?.playerId ?? null;
+  const teamId = (searchParams.get("team") ?? session?.teamId ?? "team-a") as TeamId;
 
   const [stage, setStage] = useState<RevealStage>("loading");
   const [radioLineIndex, setRadioLineIndex] = useState(0);
   const [culpritName, setCulpritName] = useState<string | null>(null);
   const [isCulprit, setIsCulprit] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
 
-  // Fetch culprit once
+  // Fetch this TEAM's culprit + ritual photo once
   const fetchCulprit = useCallback(async () => {
     if (!gameId) return;
-    const result = await getCulpritReveal(gameId);
+    const result = await getCulpritReveal(gameId, teamId);
     if (result.success && result.data) {
       setCulpritName(result.data.culpritName);
       setIsCulprit(result.data.culpritPlayerId === playerId);
+      setPhoto(result.data.photo);
     }
-  }, [gameId, playerId]);
+  }, [gameId, teamId, playerId]);
 
   useEffect(() => {
     fetchCulprit();
@@ -131,6 +137,22 @@ export default function RevealPage() {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
+        {photo && (
+          <div className="mb-8">
+            <AgedPhoto
+              src={photo}
+              alt="The ritual record"
+              className="w-full rounded-lg border border-stone-800"
+              style={{ aspectRatio: "4 / 3" }}
+            />
+            <p className="text-stone-500 text-xs italic mt-3">
+              The ritual record. Taken tonight — or was it?
+              <br />
+              Count the faces. Someone is missing.
+            </p>
+          </div>
+        )}
+
         <p className="text-stone-500 text-xs tracking-widest uppercase mb-8">
           The last cold beer was taken by
         </p>
@@ -152,7 +174,9 @@ export default function RevealPage() {
 
         <p className="text-stone-500 text-sm leading-relaxed mb-2">
           {isCulprit
-            ? "You knew. You always knew. You just hadn't admitted it yet."
+            ? "You knew. You always knew. You held the camera so no one would see your hands."
+            : photo
+            ? `${culpritName ?? "They"} took the photo. ${culpritName ?? "They"} took the beer. The one missing from the record is the one who made it necessary.`
             : `${culpritName ?? "They"} took the last one. While everyone else was settling in.`}
         </p>
         <p className="text-stone-600 text-xs mt-4">
@@ -164,5 +188,13 @@ export default function RevealPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RevealPage() {
+  return (
+    <Suspense fallback={null}>
+      <RevealContent />
+    </Suspense>
   );
 }

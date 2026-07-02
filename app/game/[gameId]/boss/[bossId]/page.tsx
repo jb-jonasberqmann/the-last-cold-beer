@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { dealBossDamage, applyBossDamage } from "@/lib/game/actions";
+import { dealBossDamage, applyBossDamage, getTeamPhoto } from "@/lib/game/actions";
+import { AgedPhoto } from "@/components/game/AgedPhoto";
 import { formatOfferCost } from "@/lib/game/formatOffer";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { getBoss } from "@/content/bosses";
@@ -73,6 +74,9 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const [activeTab, setActiveTab] = useState<"fight" | "clues" | "log">("fight");
 
   // Drunk gamble mechanic
+  // YOURSELVES: the team's own ritual photo becomes the boss
+  const [teamPhoto, setTeamPhoto] = useState<string | null>(null);
+
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
   const [resistAnim, setResistAnim] = useState(false); // boss resist animation
@@ -132,6 +136,14 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
+
+  // Load the team's ritual photo once for the final boss
+  useEffect(() => {
+    if (bossId !== "yourselves" || !gameId) return;
+    getTeamPhoto(gameId, teamId, true).then((res) => {
+      if (res.success && res.data.photo) setTeamPhoto(res.data.photo);
+    });
+  }, [bossId, gameId, teamId]);
 
   // ── Auto-apply clue damage ─────────────────────────────────────────────────
   useEffect(() => {
@@ -427,7 +439,19 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
         className="relative overflow-hidden"
         style={{ height: "clamp(130px, 38vw, 190px)", marginTop: -4 }}
       >
-        {bossImage ? (
+        {bossId === "yourselves" && teamPhoto ? (
+          <AgedPhoto
+            src={teamPhoto}
+            alt={boss.title}
+            className="absolute inset-0"
+            style={{
+              animation: resistAnim
+                ? "resistBounce 0.9s ease-in-out"
+                : isLowHp ? "angryShake 0.75s ease-in-out infinite" : undefined,
+            }}
+            imgStyle={isLowHp ? { filter: "sepia(0.78) contrast(1.25) brightness(0.6) saturate(0.7) blur(0.4px)" } : undefined}
+          />
+        ) : bossImage ? (
           <img
             src={bossImage}
             alt={boss.title}
@@ -634,7 +658,7 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
           {/* YOURSELVES defeat → culprit reveal */}
           {bossId === "yourselves" && (
             <a
-              href={`/game/${gameId}/reveal`}
+              href={`/game/${gameId}/reveal?team=${teamId}`}
               className="mt-5 inline-block px-6 py-3 rounded-lg text-sm font-bold"
               style={{ background: "rgba(120,10,10,0.6)", border: "1px solid rgba(220,60,60,0.4)", color: "rgb(254,202,202)", fontFamily: "Georgia,serif" }}
             >
