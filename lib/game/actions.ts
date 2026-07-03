@@ -5,7 +5,7 @@
 
 import { sql } from "@/lib/db";
 import { generateRoomCode, checkAnswer, isRoomComplete } from "@/lib/game/helpers";
-import { getRoom, getQuest, getBoss, getChapter } from "@/content/index";
+import { getRoom, getQuest, getBoss, getChapter, getClue } from "@/content/index";
 import type { TeamId } from "@/types/content";
 import type { ActionResult, CreateGameResult, JoinGameResult } from "@/types/game";
 import type { DbTeamProgress, DbBossProgress, DbQuestProgress } from "@/types/database";
@@ -1038,6 +1038,41 @@ export async function setScaredSilent(gameId: string, playerId: string): Promise
 }
 
 // ==========================================
+// SET / CLEAR SUN BLIND
+// Called by UI right after the sunroom dare succeeds — marks the specific
+// player who took it. Cleared team-wide the moment the team reaches the
+// Act 2 boss (the house going dark levels the playing field again).
+// Non-fatal: requires the sun_blind migration on the live DB — if it
+// hasn't been run yet, this fails quietly rather than breaking the quest.
+// ==========================================
+
+export async function setSunBlind(gameId: string, playerId: string): Promise<ActionResult> {
+  try {
+    await sql`
+      UPDATE players SET player_status = 'sun_blind'
+      WHERE id = ${playerId} AND game_id = ${gameId}
+    `;
+    return { success: true, data: undefined };
+  } catch (e) {
+    console.error("setSunBlind failed (non-fatal — has the sun_blind migration been run?):", e);
+    return { success: false, error: "Could not set sun-blind status." };
+  }
+}
+
+export async function clearSunBlindForTeam(gameId: string, teamId: TeamId): Promise<ActionResult> {
+  try {
+    await sql`
+      UPDATE players SET player_status = 'normal'
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'sun_blind'
+    `;
+    return { success: true, data: undefined };
+  } catch (e) {
+    console.error("clearSunBlindForTeam failed (non-fatal):", e);
+    return { success: false, error: "Could not clear sun-blind status." };
+  }
+}
+
+// ==========================================
 // ENTER SINGLE-OCCUPANCY BEDROOM
 // First player to call this claims the room; all other team members are locked out.
 // ==========================================
@@ -1508,10 +1543,14 @@ async function _checkAndCompleteRoom(gameId: string, teamId: TeamId, roomId: str
             ${JSON.stringify({ room_id: roomId })}::jsonb)
   `;
 
-  // Award room clues
+  // Award room clues. Some clues are per-team variants (revealedTo) — a
+  // room can list both variants (e.g. fragment-driveway-a/-b) for display
+  // purposes, but only the one matching this team should actually award.
   const room = getRoom(roomId);
   if (room) {
     for (const clueId of room.rewardClueIds) {
+      const clue = getClue(clueId);
+      if (clue?.revealedTo && clue.revealedTo !== teamId) continue;
       await _awardClue(gameId, teamId, clueId);
     }
   }

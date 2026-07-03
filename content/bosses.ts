@@ -87,7 +87,7 @@ export const BOSSES: Boss[] = [
             rewardText: "Sleeping bag inside. Mads made it through the door.",
           },
           {
-            id: "mads-phone",
+            id: "mads-phone-team-a",
             label: "Mads is missing something",
             description:
               "Mads stops mid-unload, suddenly distracted. He pats his pockets, checks the car, pats his pockets again. \"Hang on. I'm missing something. I'm not carrying another box until I find it.\"",
@@ -104,6 +104,23 @@ export const BOSSES: Boss[] = [
             failureText: "The car is messier than it looks. Try again.",
           },
           {
+            id: "mads-phone-team-b",
+            label: "Mads is missing something",
+            description:
+              "Mads stops mid-unload, suddenly distracted. He pats his pockets, checks the car, pats his pockets again. \"Hang on. I'm missing something. I'm not carrying another box until I find it.\"",
+            type: "puzzle",
+            damage: 22,
+            puzzle: {
+              prompt:
+                "Mads freezes mid-carry. \"Wait — hang on. I wrote myself a note earlier, and now I can't tell you what it says, because I can't find the only place I wrote it down.\" He checks his jacket — no, his wallet's still there. Checks his jeans — no, keys are here too. \"It's not the cooler. It's not the sleeping bag either. Whatever it is, it's small enough that it's probably still in the car — I just haven't checked the right spot.\" What is he missing?",
+              answer: ["phone", "his phone", "the phone", "mobile", "his mobile", "cell phone", "telefon", "hans telefon", "mobilen", "hans mobil"],
+            },
+            hint: "Small. Flat. The kind of thing you'd write a note on if you didn't have paper. Check the seat he wasn't sitting in.",
+            rewardText:
+              "His phone. Slid under the passenger seat when he braked turning in. That's why he never answered all evening — it's been on the floor of the car the whole time.",
+            failureText: "Not that — he already ruled that one out himself.",
+          },
+          {
             id: "mads-offer-boost",
             label: "Bribe Mads",
             description: "Pay the ritual cost and he stops dragging his feet. One-time only — he won't be bought twice.",
@@ -116,9 +133,9 @@ export const BOSSES: Boss[] = [
       },
     ],
     defeatText:
-      "Mads is finally empty-handed. He grins and steps aside. \"The code? You went through the shed, right? Then you've already got everything.\" The path to the front door is clear. Combine all five fragments and open the key box.",
+      "Mads is finally empty-handed. He grins and steps aside. \"The code? You went through the shed, right? Then you've already got everything.\" The path to the front door is clear. Combine all four fragments and open the key box.",
     victoryAdvantage:
-      "The way is clear: head to the front door and enter the five-digit code.",
+      "The way is clear: head to the front door and enter the four-digit code.",
     da: {
       title: "The Keybearer",
       subtitle: "Forsinket. Uundskyldende. Armene fuldstændig fulde.",
@@ -129,7 +146,7 @@ export const BOSSES: Boss[] = [
       defeatText:
         "Mads er endelig tomhændet. Han griner og træder til side. \"Koden? I var i skuret, ikke? Så har I allerede det hele.\" Vejen til hoveddøren er fri.",
       victoryAdvantage:
-        "Vejen er fri: gå til hoveddøren og indtast den femcifrede kode.",
+        "Vejen er fri: gå til hoveddøren og indtast den firecifrede kode.",
       phases: [
         {
           phase: 1,
@@ -139,7 +156,8 @@ export const BOSSES: Boss[] = [
             { id: "mads-cooler", label: "Bær den tunge køler", rewardText: "Køleren er inde. Mads' arme er lidt mere fri.", failureText: "Den er for tung til én person." },
             { id: "mads-beer", label: "Tag ølkasserne", rewardText: "Øl inde. Én ting færre Mads bærer." },
             { id: "mads-door", label: "Hold døren åben", rewardText: "Sovepose inde. Mads kom igennem døren." },
-            { id: "mads-phone", label: "Mads mangler noget", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger dem altid der og glemmer det altid.\" Hvad finder du?", hint: "Solskærm. Hvad rækker man ud efter når aftensolen rammer forruden?", rewardText: "Solbrillerne. I solskærmen. Han havde dem hele tiden. Mads tager dem på, griner, og sætter tempoet betydeligt op.", failureText: "Bilen er mere rodet end den ser ud." },
+            { id: "mads-phone-team-a", label: "Mads mangler noget", puzzlePrompt: "Mads tjekker hver lomme. Jakke — tom. Jeans — tom. Bilsæde — intet. Så ser han på jer. \"Tjek solskærmen,\" siger han. \"Jeg lægger dem altid der og glemmer det altid.\" Hvad finder du?", hint: "Solskærm. Hvad rækker man ud efter når aftensolen rammer forruden?", rewardText: "Solbrillerne. I solskærmen. Han havde dem hele tiden. Mads tager dem på, griner, og sætter tempoet betydeligt op.", failureText: "Bilen er mere rodet end den ser ud." },
+            { id: "mads-phone-team-b", label: "Mads mangler noget", puzzlePrompt: "Mads fryser midt i en tur. \"Vent — jeg skrev noget ned tidligere, og nu kan jeg ikke huske hvad, for det eneste sted det står, er det ene sted jeg ikke har fundet endnu.\" Han tjekker jakken — nej, tegnebogen er der stadig. Tjekker jeans — nej, nøglerne er her også. \"Det er ikke køleren. Det er heller ikke soveposen. Hvad end det er, er det lille nok til at det nok stadig er i bilen — jeg har bare ikke tjekket det rigtige sted.\" Hvad mangler han?", hint: "Lille. Fladt. Den slags man skriver en seddel på hvis man ikke har papir. Tjek sædet han ikke sad i.", rewardText: "Hans telefon. Gled ind under passagersædet da han bremsede hårdt op ind ad indkørslen. Derfor svarede han aldrig hele aftenen — den har ligget på bilens gulv hele tiden.", failureText: "Ikke den — det har han allerede afkrydset selv." },
             { id: "mads-offer-boost", label: "Bestik Mads", rewardText: "Mads griner. Bevæger sig lidt hurtigere. 25 fremskridt." },
           ],
         },
@@ -267,6 +285,18 @@ export const BOSSES: Boss[] = [
             offerCost: 2,
             rewardText: "The static softens. 20 HP restored.",
           },
+          {
+            id: "radio-sunroom-bonus",
+            label: "Already lost a sense tonight",
+            description:
+              "Whoever went sun-blind in the sunroom knows exactly what it feels like to lose a sense to this house. That familiarity hits automatically the moment you walk in.",
+            type: "clue_check",
+            damage: 20,
+            requiredClueId: "sunroom-blind-mark",
+            rewardText:
+              "Losing your sight once already made this easier to face. Applied automatically. 20 HP restored.",
+            failureText: "Nobody on your team went sun-blind in the sunroom.",
+          },
         ],
       },
       {
@@ -354,6 +384,7 @@ export const BOSSES: Boss[] = [
             { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Erstatningssikringen er klistret til indersiden af paneldøren. En seddel ved siden af den: \"Ikke første gang. Vil ikke være den sidste. Match vurderingen præcis.\" Hvad gør du?", hint: "Begge sikringer matcher. Svaret er indlysende.", rewardText: "Sikringen er udskiftet. Den grønne skive lyser op. 30 HP genoprettet.", failureText: "Panelet lukker. Statikken fortsætter." },
             { id: "radio-frequency", label: "Stem frekvensen", rewardText: "Skiven låser. Det grønne lys blusser. 35 HP genoprettet.", failureText: "Du har brug for alle tre radiofragmenter først." },
             { id: "radio-offer-boost", label: "Hæld en ud til radioen", rewardText: "Statikken dæmpes. 20 HP genoprettet." },
+            { id: "radio-sunroom-bonus", label: "Har allerede mistet en sans i aften", rewardText: "At have mistet synet én gang gjorde dette lettere at møde. Anvendt automatisk. 20 HP genoprettet.", failureText: "Ingen på jeres hold blev solblinde i vinterhaven." },
           ],
         },
         {

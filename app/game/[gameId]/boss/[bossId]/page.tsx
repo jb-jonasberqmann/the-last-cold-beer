@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { dealBossDamage, applyBossDamage, getTeamPhoto } from "@/lib/game/actions";
+import { dealBossDamage, applyBossDamage, getTeamPhoto, clearSunBlindForTeam } from "@/lib/game/actions";
 import { AgedPhoto } from "@/components/game/AgedPhoto";
 import { formatOfferCost } from "@/lib/game/formatOffer";
 import { GameLayout } from "@/components/layout/GameLayout";
@@ -25,21 +25,38 @@ const BOSS_ARTWORK: Record<string, string> = {
 
 // Clue hint labels per puzzle action (shown in cyan under the card description)
 const PUZZLE_CLUE_HINTS: Record<string, string> = {
-  "radio-frequency": "Uses the Broadcast Log from the Tool Shed.",
-  "radio-fuse":      "Check what you found in the Bunk Room.",
-  "yourselves-a1":   "Requires the artifact from Act 1.",
-  "yourselves-a2":   "Requires both team artifacts combined.",
+  "radio-frequency":     "Requires all three radio fragments — Living Room, Kitchen, and Activity Room.",
+  "radio-sunroom-bonus": "Requires the Sunroom's sun-blind clue — auto-applies if you have it.",
+  "yourselves-a1":       "Requires the artifact from Act 1.",
+  "yourselves-a2":       "Requires both team artifacts combined.",
 };
 
-// Free action: Act 1 boss — complete "carport" (optional branch) unlocks a free boost
-// Act 2 boss — completing "tool-shed" unlocks a free radio sabotage action
+// Free action: a room-linked bonus that waives one action's Offer cost.
+// Act 1 boss — completing "carport" (optional branch) unlocks a free boost.
+// Act 2 boss — completing "sunroom" (the sun-blind dare) unlocks a free
+// Grand Offering, the biggest single action in the fight — a payoff sized
+// to match the cost of going half-blind for the rest of the act.
 const FREE_ACTION_ROOM: Record<string, string> = {
   "mads":       "carport",
-  "the-radio":  "tool-shed",
+  "the-radio":  "sunroom",
 };
 const FREE_ACTION_ID: Record<string, string> = {
   "mads":      "mads-offer-boost",
-  "the-radio": "radio-offer-boost",
+  "the-radio": "radio-final-offer",
+};
+
+// Flavor label for the free-action toast, per boss.
+const FREE_ACTION_LABEL: Record<string, string> = {
+  "mads":      "🚙 Carport Advantage!",
+  "the-radio": "🌇 Sun-Blind Advantage!",
+};
+const FREE_ACTION_ICON: Record<string, string> = {
+  "mads":      "🚙",
+  "the-radio": "🌇",
+};
+const FREE_ACTION_DESC: Record<string, string> = {
+  "mads":      "You explored the carport — free bribe, no cost",
+  "the-radio": "Someone went sun-blind in the sunroom — the Grand Offering is free",
 };
 
 interface Props {
@@ -117,6 +134,15 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const autoApplied = useRef<Set<string>>(new Set());
   const [autoApplyNotices, setAutoApplyNotices] = useState<{ actionId: string; label: string; damage: number }[]>([]);
 
+  // Sun-blind clears the moment a team reaches the Radio boss — the house
+  // going dark levels the playing field. Only needs to fire once per visit.
+  const sunBlindCleared = useRef(false);
+  useEffect(() => {
+    if (bossId !== "the-radio" || !gameId || !teamId || sunBlindCleared.current) return;
+    sunBlindCleared.current = true;
+    clearSunBlindForTeam(gameId, teamId);
+  }, [bossId, gameId, teamId]);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem(autoAppliedKey);
@@ -155,7 +181,13 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
       } catch {}
     }
 
-    const bossRows: DbBossProgress[] = data.bossProgress ?? [];
+    // getAllBossProgress returns rows for EVERY boss in the game, not just
+    // this one — must filter by boss_id too, or an already-defeated earlier
+    // boss (e.g. Mads) can get picked up here and show this boss as defeated
+    // on load, and a GM boss reset (which only touches this bossId) won't fix it.
+    const bossRows: DbBossProgress[] = (data.bossProgress ?? []).filter(
+      (b: DbBossProgress) => b.boss_id === bossId
+    );
     setBossProgressA(bossRows.find((b) => b.team_id === "team-a") ?? null);
     setBossProgressB(bossRows.find((b) => b.team_id === "team-b") ?? null);
 
@@ -300,7 +332,8 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
     if (result.success && result.data.damage > 0) {
       try { localStorage.setItem(freeActionUsedKey, "1"); } catch {}
       setFreeActionUsed(true);
-      setFeedback({ actionId: "free-action", text: `🚙 Carport Advantage! ${result.data.damage} damage dealt. ${result.data.rewardText ?? ""}`, success: true });
+      const freeLabel = FREE_ACTION_LABEL[bossId] ?? "🎁 Free Action!";
+      setFeedback({ actionId: "free-action", text: `${freeLabel} ${result.data.damage} damage dealt. ${result.data.rewardText ?? ""}`, success: true });
       if (result.data.counterAttack && !result.data.defeated) {
         setCounterModal(result.data.counterAttack as CounterEventData);
       }
@@ -763,11 +796,11 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                   className={cn("rounded-xl border p-3 flex items-center gap-3", freeActionSpent ? "opacity-45 border-stone-800/50" : "border-stone-700/40")}
                   style={{ background: "rgba(8,16,22,0.85)", fontFamily: "Georgia, serif" }}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-stone-800/80 flex items-center justify-center text-lg flex-shrink-0">🚙</div>
+                  <div className="w-9 h-9 rounded-lg bg-stone-800/80 flex items-center justify-center text-lg flex-shrink-0">{FREE_ACTION_ICON[bossId] ?? "🎁"}</div>
                   <div className="flex-1 min-w-0">
-                    <div className={cn("text-sm font-bold", freeActionSpent ? "text-stone-500" : "text-cyan-400")}>Carport Advantage</div>
+                    <div className={cn("text-sm font-bold", freeActionSpent ? "text-stone-500" : "text-cyan-400")}>{FREE_ACTION_LABEL[bossId]?.replace(/^\S+\s/, "") ?? "Free Advantage"}</div>
                     <div className="text-xs text-stone-500 mt-0.5">
-                      {freeActionSpent ? "✓ Used — one-time only" : "You explored the carport — free bribe, no cost"}
+                      {freeActionSpent ? "✓ Used — one-time only" : (FREE_ACTION_DESC[bossId] ?? "Free action, no cost")}
                     </div>
                   </div>
                   {freeActionSpent ? (

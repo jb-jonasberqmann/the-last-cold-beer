@@ -24,7 +24,7 @@ export interface DbGame {
   updated_at: string;
 }
 
-export type PlayerStatus = "normal" | "scared_silent";
+export type PlayerStatus = "normal" | "scared_silent" | "sun_blind";
 
 export interface DbPlayer {
   id: string;

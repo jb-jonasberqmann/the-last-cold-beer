@@ -13,8 +13,9 @@ export const QUESTS: Quest[] = [
 
   // --- DRIVEWAY ---
   {
-    id: "driveway-arrival",
+    id: "driveway-arrival-a",
     roomId: "driveway",
+    forTeam: "team-a",
     type: "photo",
     title: "The Ritual Record",
     description:
@@ -24,12 +25,37 @@ export const QUESTS: Quest[] = [
     order: 1,
     isRequired: true,
     hints: [],
-    rewardText: "The record is taken. The house is satisfied — for now. Arrival registered.",
+    rewardClueId: "fragment-driveway-a",
+    rewardText:
+      "Vibe check complete. I count 3 of you. I might be wrong. I might be right. Who are you to judge — I'm only a bot. Filed as the arrival count. Might matter later.",
     da: {
       title: "Ritualets Optegnelse",
       description: "Huset fører optegnelser over alle der besøger det. I aften er ingen undtagelse. Inden noget andet skal jeres ankomst dokumenteres.",
       prompt: "Én af jer holder kameraet. Saml resten af holdet foran huset og tag ÉT billede af dem — alle sammen, i samme billede. Huset accepterer ikke mindre.",
-      rewardText: "Optegnelsen er taget. Huset er tilfreds — indtil videre. Ankomst registreret.",
+      rewardText: "Vibe check gennemført. Jeg tæller 3 af jer. Jeg kan tage fejl. Jeg kan have ret. Hvem er I til at dømme — jeg er bare en bot. Noteret som ankomsttallet. Kan vise sig at betyde noget senere.",
+    },
+  },
+  {
+    id: "driveway-arrival-b",
+    roomId: "driveway",
+    forTeam: "team-b",
+    type: "photo",
+    title: "The Ritual Record",
+    description:
+      "The house keeps a record of everyone who visits. Tonight is no different. Before anything else, your arrival must be documented.",
+    prompt:
+      "One of you holds the camera. Gather the rest of your team in front of the house and take ONE photo of them — everyone, together, all in frame. The house will not accept anything less.",
+    order: 1,
+    isRequired: true,
+    hints: [],
+    rewardClueId: "fragment-driveway-b",
+    rewardText:
+      "Vibe check complete. I count 6 of you. I might be wrong. I might be right. Who are you to judge — I'm only a bot. Filed as the arrival count. Might matter later.",
+    da: {
+      title: "Ritualets Optegnelse",
+      description: "Huset fører optegnelser over alle der besøger det. I aften er ingen undtagelse. Inden noget andet skal jeres ankomst dokumenteres.",
+      prompt: "Én af jer holder kameraet. Saml resten af holdet foran huset og tag ÉT billede af dem — alle sammen, i samme billede. Huset accepterer ikke mindre.",
+      rewardText: "Vibe check gennemført. Jeg tæller 6 af jer. Jeg kan tage fejl. Jeg kan have ret. Hvem er I til at dømme — jeg er bare en bot. Noteret som ankomsttallet. Kan vise sig at betyde noget senere.",
     },
   },
   {
@@ -60,33 +86,63 @@ export const QUESTS: Quest[] = [
 
   // --- TERRACE ---
   {
-    id: "terrace-railing",
+    id: "terrace-shelf-a",
     roomId: "terrace",
+    forTeam: "team-a",
     type: "puzzle",
-    title: "The Railing",
+    title: "The Shelf Through the Glass",
     description:
-      "Check the underside of the terrace railing — specifically near the third post from the left. People carve things in railings when they want them found later but not immediately.",
+      "Through the terrace glass: a shelf holds ten numbered spines, 0 through 9, evenly spaced — except one slot on the shelf is empty.",
     prompt:
-      "You find a digit scratched into the underside of the railing near the third post. What is it?",
+      "Reading left to right, the spines you can make out are: 4, 7, 2, 9, 8, 1, 0, 3, 6. Which digit never made it onto the shelf?",
     order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Run your hand along the underside of the railing." },
-      { order: 2, offerCost: 1, text: "Third post from the left. Underside. A single digit." },
+      { order: 1, offerCost: 1, text: "Write out 0 through 9. Cross off every digit you can see on the shelf. One will be left." },
     ],
     answer: {
-      correct: ["7", "seven", "syv"],
+      correct: ["5", "five", "fem"],
       normalized: true,
     },
-    rewardClueId: "fragment-terrace",
-    rewardText: "7. Scratched into the wood with something sharp. Someone was here before you.",
-    failureText: "Look again. It's there.",
+    rewardClueId: "fragment-terrace-a",
+    rewardText: "5. The missing spine. Someone took that one off the shelf on purpose.",
+    failureText: "Cross off each digit you can see, one at a time. Whatever's left over is the answer.",
     da: {
-      title: "Gelænderet",
-      description: "Tjek undersiden af terrasse-gelænderet — specifikt ved den tredje stolpe fra venstre.",
-      prompt: "Du finder et ciffer ridset ind i undersiden af gelænderet ved den tredje stolpe. Hvad er det?",
-      rewardText: "7. Ridset ind i træet med noget skarpt. Nogen var her før dig.",
-      failureText: "Kig igen. Det er der.",
+      title: "Hylden Gennem Glasset",
+      description: "Gennem terrassens glas: en hylde med ti nummererede rygge, 0 til 9, jævnt fordelt — undtagen én tom plads på hylden.",
+      prompt: "Læst fra venstre mod højre kan du se ryggene: 4, 7, 2, 9, 8, 1, 0, 3, 6. Hvilket ciffer nåede aldrig hylden?",
+      rewardText: "5. Den manglende ryg. Nogen fjernede den fra hylden med vilje.",
+      failureText: "Streg hvert ciffer du kan se ud, ét ad gangen. Det der er tilbage er svaret.",
+    },
+  },
+  {
+    id: "terrace-shelf-b",
+    roomId: "terrace",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Shelf Through the Glass",
+    description:
+      "Through the terrace glass: a shelf holds ten numbered spines, 0 through 9, evenly spaced — except one slot on the shelf is empty.",
+    prompt:
+      "Reading left to right, the spines you can make out are: 5, 8, 1, 9, 4, 0, 7, 3, 6. Which digit never made it onto the shelf?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Write out 0 through 9. Cross off every digit you can see on the shelf. One will be left." },
+    ],
+    answer: {
+      correct: ["2", "two", "to"],
+      normalized: true,
+    },
+    rewardClueId: "fragment-terrace-b",
+    rewardText: "2. The missing spine. Someone took that one off the shelf on purpose.",
+    failureText: "Cross off each digit you can see, one at a time. Whatever's left over is the answer.",
+    da: {
+      title: "Hylden Gennem Glasset",
+      description: "Gennem terrassens glas: en hylde med ti nummererede rygge, 0 til 9, jævnt fordelt — undtagen én tom plads på hylden.",
+      prompt: "Læst fra venstre mod højre kan du se ryggene: 5, 8, 1, 9, 4, 0, 7, 3, 6. Hvilket ciffer nåede aldrig hylden?",
+      rewardText: "2. Den manglende ryg. Nogen fjernede den fra hylden med vilje.",
+      failureText: "Streg hvert ciffer du kan se ud, ét ad gangen. Det der er tilbage er svaret.",
     },
   },
   {
@@ -122,90 +178,105 @@ export const QUESTS: Quest[] = [
     order: 1,
     isRequired: true,
     hints: [],
-    rewardText: "The hollow yields something. The garden has been used as a hiding spot before.",
+    rewardText: "The hollow itself is empty. But something is carved into the bark right beside it, worth reading closely.",
     da: {
       title: "Søg Haven",
       description: "1.250 kvadratmeter. Naturlig. Kystmæssig. Gruppen deler sig for at søge.",
       prompt: "Del op og søg haven. Én spiller går til den gamle egetræ ved baghegnet og tjekker hulheden.",
+      rewardText: "Selve hulheden er tom. Men noget er ridset ind i barken lige ved siden af den, værd at læse nøje.",
     },
   },
   {
-    id: "garden-oak-hollow",
+    id: "garden-oak-riddle-a",
     roomId: "garden",
+    forTeam: "team-a",
     type: "puzzle",
-    title: "The Oak Tree Hollow",
+    title: "What the Oak Knows",
     description:
-      "The old oak near the back fence has a hollow at about waist height. Inside: a folded scrap of paper. What digit is on it?",
-    prompt: "Open the folded paper from the oak hollow. What number is written on it?",
+      "Carved into the old oak near the back fence — not a number, but a description of one.",
+    prompt:
+      "\"I am the loneliest digit. Nothing below me is stranger than being alone. I am also the very first — put me beside any number, and it means more than it did a moment ago.\" What digit is being described?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "The hollow is at about waist height. The paper is folded twice." },
+      { order: 1, offerCost: 1, text: "It's the first number anyone ever counts to." },
     ],
     answer: {
       correct: ["1", "one", "en", "et"],
       normalized: true,
     },
-    rewardClueId: "fragment-garden",
-    rewardText: "1. Folded and waiting in the hollow. The garden keeps secrets.",
-    failureText: "The paper has exactly one thing on it.",
+    rewardClueId: "fragment-garden-a",
+    rewardText: "1. Carved in one clean line. The garden keeps secrets — this one just needed reading, not digging.",
+    failureText: "Think about counting. What's the very first number you ever say?",
     da: {
-      title: "Egetræets Hulhed",
-      description: "Den gamle egetræ ved baghegnet har en hulhed i hoftehøjde. Indeni: et foldet stykke papir. Hvilket ciffer er på det?",
-      prompt: "Åbn det foldede papir fra egetræets hulhed. Hvilken nummer er skrevet på det?",
-      rewardText: "1. Foldet og ventende i hulheden.",
-      failureText: "Papiret har præcis én ting på sig.",
+      title: "Hvad Egen Ved",
+      description: "Ridset ind i den gamle egetræ ved baghegnet — ikke et tal, men en beskrivelse af ét.",
+      prompt: "\"Jeg er det mest ensomme ciffer. Intet under mig er mærkeligere end at være alene. Jeg er også den allerførste — sæt mig ved siden af et hvilket som helst tal, og det betyder mere end det gjorde et øjeblik før.\" Hvilket ciffer bliver beskrevet?",
+      rewardText: "1. Ridset i én ren streg. Haven holder hemmeligheder — denne skulle bare læses, ikke graves frem.",
+      failureText: "Tænk på at tælle. Hvad er det allerførste tal du siger?",
+    },
+  },
+  {
+    id: "garden-oak-riddle-b",
+    roomId: "garden",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "What the Oak Knows",
+    description:
+      "Carved into the old oak near the back fence — not a number, but a description of one.",
+    prompt:
+      "\"I am an even number. If you cut me in half horizontally, I become two zeros. If I tip onto my side, I become infinity. What am I?\"",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Picture the shape. Two circles, stacked." },
+    ],
+    answer: {
+      correct: ["8", "eight", "otte"],
+      normalized: true,
+    },
+    rewardClueId: "fragment-garden-b",
+    rewardText: "8. Carved as two stacked circles. The garden keeps secrets — this one just needed reading, not digging.",
+    failureText: "Draw the shape the riddle is describing. What digit looks like that?",
+    da: {
+      title: "Hvad Egen Ved",
+      description: "Ridset ind i den gamle egetræ ved baghegnet — ikke et tal, men en beskrivelse af ét.",
+      prompt: "\"Jeg er et lige tal. Hvis du skærer mig over vandret, bliver jeg til to nuller. Hvis jeg vipper om på siden, bliver jeg til uendelighed. Hvad er jeg?\"",
+      rewardText: "8. Ridset som to stablede cirkler. Haven holder hemmeligheder — denne skulle bare læses, ikke graves frem.",
+      failureText: "Tegn formen som gåden beskriver. Hvilket ciffer ligner det?",
     },
   },
 
   // --- SHED ---
   {
-    id: "shed-door-search",
+    id: "shed-date-list-quest",
     roomId: "shed",
     type: "puzzle",
-    title: "Behind the Door",
+    title: "The Date List",
     description:
-      "The shed door opens with a shove. Something is taped to the back of it, behind the hinges — almost invisible unless you pull the door all the way open and look at the back.",
+      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates. All crossed out except the last one.\n\n~~July 19th 2010~~\n~~July 11th 2011~~\n~~July 23rd 2012~~\n~~July 15th 2013~~\n~~July 14th 2014~~\n~~July 20th 2015~~\n~~July 18th 2016~~\n~~July 10th 2017~~\n~~July 16th 2018~~\n~~July 22nd 2019~~\n~~July 13th 2020~~\n~~July 19th 2021~~\n~~July 11th 2022~~\n~~July 17th 2023~~\n~~July 15th 2024~~\n~~July 21st 2025~~\n\n**Tonight's date — not crossed out.**",
     prompt:
-      "Pull the shed door all the way open and check the back of it, behind the hinges. What digit is written on the tape there?",
+      "Read the list again, top to bottom. Every line has exactly one thing in common that never changes, no matter the year. Find it — then turn what you find into the digit that matches it.",
     order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "The tape is on the back of the door, not the front. Behind the hinges." },
+      { order: 1, offerCost: 1, text: "Ignore the day. Ignore the year. Look at what's left." },
+      { order: 2, offerCost: 1, text: "It's a month. Which number month is it?" },
     ],
     answer: {
-      correct: ["9", "nine", "ni"],
+      correct: ["7", "seven", "syv"],
       normalized: true,
     },
     rewardClueId: "fragment-shed",
-    rewardText: "9. On tape, on the back of the door. Placed where you'd only find it if you were really looking.",
-    failureText: "The number is on the tape. Behind the hinges.",
-    da: {
-      title: "Bag Døren",
-      description: "Skurets dør åbner med et skub. Noget er klistret på bagsiden af den, bag hængserne.",
-      prompt: "Træk skurets dør helt åben og tjek bagsiden af den, bag hængserne. Hvilket ciffer er skrevet på tapen der?",
-      rewardText: "9. På tape, på bagsiden af døren.",
-      failureText: "Nummeret er på tapen. Bag hængserne.",
-    },
-  },
-  {
-    id: "shed-date-list-quest",
-    roomId: "shed",
-    type: "social_challenge",
-    title: "The Date List",
-    description:
-      "On the inside wall of the shed, laminated and pinned: a list of dates. All crossed out except one. Read it. Talk about it. What does the group make of it?",
-    prompt:
-      "Read the date list on the shed wall as a group. What do you notice? One player must say something about it out loud — funny, uneasy, confused, whatever. The group votes on whether their observation counts.",
-    order: 2,
-    isRequired: true,
-    hints: [],
-    rewardClueId: "shed-date-list",
-    rewardText: "The list is in the Case File. It seemed easy to explain in Act 1. It will not seem easy later. And one more thing — someone wrote a small digit in the corner, next to tonight's date. That looks like a code fragment.",
+    rewardText:
+      "7. Every single date falls in July — the seventh month, without exception, across sixteen years. Someone has been keeping track. Every year. They always cross the date out.",
+    failureText: "The day changes. The year changes. One thing on every line never does.",
     da: {
       title: "Datolisten",
-      description: "På indervæggen i skuret, lamineret og fastgjort: en liste af datoer. Alle overstreget undtagen én.",
-      prompt: "Læs datolisten på skurvæggen som gruppe. Hvad lægger I mærke til? Én spiller skal sige noget om det højt.",
+      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer. Alle overstreget undtagen den sidste.\n\n~~19. juli 2010~~\n~~11. juli 2011~~\n~~23. juli 2012~~\n~~15. juli 2013~~\n~~14. juli 2014~~\n~~20. juli 2015~~\n~~18. juli 2016~~\n~~10. juli 2017~~\n~~16. juli 2018~~\n~~22. juli 2019~~\n~~13. juli 2020~~\n~~19. juli 2021~~\n~~11. juli 2022~~\n~~17. juli 2023~~\n~~15. juli 2024~~\n~~21. juli 2025~~\n\n**Aftenens dato — ikke overstreget.**",
+      prompt: "Læs listen igen, top til bund. Hver linje har præcis én ting til fælles, som aldrig ændrer sig, uanset året. Find den — og omsæt det du finder til det ciffer der passer.",
+      rewardText: "7. Hver eneste dato falder i juli — den syvende måned, uden undtagelse, gennem seksten år. Nogen har holdt styr på det. Hvert år. De overstreger altid datoen.",
+      failureText: "Dagen ændrer sig. Året ændrer sig. Én ting på hver linje gør aldrig.",
     },
   },
 
@@ -280,33 +351,32 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Key Box",
     description:
-      "Five digits. Open your Case File and find the five Code Fragments. The order is the order you found them: Driveway first, then Terrace, Garden, Shed, and the Date List last. Each fragment is a single digit. Read them in that order and enter the five-digit code.",
+      "Four digits. Open your Case File and find your four Code Fragments. The order is the order you found them: Driveway first, then Terrace, Garden, and Shed last. Each fragment is a single digit. Read them in that order and enter the four-digit code.",
     prompt:
-      "Ask one of your team members to open the Case File (🗂 top right on the map screen — you can't access it from inside a room). Find the five Code Fragment clues and read out each digit:\n\n" +
+      "Ask one of your team members to open the Case File (🗂 top right on the map screen — you can't access it from inside a room). Find your four Code Fragment clues and read out each digit:\n\n" +
       "1. Code Fragment — Driveway\n" +
       "2. Code Fragment — Terrace\n" +
       "3. Code Fragment — Garden\n" +
-      "4. Code Fragment — Shed\n" +
-      "5. Code Fragment — The Date List\n\n" +
-      "Combine the five digits in that order. Enter the five-digit code below.",
+      "4. Code Fragment — Shed\n\n" +
+      "Combine the four digits in that order. Enter the four-digit code below.",
     order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "The digit for each location is written in bold inside each Code Fragment clue in your Case File. Open 🗂, find all five 'Code Fragment' entries, read the bold number in each." },
-      { order: 2, offerCost: 2, text: "Driveway: 3. Terrace: 7. Garden: 1. Shed: 9. Date list: 4. Code: 37194." },
+      { order: 1, offerCost: 1, text: "The digit for each location is written in bold inside each Code Fragment clue in your Case File. Open 🗂, find your four 'Code Fragment' entries, read the bold number in each." },
+      { order: 2, offerCost: 2, text: "Read the fragments in the order you found them — Driveway, Terrace, Garden, Shed — and combine the four digits into one code." },
     ],
     answer: {
-      correct: ["37194", "3 7 1 9 4"],
+      correct: ["3517", "3 5 1 7", "6287", "6 2 8 7"],
       normalized: true,
     },
     rewardText: "Click. The key box opens. The door unlocks. Act 2 begins.",
-    failureText: "The key box rejects it. Open your Case File and double-check each Code Fragment — the order is Driveway → Terrace → Garden → Shed → Date List.",
+    failureText: "The key box rejects it. Open your Case File and double-check each Code Fragment — the order is Driveway → Terrace → Garden → Shed.",
     da: {
       title: "Nøgleboksen",
-      description: "Fem cifre. Åbn din sagsmappen og find de fem Kodefragmenter. Rækkefølgen er den du fandt dem: Indkørslen først, så Terrassen, Haven, Skuret og Datolisten sidst.",
-      prompt: "Bed et af jeres holdmedlemmer om at åbne sagsmappen (🗂 øverst til højre på kortskærmen — I kan ikke åbne den inde i et rum). Find de fem Kodefragment-ledetråde og læs hvert ciffer:\n\n1. Kodefragment — Indkørslen\n2. Kodefragment — Terrassen\n3. Kodefragment — Haven\n4. Kodefragment — Skuret\n5. Kodefragment — Datolisten\n\nKombiner de fem cifre i den rækkefølge. Indtast den femsifrede kode.",
+      description: "Fire cifre. Åbn sagsmappen og find jeres fire Kodefragmenter. Rækkefølgen er den I fandt dem: Indkørslen først, så Terrassen, Haven og Skuret sidst.",
+      prompt: "Bed et af jeres holdmedlemmer om at åbne sagsmappen (🗂 øverst til højre på kortskærmen — I kan ikke åbne den inde i et rum). Find jeres fire Kodefragment-ledetråde og læs hvert ciffer:\n\n1. Kodefragment — Indkørslen\n2. Kodefragment — Terrassen\n3. Kodefragment — Haven\n4. Kodefragment — Skuret\n\nKombiner de fire cifre i den rækkefølge. Indtast den firecifrede kode.",
       rewardText: "Klik. Nøgleboksen åbner. Døren låses op. Akt 2 begynder.",
-      failureText: "Nøgleboksen afviser det. Tjek rækkefølgen.",
+      failureText: "Nøgleboksen afviser det. Tjek rækkefølgen: Indkørslen → Terrassen → Haven → Skuret.",
     },
   },
 
@@ -335,19 +405,20 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "double-room-note",
+    id: "double-room-note-a",
     roomId: "double-room",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Unfinished Note",
     description:
       "On the bedside table: a note. It ends mid-sentence, mid-word almost. The clue word appears twice in what's written — the same word, used in two different ways.",
     prompt:
-      "Read the note from the double room bedside table. What word appears twice and seems to carry the most weight?\n\n*\"We owed it to each other. We owed it to the house. I know we said we'd come back and finish what we—\"*",
+      "Read the note from the double room bedside table. What word appears twice and seems to carry the most weight — and what fills the blank at the end?\n\n*\"We owed it to each other. We owed it to the house. I know we said we'd come back and finish what we ____.\"*",
     order: 2,
     isRequired: true,
     isPrivate: true,
     hints: [
-      { order: 1, offerCost: 1, text: "The word appears in the first two sentences." },
+      { order: 1, offerCost: 1, text: "Whatever fills the blank has to be the same word as the first two sentences — read them again." },
     ],
     answer: {
       correct: ["owed", "skyldte"],
@@ -356,13 +427,45 @@ export const QUESTS: Quest[] = [
     rewardClueId: "word-owed",
     rewardText:
       "Owed. The word is in the Case File. Remember it — you'll need it in the Living Room.",
-    failureText: "Read the first two sentences again.",
+    failureText: "Read the first two sentences again. The blank has to match them.",
     da: {
       title: "Den Uafsluttede Seddel",
       description: "På natbordet: en seddel. Den slutter midt i en sætning.",
-      prompt: "Læs sedlen fra dobbeltværelsets natbord. Hvilket ord optræder to gange og synes at bære mest vægt?\n\n*\"Vi skyldte det hinanden. Vi skyldte det huset. Jeg ved vi sagde vi ville komme tilbage og afslutte hvad vi—\"*",
+      prompt: "Læs sedlen fra dobbeltværelsets natbord. Hvilket ord optræder to gange og synes at bære mest vægt — og hvad udfylder det blanke felt til sidst?\n\n*\"Vi skyldte det hinanden. Vi skyldte det huset. Jeg ved vi sagde vi ville komme tilbage og afslutte hvad vi ____.\"*",
       rewardText: "Skyldte. Ordet er i sagsmappen.",
-      failureText: "Læs de to første sætninger igen.",
+      failureText: "Læs de to første sætninger igen. Det blanke felt skal matche dem.",
+    },
+  },
+  {
+    id: "double-room-note-b",
+    roomId: "double-room",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Unfinished Note",
+    description:
+      "On the bedside table: a note. It ends mid-sentence, mid-word almost. The clue word appears twice in what's written — the same word, used in two different ways.",
+    prompt:
+      "Read the note from the double room bedside table. What word appears twice and seems to carry the most weight — and what fills the blank at the end?\n\n*\"We promised it to each other. We promised it to the house. I know we said we'd come back and finish what we ____.\"*",
+    order: 2,
+    isRequired: true,
+    isPrivate: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Whatever fills the blank has to be the same word as the first two sentences — read them again." },
+    ],
+    answer: {
+      correct: ["promised", "lovede"],
+      normalized: true,
+    },
+    rewardClueId: "word-promised",
+    rewardText:
+      "Promised. The word is in the Case File. Remember it — you'll need it in the Living Room.",
+    failureText: "Read the first two sentences again. The blank has to match them.",
+    da: {
+      title: "Den Uafsluttede Seddel",
+      description: "På natbordet: en seddel. Den slutter midt i en sætning.",
+      prompt: "Læs sedlen fra dobbeltværelsets natbord. Hvilket ord optræder to gange og synes at bære mest vægt — og hvad udfylder det blanke felt til sidst?\n\n*\"Vi lovede det hinanden. Vi lovede det huset. Jeg ved vi sagde vi ville komme tilbage og afslutte hvad vi ____.\"*",
+      rewardText: "Lovede. Ordet er i sagsmappen.",
+      failureText: "Læs de to første sætninger igen. Det blanke felt skal matche dem.",
     },
   },
 
@@ -387,8 +490,9 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "single-room-note",
+    id: "single-room-note-a",
     roomId: "single-room",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Observation That Became a Crisis",
     description:
@@ -414,6 +518,38 @@ export const QUESTS: Quest[] = [
       description: "En seddel på skrivebordet. Den startede som en rolig observation og endte et helt andet sted.",
       prompt: "Læs sedlen fra enkeltværelsets skrivebord. Det samme ord gentager sig — hver gang lidt større. Hvad udfylder det sidste blanke felt?\n\n*\"Det er ikke engang mit hus. Lånt er det. Ikke engang min seng. Lånt. Dette... liv... ______?\"*",
       rewardText: "Lånt. Ordet er i sagsmappen.",
+      failureText: "Ordet er i næsten hver sætning. Det vokser.",
+    },
+  },
+  {
+    id: "single-room-note-b",
+    roomId: "single-room",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Observation That Became a Crisis",
+    description:
+      "A note on the desk. It started as a calm observation and ended somewhere else entirely. The clue word is in every sentence — each time slightly larger in scope.",
+    prompt:
+      "Read the note from the single room desk. The same word repeats — each time slightly bigger in scope. What fills the final blank?\n\n*\"This is not even my house. Broken it is. Not even my bed. Broken. This... life... ______?\"*",
+    order: 2,
+    isRequired: true,
+    isPrivate: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "The word appears in almost every line." },
+    ],
+    answer: {
+      correct: ["broken", "ødelagt", "i stykker"],
+      normalized: true,
+    },
+    rewardClueId: "word-broken",
+    rewardText:
+      "Broken. The word is in the Case File. You'll need it in the Living Room.",
+    failureText: "The word is in every sentence. It grows.",
+    da: {
+      title: "Observationen der Blev en Krise",
+      description: "En seddel på skrivebordet. Den startede som en rolig observation og endte et helt andet sted.",
+      prompt: "Læs sedlen fra enkeltværelsets skrivebord. Det samme ord gentager sig — hver gang lidt større. Hvad udfylder det sidste blanke felt?\n\n*\"Det er ikke engang mit hus. I stykker er det. Ikke engang min seng. I stykker. Dette... liv... ______?\"*",
+      rewardText: "I stykker. Ordet er i sagsmappen.",
       failureText: "Ordet er i næsten hver sætning. Det vokser.",
     },
   },
@@ -448,8 +584,9 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "bunk-room-note",
+    id: "bunk-room-note-a",
     roomId: "bunk-room",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Underside of the Mattress",
     description:
@@ -477,11 +614,43 @@ export const QUESTS: Quest[] = [
       failureText: "Det samme ord som i den første sætning udfylder det blanke felt.",
     },
   },
+  {
+    id: "bunk-room-note-b",
+    roomId: "bunk-room",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Underside of the Mattress",
+    description:
+      "Written on the underside of the top bunk mattress. Only visible from the bottom bunk. Cold. Minimal. Two sentences with the same blank.",
+    prompt:
+      "You're lying in the bottom bunk, looking up. One word fills the last blank — that word is yours to carry. But when you leave this room, you may NOT say it or write it. You must act it out for the rest of the team in silence.\n\n*\"It was buried. It is always ______.\"*",
+    order: 2,
+    isRequired: true,
+    isPrivate: true,
+    hints: [],
+    answer: {
+      correct: ["buried", "begravet"],
+      normalized: true,
+    },
+    rewardClueId: "word-buried",
+    setsScaredSilent: true,
+    rewardText:
+      "The word is yours now — and something about this room has scared you silent. When you walk out, hand over what you found without saying a single word. Don't explain why. In the living room you cannot type — act your word out in silence until your team guesses. Keep this message to yourself.",
+    failureText: "The same word that fills the first sentence fills the blank.",
+    da: {
+      title: "Undersiden af Madrassen",
+      description: "Skrevet på undersiden af den øverste køje-madras. Kun synlig fra den nederste køje.",
+      prompt: "Du ligger i den nederste køje og kigger op. Ét ord udfylder det sidste blanke felt — det ord er dit at bære. Men når du forlader dette rum, må du IKKE sige det eller skrive det. Du skal fremvise det for holdet i tavshed.\n\n*\"Det blev begravet. Det bliver altid ______.\"*",
+      rewardText: "Ordet er dit nu — og noget ved dette rum har skræmt dig til tavshed. Når du går ud, afleverer du hvad du fandt uden at sige et eneste ord. Forklar ikke hvorfor. I stuen kan du ikke skrive — fremvis dit ord i tavshed indtil holdet gætter. Behold denne besked for dig selv.",
+      failureText: "Det samme ord som i den første sætning udfylder det blanke felt.",
+    },
+  },
 
   // --- LIVING ROOM ---
   {
-    id: "living-room-sentence",
+    id: "living-room-sentence-a",
     roomId: "living-room",
+    forTeam: "team-a",
     type: "puzzle",
     title: "Something _____, Something _____, Something _____",
     description:
@@ -515,23 +684,99 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "living-room-radio",
+    id: "living-room-sentence-b",
     roomId: "living-room",
-    type: "social_challenge",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "Something _____, Something _____, Something _____",
+    description:
+      "Three blank spaces. Three bedroom players, three words. The Bunk Room player cannot type — they must communicate their word by other means. Fill in the blanks.",
+    prompt:
+      "The three bedroom players each hold one word. Assemble the sentence:\n\n*\"Something _____, something _____, something _____.\"*\n\nThe Double Room word fills the first blank. The Single Room word fills the second. The Bunk Room player must communicate their word without typing.",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Double Room: promised. Single Room: broken. Bunk Room: the player must mime it." },
+    ],
+    answer: {
+      correct: [
+        "something promised something broken something buried",
+        "promised broken buried",
+        "lovede i stykker begravet",
+        "noget lovet noget i stykker noget begravet",
+      ],
+      normalized: true,
+    },
+    clearsScaredSilent: true,
+    rewardText:
+      "Something promised, something broken, something buried. The sentence is complete. The Bunk Room player may speak again — their silence was only for this room.",
+    failureText: "Three words. One from each bedroom. The Bunk Room player cannot type — watch them.",
+    da: {
+      title: "Noget _____, Noget _____, Noget _____",
+      description: "Tre tomme felter. Tre soveværelsesspillere, tre ord. Køjestuens spiller kan ikke skrive — de skal kommunikere deres ord på anden måde.",
+      prompt: "De tre soveværelsesspillere har hvert ét ord. Saml sætningen:\n\n*\"Noget _____, noget _____, noget _____.\"*",
+      rewardText: "Noget lovet, noget i stykker, noget begravet. Sætningen er komplet. Køjestuens spiller kan tale igen.",
+      failureText: "Tre ord. Ét fra hvert soveværelse. Køjestuens spiller kan ikke skrive — se på dem.",
+    },
+  },
+  {
+    id: "living-room-radio-a",
+    roomId: "living-room",
+    forTeam: "team-a",
+    type: "puzzle",
     title: "The Static",
     description:
-      "From the living room, you can hear the radio in the dining room. The static is low but constant. Try to make out the words.",
-    prompt: "Listen to the radio static from the living room. What words can you almost hear? One player guesses — others confirm or deny.",
+      "From the living room, you can hear the radio in the dining room. The static is low but constant, and it keeps catching on the same shape — like it's trying to say one specific word.",
+    prompt:
+      "Listen closely. The static hums the same shape over and over: first, then next, then next again — until suddenly nothing follows. What single word means 'the one after which there is no other'?",
     order: 2,
-    isRequired: false,
-    hints: [],
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Think about a list. This word describes the end of it." },
+    ],
+    answer: {
+      correct: ["last", "sidste"],
+      normalized: true,
+    },
     rewardClueId: "radio-fragment-living",
-    rewardText: "A fragment heard: *\"...the last one...\"* The radio is trying to tell you something.",
+    rewardText: "Last. A fragment heard: *\"...the last one...\"* The radio is trying to tell you something.",
+    failureText: "It's the word for the end of a list — nothing comes after it.",
     da: {
       title: "Statikken",
-      description: "Fra stuen kan du høre radioen i spisestuen. Statikken er lav men konstant.",
-      prompt: "Lyt til radioens statik fra stuen. Hvilke ord kan du næsten høre?",
-      rewardText: "Et fragment hørt: *\"...den sidste...\"*",
+      description: "Fra stuen kan du høre radioen i spisestuen. Statikken er lav men konstant, og den bliver ved med at hænge fast på den samme form — som om den prøver at sige ét bestemt ord.",
+      prompt: "Lyt nøje. Statikken brummer den samme form igen og igen: først, så næste, så næste igen — indtil pludselig intet følger. Hvilket ord betyder 'den efter hvilken der ikke er nogen anden'?",
+      rewardText: "Sidste. Et fragment hørt: *\"...den sidste...\"*",
+      failureText: "Det er ordet for enden af en liste — intet kommer efter det.",
+    },
+  },
+  {
+    id: "living-room-radio-b",
+    roomId: "living-room",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Static",
+    description:
+      "From the living room, you can hear the radio in the dining room. The static is low but constant, and it keeps catching on the same shape — like it's trying to say one specific word.",
+    prompt:
+      "Listen closely. Whatever this word means, it isn't 'first.' It's the far end of a list — the one nobody follows, because nobody's left to follow. What single word means that?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Think about a list. This word describes the end of it." },
+    ],
+    answer: {
+      correct: ["last", "sidste"],
+      normalized: true,
+    },
+    rewardClueId: "radio-fragment-living",
+    rewardText: "Last. A fragment heard: *\"...the last one...\"* The radio is trying to tell you something.",
+    failureText: "It's the word for the end of a list — nothing comes after it.",
+    da: {
+      title: "Statikken",
+      description: "Fra stuen kan du høre radioen i spisestuen. Statikken er lav men konstant, og den bliver ved med at hænge fast på den samme form — som om den prøver at sige ét bestemt ord.",
+      prompt: "Lyt nøje. Uanset hvad dette ord betyder, er det ikke 'først.' Det er den anden ende af en liste — den ingen følger, fordi ingen er tilbage. Hvilket ord betyder det?",
+      rewardText: "Sidste. Et fragment hørt: *\"...den sidste...\"*",
+      failureText: "Det er ordet for enden af en liste — intet kommer efter det.",
     },
   },
 
@@ -577,6 +822,29 @@ export const QUESTS: Quest[] = [
       prompt: "Stå i vinterhaven og lyt til vinden. Én spiller beskriver hvad de hører.",
     },
   },
+  {
+    id: "sunroom-sunblind",
+    roomId: "sunroom",
+    type: "social_challenge",
+    title: "The Low Sun",
+    description:
+      "The last direct sunlight of the day comes in low and level through the glass — the one moment tonight the sunroom actually earns its name. Looking straight at it hurts almost immediately.",
+    prompt:
+      "One player looks straight into the low sun through the glass and holds it — out loud, counted to five, the rest of the team watching. From this point on, that player is sun-blind: for the rest of tonight, whenever a teammate asks them in person to grab a drink from the fridge, they go get it, no matter what they're doing. No arguing, no delegating. It clears the moment the house finally goes dark.",
+    order: 3,
+    isRequired: false,
+    hints: [],
+    setsSunBlind: true,
+    rewardClueId: "sunroom-blind-mark",
+    rewardText:
+      "Five seconds. The glare stays burned into your vision long after you look away. You can't really see straight anymore — not until the lights go out for good. But whatever you're about to face at the radio, losing a sense to this house once already will help.",
+    da: {
+      title: "Den Lave Sol",
+      description: "Dagens sidste direkte sollys kommer lavt og lige ind gennem glasset — det ene øjeblik i aften hvor vinterhaven rent faktisk lever op til sit navn. At kigge lige på den gør ondt næsten med det samme.",
+      prompt: "Én spiller kigger lige ind i den lave sol gennem glasset og holder den — højt, talt til fem, resten af holdet ser på. Fra dette punkt er den spiller solblind: resten af aftenen, når en holdkammerat beder dem personligt om at hente en drik fra køleskabet, gør de det, uanset hvad. Ingen indvendinger, ingen uddelegering. Det ophører i det øjeblik huset endelig bliver mørkt.",
+      rewardText: "Fem sekunder. Blændingen bliver siddende i synet længe efter du kigger væk. Du kan ikke rigtig se ordentligt længere — ikke før lysene går ud for alvor. Men hvad end I møder ved radioen, hjælper det at have mistet en sans til dette hus allerede.",
+    },
+  },
 
   // --- KITCHEN (ACT 2) ---
   {
@@ -598,63 +866,127 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "kitchen-act2-fragment",
+    id: "kitchen-act2-fragment-a",
     roomId: "kitchen-act2",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Radio from the Kitchen",
     description:
-      "The acoustics of the kitchen carry the dining room radio clearly. A burst of words through the static — three of them distinctly audible.",
+      "The acoustics of the kitchen carry the dining room radio clearly — not the words yet, just the shape of one, repeating.",
     prompt:
-      "The radio crackles from the dining room. What three words can you make out?\n\n(Hint: these are the middle words of the broadcast line you'll hear fully in the dining room.)",
+      "The static repeats the same beat without fail — not sometimes, not usually, but every single time, no exceptions. What single word means that?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Listen for: *\"...will always be...\"*" },
+      { order: 1, offerCost: 1, text: "It's the word for something that never stops being true." },
     ],
     answer: {
-      correct: ["will always be", "always be", "will always", "vil altid være", "altid være"],
+      correct: ["always", "altid"],
       normalized: true,
     },
     rewardClueId: "radio-fragment-kitchen",
-    rewardText: "*\"...will always be...\"* Three words through the static. It's building to something.",
-    failureText: "Listen again. Three words. Middle of a sentence.",
+    rewardText: "Always. *\"...will always be...\"* Three words through the static. It's building to something.",
+    failureText: "It's the word for something that never stops being true.",
     da: {
       title: "Radioen fra Køkkenet",
-      description: "Køkkenets akustik bærer spisestruerens radio klart.",
-      prompt: "Radioen knatrer fra spisestuen. Hvilke tre ord kan du høre tydeligt?",
-      rewardText: "*\"...vil altid være...\"* Tre ord gennem statikken.",
+      description: "Køkkenets akustik bærer spisestruerens radio klart — ikke ordene endnu, bare formen af ét, gentaget.",
+      prompt: "Statikken gentager den samme rytme uden undtagelse — ikke nogle gange, ikke som regel, men hver eneste gang. Hvilket ord betyder det?",
+      rewardText: "Altid. *\"...vil altid være...\"* Tre ord gennem statikken.",
+      failureText: "Det er ordet for noget der aldrig holder op med at være sandt.",
+    },
+  },
+  {
+    id: "kitchen-act2-fragment-b",
+    roomId: "kitchen-act2",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Radio from the Kitchen",
+    description:
+      "The acoustics of the kitchen carry the dining room radio clearly — not the words yet, just the shape of one, repeating.",
+    prompt:
+      "The static never once skips a beat — not once tonight, not once ever. What single word means 'every time, without exception, forever'?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "It's the word for something that never stops being true." },
+    ],
+    answer: {
+      correct: ["always", "altid"],
+      normalized: true,
+    },
+    rewardClueId: "radio-fragment-kitchen",
+    rewardText: "Always. *\"...will always be...\"* Three words through the static. It's building to something.",
+    failureText: "It's the word for something that never stops being true.",
+    da: {
+      title: "Radioen fra Køkkenet",
+      description: "Køkkenets akustik bærer spisestruerens radio klart — ikke ordene endnu, bare formen af ét, gentaget.",
+      prompt: "Statikken springer aldrig en rytme over — ikke én gang i aften, ikke én gang nogensinde. Hvilket ord betyder 'hver gang, uden undtagelse, for evigt'?",
+      rewardText: "Altid. *\"...vil altid være...\"* Tre ord gennem statikken.",
+      failureText: "Det er ordet for noget der aldrig holder op med at være sandt.",
     },
   },
 
   // --- ACTIVITY ROOM ---
   {
-    id: "activity-room-fragment",
+    id: "activity-room-fragment-a",
     roomId: "activity-room",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Final Fragment",
     description:
-      "The activity room is the acoustic sweet spot. The dining room radio is clearest from here. A full phrase comes through.",
+      "The activity room is the acoustic sweet spot. The dining room radio is clearest from here — clear enough this time to catch the shape of a whole word.",
     prompt:
-      "The static clears briefly. What is the final phrase you hear from the dining room radio?\n\n(Complete the broadcast line from the fragments you've already found.)",
+      "The static resolves into one clear beat: not starting something, not continuing it — the exact moment there's nothing left to do. What single word means 'to complete, to end the task'?",
     order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Living room: *'...the last one...'*  Kitchen: *'...will always be...'*  Activity room: ?" },
-      { order: 2, offerCost: 1, text: "The final phrase: *'...the one to finish it.'*" },
+      { order: 1, offerCost: 1, text: "It's the opposite of starting." },
     ],
     answer: {
-      correct: ["the one to finish it", "one to finish it", "to finish it", "den der afslutter det", "afslutter det"],
+      correct: ["finish", "afslut", "afslutte"],
       normalized: true,
     },
     rewardClueId: "radio-fragment-activity",
     rewardText:
-      "*\"...the one to finish it.\"* The three fragments assembled: *\"The last one... will always be... the one to finish it.\"* Fix the radio to hear it clearly.",
-    failureText: "The three fragments point to a conclusion. What is it?",
+      "Finish. *\"...the one to finish it.\"* Fix the radio to hear the whole thing clearly.",
+    failureText: "It's the opposite of starting.",
     da: {
       title: "Det Endelige Fragment",
-      description: "Aktivitetsrummet er det akustiske sweet spot. Spisestruerens radio er tydeligst herfra.",
-      prompt: "Statikken klarer sig kortvarigt. Hvad er den endelige sætning du hører fra spisestruerens radio?",
-      rewardText: "*\"...den der afslutter det.\"* De tre fragmenter samlet.",
+      description: "Aktivitetsrummet er det akustiske sweet spot. Spisestruerens radio er tydeligst herfra — tydelig nok denne gang til at fange formen af et helt ord.",
+      prompt: "Statikken samler sig i én tydelig rytme: hverken starten på noget, eller fortsættelsen — det præcise øjeblik hvor der ikke er mere at gøre. Hvilket ord betyder 'at fuldføre, at afslutte opgaven'?",
+      rewardText: "Afslut. *\"...den der afslutter det.\"* Reparer radioen for at høre det hele tydeligt.",
+      failureText: "Det er det modsatte af at starte.",
+    },
+  },
+  {
+    id: "activity-room-fragment-b",
+    roomId: "activity-room",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Final Fragment",
+    description:
+      "The activity room is the acoustic sweet spot. The dining room radio is clearest from here — clear enough this time to catch the shape of a whole word.",
+    prompt:
+      "The static settles on a single idea: the last action before a job stops being unfinished. What single word means 'to complete'?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "It's the opposite of starting." },
+    ],
+    answer: {
+      correct: ["finish", "afslut", "afslutte"],
+      normalized: true,
+    },
+    rewardClueId: "radio-fragment-activity",
+    rewardText:
+      "Finish. *\"...the one to finish it.\"* Fix the radio to hear the whole thing clearly.",
+    failureText: "It's the opposite of starting.",
+    da: {
+      title: "Det Endelige Fragment",
+      description: "Aktivitetsrummet er det akustiske sweet spot. Spisestruerens radio er tydeligst herfra — tydelig nok denne gang til at fange formen af et helt ord.",
+      prompt: "Statikken lander på én idé: den sidste handling før en opgave holder op med at være ufærdig. Hvilket ord betyder 'at fuldføre'?",
+      rewardText: "Afslut. *\"...den der afslutter det.\"* Reparer radioen for at høre det hele tydeligt.",
+      failureText: "Det er det modsatte af at starte.",
     },
   },
   {
@@ -787,13 +1119,13 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Source",
     description:
-      "On the shelf: candle stubs, a stack of board games, a carafe — and one thing that has no business making noise. Old. Brown. Bakelite. A green dial, glowing, though nothing in this house should be broadcasting tonight.",
+      "On the shelf: candle stubs, a stack of board games, a carafe — and one thing that has no business making noise. Old. Brown. Bakelite. A bent antenna angled toward the window. A volume knob worn smooth by someone's hand. A green dial, glowing, though nothing in this house should be broadcasting tonight.",
     prompt:
       "Name the thing that has been talking to you all evening. What is broadcasting?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Green dial. Brown bakelite. Your grandparents had one on their kitchen counter." },
+      { order: 1, offerCost: 1, text: "Green dial. Bent antenna. Worn volume knob. Brown bakelite. Your grandparents had one on their kitchen counter." },
     ],
     answer: {
       correct: ["radio", "the radio", "a radio", "the old radio", "bakelite radio", "radioen", "en radio", "den gamle radio"],
@@ -804,7 +1136,7 @@ export const QUESTS: Quest[] = [
     failureText: "It's on the shelf. It hums. It glows green. Look closer.",
     da: {
       title: "Kilden",
-      description: "På hylden: stearinlysstumper, en stak brætspil, en karaffel — og én ting der ikke har noget at gøre med at lave lyd. Gammel. Brun. Bakelit. En grøn skive der gløder, selvom intet i dette hus burde sende i aften.",
+      description: "På hylden: stearinlysstumper, en stak brætspil, en karaffel — og én ting der ikke har noget at gøre med at lave lyd. Gammel. Brun. Bakelit. En bøjet antenne vinklet mod vinduet. En lydstyrkeknap slidt glat af en hånd. En grøn skive der gløder, selvom intet i dette hus burde sende i aften.",
       prompt: "Navngiv tingen der har talt til jer hele aftenen. Hvad er det der sender?",
       rewardText: "Radioen. Selvfølgelig er det radioen. Den har forsøgt at sige noget hele aftenen — gennem alle husets vægge. Og den stopper ikke før nogen får den til at tale klart. Mød den.",
       failureText: "Den står på hylden. Den brummer. Den gløder grønt. Kig nærmere.",
@@ -1274,8 +1606,10 @@ export function getQuest(id: string): Quest | undefined {
   return QUESTS.find((q) => q.id === id);
 }
 
-export function getQuestsByRoom(roomId: string): Quest[] {
-  return QUESTS.filter((q) => q.roomId === roomId).sort((a, b) => a.order - b.order);
+export function getQuestsByRoom(roomId: string, teamId?: string): Quest[] {
+  return QUESTS.filter(
+    (q) => q.roomId === roomId && (!q.forTeam || q.forTeam === teamId)
+  ).sort((a, b) => a.order - b.order);
 }
 
 export function getRequiredQuestsByRoom(roomId: string, teamId?: string): Quest[] {

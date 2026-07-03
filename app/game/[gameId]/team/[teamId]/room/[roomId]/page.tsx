@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, enterBedroom, setScaredSilent, advanceAct, saveRitualPhoto } from "@/lib/game/actions";
+import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, enterBedroom, setScaredSilent, setSunBlind, advanceAct, saveRitualPhoto } from "@/lib/game/actions";
 import { fileToJpegDataUrl } from "@/lib/photoCapture";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -151,7 +151,7 @@ export default function RoomPage({ params }: Props) {
 
   const rawRoom = roomId ? getRoom(roomId) : null;
   const room = rawRoom ?? null;
-  const allQuests = rawRoom ? getQuestsByRoom(rawRoom.id) : [];
+  const allQuests = rawRoom ? getQuestsByRoom(rawRoom.id, teamId) : [];
 
   const requiredQuests = allQuests.filter((q) => q.isRequired);
   const bonusQuests = allQuests.filter((q) => !q.isRequired);
@@ -226,8 +226,16 @@ export default function RoomPage({ params }: Props) {
     roomId === "living-room" &&
     hasSpeakingTeammate;
 
+  // Some rooms award per-team clue variants (e.g. Driveway/Terrace/Garden
+  // fragments). Only show/count the variant that belongs to this team —
+  // filter out any clue whose revealedTo names the other team.
+  const visibleRewardClueIds = room.rewardClueIds.filter((id) => {
+    const c = getClue(id);
+    return !c?.revealedTo || c.revealedTo === teamId;
+  });
+
   // Clues for this room that team has found
-  const roomClueCount = room.rewardClueIds.filter(
+  const roomClueCount = visibleRewardClueIds.filter(
     (id) => teamClues.find((tc) => tc.clue_id === id)
   ).length;
 
@@ -360,7 +368,7 @@ export default function RoomPage({ params }: Props) {
             </span>
           </div>
 
-          {room.rewardClueIds.length > 0 ? (
+          {visibleRewardClueIds.length > 0 ? (
             <button
               onClick={() => setShowCluesPanel(true)}
               className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-bold active:scale-95 transition-transform"
@@ -526,7 +534,7 @@ export default function RoomPage({ params }: Props) {
               </div>
 
               <div className="space-y-3">
-                {room.rewardClueIds.map((clueId) => {
+                {visibleRewardClueIds.map((clueId) => {
                   const clue = getClue(clueId);
                   const discovered = teamClues.find((tc) => tc.clue_id === clueId);
                   if (!clue) return null;
@@ -678,6 +686,9 @@ export default function RoomPage({ params }: Props) {
                       // Wire special post-quest effects
                       if (activeQuest.setsScaredSilent && session?.playerId) {
                         await setScaredSilent(gameId, session.playerId);
+                      }
+                      if (activeQuest.setsSunBlind && session?.playerId) {
+                        await setSunBlind(gameId, session.playerId);
                       }
                       if (activeQuest.id === "front-door-keybox") {
                         await advanceAct(gameId, "act-1", "act-2", teamId);

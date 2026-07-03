@@ -9,53 +9,106 @@ export const CLUES: Clue[] = [
 
   // ==========================================
   // ACT 1 — CODE FRAGMENTS
-  // Four fragments collected across outdoor rooms.
-  // Mads (boss) gives the fifth — but that's handled as boss reward.
+  // Four fragments collected across outdoor rooms. Driveway, Terrace, and
+  // Garden fragments are per-team (revealedTo splits which variant each
+  // team actually receives) so teams can't just compare answers out loud.
+  // Shed's fragment is universal since it ties into Act 3 continuity.
   // Combined at The Front Door to enter Act 2.
   // ==========================================
   {
-    id: "fragment-driveway",
+    id: "fragment-driveway-a",
     chapterId: "act-1",
     title: "Code Fragment — Driveway",
     description:
-      "A piece of tape stuck to the underside of the car boot lid. Written in permanent marker: a single digit. **3**",
+      "The house's arrival scanner counted your team the moment the photo was taken. It says **3**. It could be wrong. It insists it isn't.",
     icon: "🔢",
-    flavor: "Someone hid it where only someone looking for it would find it.",
+    flavor: "It might be wrong. It might be right. Who are you to judge — it's only a bot.",
     isKeyClue: true,
+    revealedTo: "team-a",
     da: {
       title: "Kodefragment — Indkørslen",
-      description: "Et stykke tape klistret under bagklappens indeside. Skrevet med permanent markør: ét ciffer. **3**",
-      flavor: "Nogen gemte det der, hvor kun nogen der ledte efter det ville finde det.",
+      description: "Husets ankomst-scanner talte jeres hold i det øjeblik billedet blev taget. Den siger **3**. Den kan tage fejl. Den insisterer på at den ikke gør.",
+      flavor: "Den kan tage fejl. Den kan have ret. Hvem er du til at dømme — den er bare en bot.",
     },
   },
   {
-    id: "fragment-terrace",
+    id: "fragment-driveway-b",
+    chapterId: "act-1",
+    title: "Code Fragment — Driveway",
+    description:
+      "The house's arrival scanner counted your team the moment the photo was taken. It says **6**. It could be wrong. It insists it isn't.",
+    icon: "🔢",
+    flavor: "It might be wrong. It might be right. Who are you to judge — it's only a bot.",
+    isKeyClue: true,
+    revealedTo: "team-b",
+    da: {
+      title: "Kodefragment — Indkørslen",
+      description: "Husets ankomst-scanner talte jeres hold i det øjeblik billedet blev taget. Den siger **6**. Den kan tage fejl. Den insisterer på at den ikke gør.",
+      flavor: "Den kan tage fejl. Den kan have ret. Hvem er du til at dømme — den er bare en bot.",
+    },
+  },
+  {
+    id: "fragment-terrace-a",
     chapterId: "act-1",
     title: "Code Fragment — Terrace",
     description:
-      "Scratched into the underside of the terrace railing, near the third post from the left: **7**",
+      "The missing spine from the shelf through the terrace glass: **5**",
     icon: "🔢",
-    flavor: "The railing has more history than you thought.",
+    flavor: "Someone took that one off the shelf on purpose.",
     isKeyClue: true,
+    revealedTo: "team-a",
     da: {
       title: "Kodefragment — Terrassen",
-      description: "Ridset ind i undersiden af terrasse-gelænderet, ved den tredje stolpe fra venstre: **7**",
-      flavor: "Gelænderet har mere historie end du troede.",
+      description: "Den manglende ryg fra hylden gennem terrassens glas: **5**",
+      flavor: "Nogen fjernede den fra hylden med vilje.",
     },
   },
   {
-    id: "fragment-garden",
+    id: "fragment-terrace-b",
+    chapterId: "act-1",
+    title: "Code Fragment — Terrace",
+    description:
+      "The missing spine from the shelf through the terrace glass: **2**",
+    icon: "🔢",
+    flavor: "Someone took that one off the shelf on purpose.",
+    isKeyClue: true,
+    revealedTo: "team-b",
+    da: {
+      title: "Kodefragment — Terrassen",
+      description: "Den manglende ryg fra hylden gennem terrassens glas: **2**",
+      flavor: "Nogen fjernede den fra hylden med vilje.",
+    },
+  },
+  {
+    id: "fragment-garden-a",
     chapterId: "act-1",
     title: "Code Fragment — Garden",
     description:
-      "Tucked inside the hollow of the old oak tree near the back fence. A folded scrap of paper: **1**",
+      "The digit carved into the old oak, once you worked out what it was describing: **1**",
     icon: "🔢",
-    flavor: "The garden keeps secrets better than anyone.",
+    flavor: "The garden keeps secrets better than anyone — this one just needed reading, not digging.",
     isKeyClue: true,
+    revealedTo: "team-a",
     da: {
       title: "Kodefragment — Haven",
-      description: "Gemt i hulheden af den gamle egetræ ved baghegnet. Et foldet stykke papir: **1**",
-      flavor: "Haven holder hemmeligheder bedre end nogen.",
+      description: "Cifferet ridset ind i den gamle egetræ, når du fandt ud af hvad det beskrev: **1**",
+      flavor: "Haven holder hemmeligheder bedre end nogen — denne skulle bare læses, ikke graves frem.",
+    },
+  },
+  {
+    id: "fragment-garden-b",
+    chapterId: "act-1",
+    title: "Code Fragment — Garden",
+    description:
+      "The digit carved into the old oak, once you worked out what it was describing: **8**",
+    icon: "🔢",
+    flavor: "The garden keeps secrets better than anyone — this one just needed reading, not digging.",
+    isKeyClue: true,
+    revealedTo: "team-b",
+    da: {
+      title: "Kodefragment — Haven",
+      description: "Cifferet ridset ind i den gamle egetræ, når du fandt ud af hvad det beskrev: **8**",
+      flavor: "Haven holder hemmeligheder bedre end nogen — denne skulle bare læses, ikke graves frem.",
     },
   },
   {
@@ -63,29 +116,14 @@ export const CLUES: Clue[] = [
     chapterId: "act-1",
     title: "Code Fragment — Shed",
     description:
-      "Taped to the back of the shed door, behind the hinges. Almost invisible unless you're actually looking. **9**",
+      "Every date on the shed's laminated list falls in July — the seventh month, without exception, across sixteen years: **7**",
     icon: "🔢",
-    flavor: "Hidden in plain sight, like everything else in this shed.",
+    flavor: "Hidden in plain sight, like everything else on that list.",
     isKeyClue: true,
     da: {
       title: "Kodefragment — Skuret",
-      description: "Klistret på bagsiden af skurets dør, bag hængserne. Næsten usynlig medmindre du leder. **9**",
-      flavor: "Gemt i åbenlys syne, ligesom alt andet i dette skur.",
-    },
-  },
-  {
-    id: "fragment-mads",
-    chapterId: "act-1",
-    title: "Code Fragment — The Date List",
-    description:
-      "Written small in the corner of the laminated date list on the shed wall, right next to tonight's uncrossed date: **4**. The last digit was in the shed all along.",
-    icon: "🔢",
-    flavor: "Mads swears he texted everyone about this. He did not.",
-    isKeyClue: true,
-    da: {
-      title: "Kodefragment — Datolisten",
-      description: "Skrevet småt i hjørnet af den laminerede datoliste på skurvæggen, lige ved siden af aftenens ikke-overstregede dato: **4**. Det sidste ciffer var i skuret hele tiden.",
-      flavor: "Mads sværger han skrev det til alle. Det gjorde han ikke.",
+      description: "Hver eneste dato på skurets laminerede liste falder i juli — den syvende måned, uden undtagelse, gennem seksten år: **7**",
+      flavor: "Gemt i åbenlys syne, ligesom alt andet på den liste.",
     },
   },
   {
@@ -113,32 +151,51 @@ export const CLUES: Clue[] = [
     chapterId: "act-1",
     title: "The Date List",
     description:
-      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates. All crossed out except the last one.\n\n~~July 19th 2010~~\n~~July 11th 2011~~\n~~July 23rd 2012~~\n~~July 15th 2013~~\n~~July 14th 2014~~\n~~July 20th 2015~~\n~~July 18th 2016~~\n~~July 10th 2017~~\n~~July 16th 2018~~\n~~July 22nd 2019~~\n~~July 13th 2020~~\n~~July 19th 2021~~\n~~July 11th 2022~~\n~~July 17th 2023~~\n~~July 15th 2024~~\n~~July 21st 2025~~\n\n**[Today's date — rendered dynamically]**\n\nEvery date falls in late July. All are crossed out except this one.",
+      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates. All crossed out except the last one.\n\n~~July 19th 2010~~\n~~July 11th 2011~~\n~~July 23rd 2012~~\n~~July 15th 2013~~\n~~July 14th 2014~~\n~~July 20th 2015~~\n~~July 18th 2016~~\n~~July 10th 2017~~\n~~July 16th 2018~~\n~~July 22nd 2019~~\n~~July 13th 2020~~\n~~July 19th 2021~~\n~~July 11th 2022~~\n~~July 17th 2023~~\n~~July 15th 2024~~\n~~July 21st 2025~~\n\n**Tonight's date — not crossed out.**\n\nSixteen years, sixteen dates. If you looked closely, you'd already have found what they share.",
     icon: "📋",
     flavor: "Someone has been keeping track. Every year. They always cross the date out.",
     isKeyClue: false,
     da: {
       title: "Datolisten",
-      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer. Alle overstreget undtagen den sidste.\n\n~~19. juli 2010~~\n~~11. juli 2011~~\n~~23. juli 2012~~\n~~15. juli 2013~~\n~~14. juli 2014~~\n~~20. juli 2015~~\n~~18. juli 2016~~\n~~10. juli 2017~~\n~~16. juli 2018~~\n~~22. juli 2019~~\n~~13. juli 2020~~\n~~19. juli 2021~~\n~~11. juli 2022~~\n~~17. juli 2023~~\n~~15. juli 2024~~\n~~21. juli 2025~~\n\n**[Dagens dato — renderet dynamisk]**\n\nHver dato falder i slutningen af juli. Alle er overstreget undtagen denne.",
+      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer. Alle overstreget undtagen den sidste.\n\n~~19. juli 2010~~\n~~11. juli 2011~~\n~~23. juli 2012~~\n~~15. juli 2013~~\n~~14. juli 2014~~\n~~20. juli 2015~~\n~~18. juli 2016~~\n~~10. juli 2017~~\n~~16. juli 2018~~\n~~22. juli 2019~~\n~~13. juli 2020~~\n~~19. juli 2021~~\n~~11. juli 2022~~\n~~17. juli 2023~~\n~~15. juli 2024~~\n~~21. juli 2025~~\n\n**Aftenens dato — ikke overstreget.**\n\nSeksten år, seksten datoer. Havde du kigget nøje, havde du allerede fundet det de har til fælles.",
       flavor: "Nogen har holdt styr på det. Hvert år. De overstreger altid datoen.",
     },
   },
 
   // ==========================================
   // ACT 2 — BEDROOM WORDS (for living room puzzle)
+  // Team A gets owed/borrowed/taken, Team B gets promised/broken/buried —
+  // revealedTo keeps each team from ever seeing the other's set.
   // ==========================================
   {
     id: "word-owed",
     chapterId: "act-2",
     title: "The Double Room Note",
     description:
-      "A note on the bedside table. Mid-sentence. Never finished.\n\n*\"We owed it to each other. We owed it to the house. I know we said we'd come back and finish what we—\"*\n\nThe clue word: **owed**",
+      "A note on the bedside table. Mid-sentence. Never finished.\n\n*\"We owed it to each other. We owed it to the house. I know we said we'd come back and finish what we ____.\"*\n\nThe clue word: **owed**",
     icon: "📝",
     flavor: "Warm and human. But carries weight.",
     isKeyClue: true,
+    revealedTo: "team-a",
     da: {
       title: "Dobbeltværelsets Seddel",
-      description: "En seddel på natbordet. Midt i en sætning. Aldrig afsluttet.\n\n*\"Vi skyldte det hinanden. Vi skyldte det huset. Jeg ved vi sagde vi ville komme tilbage og afslutte hvad vi—\"*\n\nNøgleordet: **skyldte**",
+      description: "En seddel på natbordet. Midt i en sætning. Aldrig afsluttet.\n\n*\"Vi skyldte det hinanden. Vi skyldte det huset. Jeg ved vi sagde vi ville komme tilbage og afslutte hvad vi ____.\"*\n\nNøgleordet: **skyldte**",
+      flavor: "Varm og menneskelig. Men bærer vægt.",
+    },
+  },
+  {
+    id: "word-promised",
+    chapterId: "act-2",
+    title: "The Double Room Note",
+    description:
+      "A note on the bedside table. Mid-sentence. Never finished.\n\n*\"We promised it to each other. We promised it to the house. I know we said we'd come back and finish what we ____.\"*\n\nThe clue word: **promised**",
+    icon: "📝",
+    flavor: "Warm and human. But carries weight.",
+    isKeyClue: true,
+    revealedTo: "team-b",
+    da: {
+      title: "Dobbeltværelsets Seddel",
+      description: "En seddel på natbordet. Midt i en sætning. Aldrig afsluttet.\n\n*\"Vi lovede det hinanden. Vi lovede det huset. Jeg ved vi sagde vi ville komme tilbage og afslutte hvad vi ____.\"*\n\nNøgleordet: **lovede**",
       flavor: "Varm og menneskelig. Men bærer vægt.",
     },
   },
@@ -151,9 +208,26 @@ export const CLUES: Clue[] = [
     icon: "📝",
     flavor: "You can't tell which parts were deliberate.",
     isKeyClue: true,
+    revealedTo: "team-a",
     da: {
       title: "Enkeltværelsets Seddel",
       description: "En seddel fundet i enkeltværelset. Den starter som observation. Den ender som eksistentiel krise.\n\n*\"Det er ikke engang mit hus... Lånt er det... Ikke engang min seng... Lånt... Dette... liv... lånt?\"*\n\nNøgleordet: **lånt**",
+      flavor: "Du kan ikke se hvilke dele der var bevidste.",
+    },
+  },
+  {
+    id: "word-broken",
+    chapterId: "act-2",
+    title: "The Single Room Note",
+    description:
+      "A note found in the single room. It starts as observation. It ends as an existential crisis.\n\n*\"This is not even my house... Broken it is... Not even my bed... Broken... This... life... broken?\"*\n\nThe clue word: **broken**",
+    icon: "📝",
+    flavor: "You can't tell which parts were deliberate.",
+    isKeyClue: true,
+    revealedTo: "team-b",
+    da: {
+      title: "Enkeltværelsets Seddel",
+      description: "En seddel fundet i enkeltværelset. Den starter som observation. Den ender som eksistentiel krise.\n\n*\"Det er ikke engang mit hus... I stykker er det... Ikke engang min seng... I stykker... Dette... liv... i stykker?\"*\n\nNøgleordet: **i stykker**",
       flavor: "Du kan ikke se hvilke dele der var bevidste.",
     },
   },
@@ -166,6 +240,23 @@ export const CLUES: Clue[] = [
     icon: "📝",
     flavor: "This person wrote exactly what was needed and nothing more.",
     isKeyClue: true,
+    revealedTo: "team-a",
+    da: {
+      title: "Køjestueens Seddel",
+      description: "Skrevet på undersiden af den øverste køje-madras. To sætninger. Ét ord.\n\n*\"Det blev ______. Det bliver altid ______.\"*\n\nKun spilleren der var inde i køjestuen kender det manglende ord — og de må hverken sige det eller skrive det. I stuen skal de fremvise det i tavshed indtil holdet gætter.",
+      flavor: "Denne person skrev præcis hvad der var nødvendigt og intet mere.",
+    },
+  },
+  {
+    id: "word-buried",
+    chapterId: "act-2",
+    title: "The Bunk Room Note",
+    description:
+      "Written on the underside of the top bunk mattress. Two sentences. One word.\n\n*\"It was ______. It is always ______.\"*\n\nOnly the player who entered the bunk room knows the missing word — and they cannot say it or write it. In the living room, they must act it out in silence until the team guesses.",
+    icon: "📝",
+    flavor: "This person wrote exactly what was needed and nothing more.",
+    isKeyClue: true,
+    revealedTo: "team-b",
     da: {
       title: "Køjestueens Seddel",
       description: "Skrevet på undersiden af den øverste køje-madras. To sætninger. Ét ord.\n\n*\"Det blev ______. Det bliver altid ______.\"*\n\nKun spilleren der var inde i køjestuen kender det manglende ord — og de må hverken sige det eller skrive det. I stuen skal de fremvise det i tavshed indtil holdet gætter.",
@@ -206,6 +297,27 @@ export const CLUES: Clue[] = [
     icon: "📻",
     flavor: "Three fragments. One message. You need to fix the radio.",
     isKeyClue: false,
+  },
+
+  // ==========================================
+  // ACT 2 — SUNROOM
+  // Not a code fragment or key clue — a mechanical marker used to auto-apply
+  // a bonus hit on the Radio boss for whichever player went sun-blind.
+  // ==========================================
+  {
+    id: "sunroom-blind-mark",
+    chapterId: "act-2",
+    title: "What the Glare Left Behind",
+    description:
+      "Someone on your team stared straight into the low sun through the sunroom glass and didn't look away. They can't see straight anymore — not until the house goes properly dark. But they know exactly what it feels like to lose a sense to something in this house. That'll matter at the radio.",
+    icon: "🌇",
+    flavor: "Losing one sense early makes the next one easier to face.",
+    isKeyClue: false,
+    da: {
+      title: "Hvad Blændingen Efterlod",
+      description: "Nogen på jeres hold stirrede lige ind i den lave sol gennem vinterhavens glas og kiggede ikke væk. De kan ikke se ordentligt længere — ikke før huset bliver rigtig mørkt. Men de ved præcis hvordan det føles at miste en sans til noget i dette hus. Det kommer til at betyde noget ved radioen.",
+      flavor: "At miste én sans tidligt gør den næste lettere at møde.",
+    },
   },
 
   // ==========================================

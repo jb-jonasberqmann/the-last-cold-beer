@@ -103,6 +103,7 @@ export interface Quest {
   failureText?: string; // shown on wrong answer (before hint)
   setsScaredSilent?: boolean; // if true, completing this quest sets the player's scared_silent flag
   clearsScaredSilent?: boolean; // if true, completing this room clears scared_silent for the team
+  setsSunBlind?: boolean; // if true, completing this quest sets the player's sun_blind flag (Sunroom dare) — cleared automatically on reaching the Act 2 boss
   isPrivate?: boolean; // if true, the prompt is hidden behind press-and-hold ("the room speaks only to you")
   da?: QuestDa; // Danish locale overrides
 }
