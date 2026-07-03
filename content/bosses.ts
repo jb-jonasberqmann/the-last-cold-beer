@@ -176,7 +176,7 @@ export const BOSSES: Boss[] = [
     title: "The Radio",
     subtitle: "Old bakelite. Green dial. It has been trying to tell you something all evening.",
     description:
-      "The old brown bakelite radio in the dining room. It has been crackling since you arrived. A green tuner dial. A fraying antenna. You've collected fragments of what it's been saying all evening — across the living room, the kitchen, the activity room. Now it's time to fix it and hear the broadcast clearly.",
+      "The old brown bakelite radio in the dining room. It has been crackling since you arrived. A green tuner dial. A fraying antenna. You've collected fragments of what it's been saying all evening — of all places, the toilet, plus the kitchen and the activity room. Now it's time to fix it and hear the broadcast clearly.",
     icon: "📻",
     look: {
       icon: "📻",
@@ -187,7 +187,7 @@ export const BOSSES: Boss[] = [
       backgroundStyle: "warm-dining-radio",
     },
     maxHp: 120,
-    requiredRoomIds: ["living-room", "kitchen-act2", "activity-room", "dining-room"],
+    requiredRoomIds: ["living-room", "the-toilet", "kitchen-act2", "activity-room", "dining-room"],
     counterAttacks: [
       {
         id: "defend",
@@ -250,18 +250,18 @@ export const BOSSES: Boss[] = [
             id: "radio-fuse",
             label: "Replace the fuse",
             description:
-              "Behind the back panel — a small compartment. Inside: a blown fuse. There's a spare taped to the inside of the panel door. Someone knew this would happen.",
+              "Behind the back panel — a small fuse block with four slots, wired in parallel. Three are already fitted, each stamped with its rating. The fourth is empty. A note and a tin of loose spare fuses sit beside it.",
             type: "puzzle",
             damage: 30,
             puzzle: {
               prompt:
-                "The replacement fuse is taped to the inside of the panel door. A note beside it, in handwriting you don't recognise: \"Not the first time. Won't be the last. Match the rating exactly.\" The blown fuse reads: 250mA. The spare reads: 250mA. What do you do?",
-              answer: ["replace", "swap", "install", "put it in", "use the spare", "erstat", "sæt den i"],
+                "The note reads: \"Total draw: 500mA. Undershoot it and it blows again. Overshoot it and it won't fit.\" The three fitted fuses read 200mA, 150mA, and 100mA. What rating, in mA, does the last slot need?",
+              answer: ["50", "50ma", "50 ma", "50mah"],
             },
-            hint: "The note says to match the rating exactly. Both fuses match. The answer is obvious.",
+            hint: "Add up the three fuses already fitted. The gap between that and 500 is your answer.",
             rewardText:
-              "The fuse is replaced. The green dial brightens — visibly. Something is waking up in there. 30 HP restored.",
-            failureText: "The panel closes. The static continues. Think about what the note said.",
+              "50mA. The last fuse clicks in — 200 + 150 + 100 + 50 = 500, exactly. The green dial brightens. Something is waking up in there. 30 HP restored.",
+            failureText: "Add up the three fuses already fitted. The difference between that and 500mA is what's missing.",
           },
           {
             id: "radio-frequency",
@@ -274,7 +274,7 @@ export const BOSSES: Boss[] = [
             rewardText:
               "The dial locks in. The green light blazes. Signal strength at maximum. One more action and the broadcast will be clear.",
             failureText:
-              "You need all three radio fragments first — from the living room, the kitchen, and the activity room.",
+              "You need all three radio fragments first — from the toilet, the kitchen, and the activity room.",
           },
           {
             id: "radio-offer-boost",
@@ -381,7 +381,7 @@ export const BOSSES: Boss[] = [
           actions: [
             { id: "radio-antenna", label: "Juster antennen", rewardText: "Antennen finder en position. Signalstyrken stiger. 25 HP genoprettet.", failureText: "Statikken er uændret." },
             { id: "radio-panel", label: "Åbn bagpanelet", puzzlePrompt: "Køkkenets rodeskuffe rasler med løsdele: elastikker, fødselsdagslys, en proptrækker, batterier — og den ene ting der kan dreje fire bittesmå skruer. Hvad henter du?", hint: "Fladt hoved. Bor i enhver rodeskuffe i landet.", rewardText: "Skruetrækkeren. Fire skruer ude, panelet af. Radioens indre gløder svagt. 20 HP genoprettet.", failureText: "Negle duer ikke. Hent det rigtige værktøj." },
-            { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Erstatningssikringen er klistret til indersiden af paneldøren. En seddel ved siden af den: \"Ikke første gang. Vil ikke være den sidste. Match vurderingen præcis.\" Hvad gør du?", hint: "Begge sikringer matcher. Svaret er indlysende.", rewardText: "Sikringen er udskiftet. Den grønne skive lyser op. 30 HP genoprettet.", failureText: "Panelet lukker. Statikken fortsætter." },
+            { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Sedlen lyder: \"Samlet belastning: 500mA. For lidt, og den springer igen. For meget, og den passer ikke.\" De tre monterede sikringer viser 200mA, 150mA og 100mA. Hvilken værdi, i mA, skal den sidste plads bruge?", hint: "Læg de tre monterede sikringer sammen. Forskellen op til 500 er dit svar.", rewardText: "50mA. Den sidste sikring klikker på plads — 200 + 150 + 100 + 50 = 500, præcis. Den grønne skive lyser op. 30 HP genoprettet.", failureText: "Læg de tre monterede sikringer sammen. Forskellen op til 500mA er hvad der mangler." },
             { id: "radio-frequency", label: "Stem frekvensen", rewardText: "Skiven låser. Det grønne lys blusser. 35 HP genoprettet.", failureText: "Du har brug for alle tre radiofragmenter først." },
             { id: "radio-offer-boost", label: "Hæld en ud til radioen", rewardText: "Statikken dæmpes. 20 HP genoprettet." },
             { id: "radio-sunroom-bonus", label: "Har allerede mistet en sans i aften", rewardText: "At have mistet synet én gang gjorde dette lettere at møde. Anvendt automatisk. 20 HP genoprettet.", failureText: "Ingen på jeres hold blev solblinde i vinterhaven." },

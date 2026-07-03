@@ -151,13 +151,13 @@ export const CLUES: Clue[] = [
     chapterId: "act-1",
     title: "The Date List",
     description:
-      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates. All crossed out except the last one.\n\n~~July 19th 2010~~\n~~July 11th 2011~~\n~~July 23rd 2012~~\n~~July 15th 2013~~\n~~July 14th 2014~~\n~~July 20th 2015~~\n~~July 18th 2016~~\n~~July 10th 2017~~\n~~July 16th 2018~~\n~~July 22nd 2019~~\n~~July 13th 2020~~\n~~July 19th 2021~~\n~~July 11th 2022~~\n~~July 17th 2023~~\n~~July 15th 2024~~\n~~July 21st 2025~~\n\n**Tonight's date — not crossed out.**\n\nSixteen years, sixteen dates. If you looked closely, you'd already have found what they share.",
+      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates, written as plain numbers, one under another. All crossed out except the last.\n\n~~07192010~~\n~~07112011~~\n~~07232012~~\n~~07152013~~\n~~07142014~~\n~~07202015~~\n~~07182016~~\n~~07102017~~\n~~07162018~~\n~~07222019~~\n~~07132020~~\n~~07192021~~\n~~07112022~~\n~~07172023~~\n~~07152024~~\n~~07212025~~\n\n**{{TODAY}} — not crossed out.**\n\nSixteen years, sixteen dates. If you looked closely, you'd already have found what they share.",
     icon: "📋",
     flavor: "Someone has been keeping track. Every year. They always cross the date out.",
     isKeyClue: false,
     da: {
       title: "Datolisten",
-      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer. Alle overstreget undtagen den sidste.\n\n~~19. juli 2010~~\n~~11. juli 2011~~\n~~23. juli 2012~~\n~~15. juli 2013~~\n~~14. juli 2014~~\n~~20. juli 2015~~\n~~18. juli 2016~~\n~~10. juli 2017~~\n~~16. juli 2018~~\n~~22. juli 2019~~\n~~13. juli 2020~~\n~~19. juli 2021~~\n~~11. juli 2022~~\n~~17. juli 2023~~\n~~15. juli 2024~~\n~~21. juli 2025~~\n\n**Aftenens dato — ikke overstreget.**\n\nSeksten år, seksten datoer. Havde du kigget nøje, havde du allerede fundet det de har til fælles.",
+      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer, skrevet som rene tal, én under den anden. Alle overstreget undtagen den sidste.\n\n~~07192010~~\n~~07112011~~\n~~07232012~~\n~~07152013~~\n~~07142014~~\n~~07202015~~\n~~07182016~~\n~~07102017~~\n~~07162018~~\n~~07222019~~\n~~07132020~~\n~~07192021~~\n~~07112022~~\n~~07172023~~\n~~07152024~~\n~~07212025~~\n\n**{{TODAY}} — ikke overstreget.**\n\nSeksten år, seksten datoer. Havde du kigget nøje, havde du allerede fundet det de har til fælles.",
       flavor: "Nogen har holdt styr på det. Hvert år. De overstreger altid datoen.",
     },
   },
@@ -269,13 +269,13 @@ export const CLUES: Clue[] = [
   // One per room, building to the dining room revelation
   // ==========================================
   {
-    id: "radio-fragment-living",
+    id: "radio-fragment-toilet",
     chapterId: "act-2",
-    title: "Radio Fragment — Living Room",
+    title: "Radio Fragment — The Toilet",
     description:
-      "Through the crackling static, a fragment: *\"...the last one...\"*\n\nThen nothing.",
+      "Through the crackling static, a fragment: *\"...the last one...\"*\n\nThen nothing. Of all the places to hear it.",
     icon: "📻",
-    flavor: "The radio in the dining room is always audible from here.",
+    flavor: "The radio in the dining room is audible even in here. Somehow.",
     isKeyClue: false,
   },
   {

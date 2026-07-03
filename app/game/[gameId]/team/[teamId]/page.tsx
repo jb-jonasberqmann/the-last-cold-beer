@@ -11,6 +11,7 @@ import { getChapter, getRoom } from "@/content/index";
 import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
 import { getQuest } from "@/content/quests";
+import { RichText } from "@/components/ui/RichText";
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -81,7 +82,10 @@ const ACT_GEO: Record<string, ActGeo> = {
 
   // ── ACT 2 — indoor / settling ─────────────────────────────────────────────
   // Spine: bedrooms → living-room → kitchen → activity → dining → boss
-  // Sunroom: optional branch from living-room (left)
+  // Sunroom: optional branch from living-room (left, pushed down to make
+  //   room for the toilet above it)
+  // The Toilet: required branch from kitchen-act2 (left), holds the "last"
+  //   radio fragment
   "act-2": {
     svgW: 340, svgH: 520, scale: 1.65,
     bossNode: { cx: 170, cy: 78 },
@@ -92,7 +96,8 @@ const ACT_GEO: Record<string, ActGeo> = {
       { id: "activity-room",  cx: 230, cy: 228, sz: 12 },
       { id: "foosball-table", cx: 254, cy: 292, sz: 10, isOptional: true },
       { id: "kitchen-act2",   cx: 170, cy: 228, sz: 13 },
-      { id: "sunroom",        cx: 100, cy: 228, sz: 11, isOptional: true },
+      { id: "the-toilet",     cx: 100, cy: 228, sz: 10 },
+      { id: "sunroom",        cx: 100, cy: 280, sz: 11, isOptional: true },
       { id: "living-room",    cx: 170, cy: 318, sz: 14 },
       { id: "double-room",    cx: 100, cy: 428, sz: 12 },
       { id: "single-room",    cx: 170, cy: 428, sz: 14 },
@@ -104,6 +109,7 @@ const ACT_GEO: Record<string, ActGeo> = {
       ["bunk-room",     "living-room"],
       ["living-room",   "sunroom"],
       ["living-room",   "kitchen-act2"],
+      ["kitchen-act2",  "the-toilet"],
       ["kitchen-act2",  "activity-room"],
       ["activity-room", "darts-board"],
       ["activity-room", "foosball-table"],
@@ -1027,9 +1033,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
                           <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(251,191,36,0.6)", fontFamily: "Georgia,serif" }}>Key</span>
                         )}
                       </div>
-                      <p className="text-xs leading-relaxed" style={{ color: "rgba(200,175,120,0.8)", fontFamily: "Georgia,serif" }}>{clue.description}</p>
+                      <RichText as="p" className="text-xs leading-relaxed" style={{ color: "rgba(200,175,120,0.8)", fontFamily: "Georgia,serif" }} text={clue.description} />
                       {clue.flavor && (
-                        <p className="text-[11px] italic mt-1.5" style={{ color: "rgba(130,95,35,0.55)", fontFamily: "Georgia,serif" }}>{clue.flavor}</p>
+                        <RichText as="p" className="text-[11px] italic mt-1.5" style={{ color: "rgba(130,95,35,0.55)", fontFamily: "Georgia,serif" }} text={clue.flavor} />
                       )}
                     </div>
                   </div>

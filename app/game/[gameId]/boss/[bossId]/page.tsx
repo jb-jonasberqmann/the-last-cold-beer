@@ -15,6 +15,7 @@ import type { DbGame, DbBossProgress, DbTeamClue, DbRoomProgress, DbGameEvent, D
 import type { TeamId, BossAction } from "@/types/content";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/hooks/useLanguage";
+import { RichText } from "@/components/ui/RichText";
 
 // ── Artwork mapping ────────────────────────────────────────────────────────────
 const BOSS_ARTWORK: Record<string, string> = {
@@ -1032,7 +1033,7 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                     <div>
                       <div className="text-sm font-bold text-amber-200">{clue?.title ?? tc.clue_id}</div>
                       {clue?.description && (
-                        <p className="text-[10px] text-stone-500 mt-0.5 leading-snug">{clue.description}</p>
+                        <RichText as="p" className="text-[10px] text-stone-500 mt-0.5 leading-snug" text={clue.description} />
                       )}
                     </div>
                   </div>

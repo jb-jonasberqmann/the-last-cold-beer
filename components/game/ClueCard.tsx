@@ -1,5 +1,6 @@
 import type { Clue } from "@/types/content";
 import { cn } from "@/lib/utils";
+import { RichText } from "@/components/ui/RichText";
 
 interface ClueCardProps {
   clue: Clue;
@@ -27,11 +28,11 @@ export function ClueCard({ clue, discoveredAt, className }: ClueCardProps) {
               </span>
             )}
           </div>
-          <p className="text-stone-300 text-sm leading-relaxed">{clue.description}</p>
+          <RichText as="p" className="text-stone-300 text-sm leading-relaxed" text={clue.description} />
         </div>
       </div>
       <div className="border-t border-stone-700 pt-2 flex justify-between items-center">
-        <p className="text-xs text-stone-500 italic">{clue.flavor}</p>
+        <RichText as="p" className="text-xs text-stone-500 italic" text={clue.flavor} />
         {discoveredAt && (
           <span className="text-xs text-stone-600 ml-2 flex-shrink-0">
             Found {new Date(discoveredAt).toLocaleDateString()}

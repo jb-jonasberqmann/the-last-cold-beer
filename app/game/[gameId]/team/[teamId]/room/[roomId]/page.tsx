@@ -6,6 +6,7 @@ import { fileToJpegDataUrl } from "@/lib/photoCapture";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { usePlayer } from "@/hooks/usePlayer";
 import { Button } from "@/components/ui/Button";
+import { RichText } from "@/components/ui/RichText";
 import { ClueCard } from "@/components/game/ClueCard";
 import { RoomSceneFullscreen } from "@/components/game/RoomSceneFullscreen";
 import { getRoom, getQuestsByRoom, getClue } from "@/content/index";
@@ -209,6 +210,14 @@ export default function RoomPage({ params }: Props) {
   const completedQuestsList = quests.filter((q) => isComplete(q.id));
   const activeQuest = quests.find((q) => !isComplete(q.id));
   const offerDef = game.offer_definition;
+
+  // "All required done" is trivially true for rooms with zero required
+  // quests (Sunroom, Darts Board, Foosball Table — fully optional side
+  // rooms), so it can't be used to decide whether the room is actually
+  // finished. Use this instead to gate the "Room Cleared" takeover screen
+  // and the quest sheet's visibility, so optional-only rooms still show
+  // their bonus quests instead of jumping straight to "Room Cleared".
+  const roomFullyDone = allRequiredDone && bonusQuests.every((q) => isComplete(q.id));
 
   // Scared silent: current player's status.
   // Only block typing when another (non-host) teammate exists who CAN type —
@@ -568,7 +577,7 @@ export default function RoomPage({ params }: Props) {
       )}
 
       {/* ── Layer 7: Room cleared — full-screen overlay ── */}
-      {allRequiredDone && (
+      {roomFullyDone && (
         <div
           className="absolute inset-0 z-[45] flex flex-col items-center justify-end animate-sheet-up"
           style={{
@@ -627,7 +636,7 @@ export default function RoomPage({ params }: Props) {
       )}
 
       {/* ── Layer 6: Bottom quest sheet ── */}
-      {!allRequiredDone && (
+      {!roomFullyDone && (
         <div
           className={cn(
             "absolute bottom-0 left-3 right-3 z-[20]",
@@ -966,7 +975,7 @@ function QuestBlock({
         >
           {quest.title}
         </h3>
-        <p className="text-sm text-stone-400 leading-relaxed">{quest.description}</p>
+        <RichText as="p" className="text-sm text-stone-400 leading-relaxed" text={quest.description} />
         <SlidingPuzzleQuest
           config={quest.slidingPuzzle}
           isComplete={isComplete}
@@ -1013,7 +1022,7 @@ function QuestBlock({
       <h3 className="font-bold text-amber-100 text-sm" style={{ fontFamily: "Georgia,serif" }}>
         {quest.title}
       </h3>
-      <p className="text-sm text-stone-300 leading-relaxed">{quest.description}</p>
+      <RichText as="p" className="text-sm text-stone-300 leading-relaxed" text={quest.description} />
     </div>
   );
 }
@@ -1099,12 +1108,12 @@ function PhotoQuestBlock({
         📷 {quest.title}
       </h3>
 
-      <p
+      <RichText
+        as="p"
         className="text-sm mb-3 leading-relaxed"
         style={{ fontFamily: "Georgia,serif", color: isComplete ? "rgba(140,100,50,0.55)" : "rgba(205,185,145,0.85)" }}
-      >
-        {quest.description}
-      </p>
+        text={quest.description}
+      />
 
       {!isComplete && (
         <div
@@ -1115,9 +1124,7 @@ function PhotoQuestBlock({
             borderLeft: "2px solid rgba(180,130,50,0.4)",
           }}
         >
-          <p className="text-sm italic leading-relaxed" style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}>
-            {quest.prompt}
-          </p>
+          <RichText as="p" className="text-sm italic leading-relaxed" style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }} text={quest.prompt} />
         </div>
       )}
 
@@ -1131,7 +1138,7 @@ function PhotoQuestBlock({
           )}
           style={{ fontFamily: "Georgia,serif" }}
         >
-          {feedback.text}
+          <RichText text={feedback.text} />
         </div>
       )}
 
@@ -1232,7 +1239,7 @@ function PhysicalChallengeBlock({
       <div className="rounded-xl px-4 py-4 border border-emerald-800/40 opacity-60" style={{ background: "rgba(6,24,12,0.85)", fontFamily: "Georgia,serif" }}>
         <div className="text-[9px] uppercase tracking-widest text-emerald-700 mb-1">✓ Done</div>
         <div className="font-bold text-emerald-500 text-sm">{quest.title}</div>
-        <div className="text-xs text-emerald-800 mt-1">{quest.rewardText ?? "Challenge complete."}</div>
+        <RichText as="div" className="text-xs text-emerald-800 mt-1" text={quest.rewardText ?? "Challenge complete."} />
       </div>
     );
   }
@@ -1245,7 +1252,7 @@ function PhysicalChallengeBlock({
           {quest.isRequired ? "Required" : "Bonus"} · Physical Challenge
         </div>
         <div className="font-bold text-base mb-2" style={{ color: "rgba(245,235,205,0.97)" }}>{quest.title}</div>
-        <p className="text-sm leading-relaxed" style={{ color: "rgba(200,175,130,0.8)" }}>{quest.description}</p>
+        <RichText as="p" className="text-sm leading-relaxed" style={{ color: "rgba(200,175,130,0.8)" }} text={quest.description} />
       </div>
 
       {/* Timer / CTA */}
@@ -1381,15 +1388,15 @@ function StickyNoteArtifact({
         {quest.title}
       </h3>
 
-      <p
+      <RichText
+        as="p"
         className="text-sm mb-3 leading-relaxed"
         style={{
           fontFamily: "Georgia,serif",
           color: isComplete ? "rgba(140,100,50,0.55)" : "rgba(205,185,145,0.85)",
         }}
-      >
-        {quest.description}
-      </p>
+        text={quest.description}
+      />
 
       {!isComplete && quest.isPrivate && (
         <p className="text-[11px] mb-2 flex items-center gap-1.5"
@@ -1411,12 +1418,12 @@ function StickyNoteArtifact({
                   borderLeft: "2px solid rgba(180,130,50,0.4)",
                 }}
               >
-                <p
+                <RichText
+                  as="p"
                   className="text-sm italic leading-relaxed"
                   style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}
-                >
-                  {quest.prompt}
-                </p>
+                  text={quest.prompt}
+                />
               </div>
             </HoldToReveal>
           </div>
@@ -1429,12 +1436,12 @@ function StickyNoteArtifact({
               borderLeft: "2px solid rgba(180,130,50,0.4)",
             }}
           >
-            <p
+            <RichText
+              as="p"
               className="text-sm italic leading-relaxed"
               style={{ fontFamily: "Georgia,serif", color: "rgba(215,180,105,0.9)" }}
-            >
-              {quest.prompt}
-            </p>
+              text={quest.prompt}
+            />
           </div>
         )
       )}
@@ -1449,7 +1456,7 @@ function StickyNoteArtifact({
           )}
           style={{ fontFamily: "Georgia,serif" }}
         >
-          {feedback.text}
+          <RichText text={feedback.text} />
         </div>
       )}
 
@@ -1587,15 +1594,13 @@ function BallotArtifact({
         <h3 className="font-bold text-amber-100 leading-tight" style={{ fontFamily: "Georgia,serif" }}>
           {quest.title}
         </h3>
-        <p className="text-sm text-stone-300 leading-relaxed">{quest.description}</p>
+        <RichText as="p" className="text-sm text-stone-300 leading-relaxed" text={quest.description} />
         {!isComplete && (
           <div
             className="rounded-sm px-3 py-2.5"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(180,130,50,0.12)" }}
           >
-            <p className="text-sm text-amber-100/80 italic" style={{ fontFamily: "Georgia,serif" }}>
-              {quest.prompt}
-            </p>
+            <RichText as="p" className="text-sm text-amber-100/80 italic" style={{ fontFamily: "Georgia,serif" }} text={quest.prompt} />
           </div>
         )}
         {feedback && (
@@ -1608,7 +1613,7 @@ function BallotArtifact({
             )}
             style={{ fontFamily: "Georgia,serif" }}
           >
-            {feedback.text}
+            <RichText text={feedback.text} />
           </div>
         )}
         {!isComplete && !isReadOnly && quest.choices && (
@@ -1688,16 +1693,14 @@ function SealedDocArtifact({
         >
           {quest.title}
         </h3>
-        <p
+        <RichText
+          as="p"
           className="text-sm text-center mb-3 leading-relaxed"
           style={{ color: isComplete ? "rgba(120,90,40,0.7)" : "rgba(200,160,80,0.8)", fontFamily: "Georgia,serif" }}
-        >
-          {quest.description}
-        </p>
+          text={quest.description}
+        />
         {!isComplete && (
-          <p className="text-xs text-center italic mb-4" style={{ color: "rgba(180,120,40,0.6)", fontFamily: "Georgia,serif" }}>
-            {quest.prompt}
-          </p>
+          <RichText as="p" className="text-xs text-center italic mb-4" style={{ color: "rgba(180,120,40,0.6)", fontFamily: "Georgia,serif" }} text={quest.prompt} />
         )}
         {feedback && (
           <div
@@ -1709,7 +1712,7 @@ function SealedDocArtifact({
             )}
             style={{ fontFamily: "Georgia,serif" }}
           >
-            {feedback.text}
+            <RichText text={feedback.text} />
           </div>
         )}
         {!isComplete && !isReadOnly && quest.offerCost && (
@@ -1758,15 +1761,13 @@ function TornFlyerArtifact({
           <h3 className="font-bold text-amber-100 mb-2 leading-tight" style={{ fontFamily: "Georgia,serif" }}>
             {quest.title}
           </h3>
-          <p className="text-sm text-stone-300 leading-relaxed mb-3">{quest.description}</p>
+          <RichText as="p" className="text-sm text-stone-300 leading-relaxed mb-3" text={quest.description} />
           {!isComplete && (
             <div
               className="rounded-sm px-3 py-2.5 mb-3"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(180,130,50,0.12)" }}
             >
-              <p className="text-sm text-amber-100/80 italic" style={{ fontFamily: "Georgia,serif" }}>
-                {quest.prompt}
-              </p>
+              <RichText as="p" className="text-sm text-amber-100/80 italic" style={{ fontFamily: "Georgia,serif" }} text={quest.prompt} />
             </div>
           )}
           {feedback && (
@@ -1779,7 +1780,7 @@ function TornFlyerArtifact({
               )}
               style={{ fontFamily: "Georgia,serif" }}
             >
-              {feedback.text}
+              <RichText text={feedback.text} />
             </div>
           )}
           {!isComplete && !isReadOnly && (

@@ -38,7 +38,7 @@ export const CHAPTERS: Chapter[] = [
     roomIds: [
       "double-room", "single-room", "bunk-room",
       "living-room", "sunroom",
-      "dining-room", "kitchen-act2", "activity-room",
+      "dining-room", "kitchen-act2", "the-toilet", "activity-room",
       "darts-board", "foosball-table",
     ],
     startingRoomIds: ["double-room", "single-room", "bunk-room"],

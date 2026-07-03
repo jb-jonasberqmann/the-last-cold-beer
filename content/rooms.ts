@@ -349,8 +349,8 @@ export const ROOMS: Room[] = [
     lockedDescription: "The living room. All three bedrooms must be completed first.",
     unlockCost: 0,
     unlockRequires: ["double-room", "single-room", "bunk-room"],
-    questIds: ["living-room-sentence-a", "living-room-sentence-b", "living-room-radio-a", "living-room-radio-b"],
-    rewardClueIds: ["radio-fragment-living"],
+    questIds: ["living-room-sentence-a", "living-room-sentence-b"],
+    rewardClueIds: [],
     isOptional: false,
     order: 4,
     da: {
@@ -451,6 +451,37 @@ export const ROOMS: Room[] = [
       description: "Køkkenet. Potter hængt op, knive i blokken, køleskab summende. Radioen er hørlig herfra.",
       lockedDescription: "Køkkenet. Udforsk stuen først.",
       atmosphere: "Funktionelt, beboet. Nogen lavede kaffe i morges — eller nogen laver altid kaffe morgenen efter ankomsten.",
+    },
+  },
+
+  {
+    id: "the-toilet",
+    chapterId: "act-2",
+    title: "The Toilet",
+    type: "mystery_room",
+    look: {
+      icon: "🚽",
+      theme: "cabin-warm",
+      atmosphere:
+        "Small, functional, and — somehow — within earshot of the dining room radio. Someone has been leaving notes taped up in here all night, same handwriting as everywhere else in the house.",
+      backgroundStyle: "warm-kitchen",
+      colorFrom: "from-stone-800",
+      colorTo: "to-stone-950",
+    },
+    description:
+      "The toilet, off the kitchen. Small room, but the radio reaches even here. One more fragment of the signal, and a note that has nothing to do with the radio and everything to do with the roll being almost empty.",
+    lockedDescription: "The toilet. Explore the kitchen first.",
+    unlockCost: 0,
+    unlockRequires: ["kitchen-act2"],
+    questIds: ["toilet-last-a", "toilet-last-b"],
+    rewardClueIds: ["radio-fragment-toilet"],
+    isOptional: false,
+    order: 6.5,
+    da: {
+      title: "Toilettet",
+      description: "Toilettet, ved køkkenet. Lille rum, men radioen når selv herind. Endnu et fragment af signalet, og en seddel der intet har med radioen at gøre og alt med at rullen næsten er tom.",
+      lockedDescription: "Toilettet. Udforsk køkkenet først.",
+      atmosphere: "Lille og funktionelt, og — på en eller anden måde — inden for hørevidde af spisestuens radio.",
     },
   },
 

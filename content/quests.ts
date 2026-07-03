@@ -254,14 +254,14 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Date List",
     description:
-      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates. All crossed out except the last one.\n\n~~July 19th 2010~~\n~~July 11th 2011~~\n~~July 23rd 2012~~\n~~July 15th 2013~~\n~~July 14th 2014~~\n~~July 20th 2015~~\n~~July 18th 2016~~\n~~July 10th 2017~~\n~~July 16th 2018~~\n~~July 22nd 2019~~\n~~July 13th 2020~~\n~~July 19th 2021~~\n~~July 11th 2022~~\n~~July 17th 2023~~\n~~July 15th 2024~~\n~~July 21st 2025~~\n\n**Tonight's date — not crossed out.**",
+      "Pinned to the inside wall of the shed — laminated, with actual push pins — a handwritten list of dates, written as plain numbers, one under another. All crossed out except the last.\n\n~~07192010~~\n~~07112011~~\n~~07232012~~\n~~07152013~~\n~~07142014~~\n~~07202015~~\n~~07182016~~\n~~07102017~~\n~~07162018~~\n~~07222019~~\n~~07132020~~\n~~07192021~~\n~~07112022~~\n~~07172023~~\n~~07152024~~\n~~07212025~~\n\n**{{TODAY}} — not crossed out.**",
     prompt:
-      "Read the list again, top to bottom. Every line has exactly one thing in common that never changes, no matter the year. Find it — then turn what you find into the digit that matches it.",
+      "Read the list again, top to bottom. Every line has exactly one thing in common that never changes, no matter the year. Find it — then turn what you find into a single digit, 0 through 9.",
     order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Ignore the day. Ignore the year. Look at what's left." },
-      { order: 2, offerCost: 1, text: "It's a month. Which number month is it?" },
+      { order: 1, offerCost: 1, text: "Ignore the last six digits of each line. Look only at the first two." },
+      { order: 2, offerCost: 1, text: "Those first two digits are a month, written as a number. Which month is it?" },
     ],
     answer: {
       correct: ["7", "seven", "syv"],
@@ -269,14 +269,14 @@ export const QUESTS: Quest[] = [
     },
     rewardClueId: "fragment-shed",
     rewardText:
-      "7. Every single date falls in July — the seventh month, without exception, across sixteen years. Someone has been keeping track. Every year. They always cross the date out.",
-    failureText: "The day changes. The year changes. One thing on every line never does.",
+      "7. Every single date starts with 07 — July, the seventh month, without exception, across sixteen years. Someone has been keeping track. Every year. They always cross the date out.",
+    failureText: "The last six digits change every line. The first two never do.",
     da: {
       title: "Datolisten",
-      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer. Alle overstreget undtagen den sidste.\n\n~~19. juli 2010~~\n~~11. juli 2011~~\n~~23. juli 2012~~\n~~15. juli 2013~~\n~~14. juli 2014~~\n~~20. juli 2015~~\n~~18. juli 2016~~\n~~10. juli 2017~~\n~~16. juli 2018~~\n~~22. juli 2019~~\n~~13. juli 2020~~\n~~19. juli 2021~~\n~~11. juli 2022~~\n~~17. juli 2023~~\n~~15. juli 2024~~\n~~21. juli 2025~~\n\n**Aftenens dato — ikke overstreget.**",
-      prompt: "Læs listen igen, top til bund. Hver linje har præcis én ting til fælles, som aldrig ændrer sig, uanset året. Find den — og omsæt det du finder til det ciffer der passer.",
-      rewardText: "7. Hver eneste dato falder i juli — den syvende måned, uden undtagelse, gennem seksten år. Nogen har holdt styr på det. Hvert år. De overstreger altid datoen.",
-      failureText: "Dagen ændrer sig. Året ændrer sig. Én ting på hver linje gør aldrig.",
+      description: "Fastgjort til indervæggen i skuret — lamineret, med rigtige tegnestifter — en håndskrevet liste af datoer, skrevet som rene tal, én under den anden. Alle overstreget undtagen den sidste.\n\n~~07192010~~\n~~07112011~~\n~~07232012~~\n~~07152013~~\n~~07142014~~\n~~07202015~~\n~~07182016~~\n~~07102017~~\n~~07162018~~\n~~07222019~~\n~~07132020~~\n~~07192021~~\n~~07112022~~\n~~07172023~~\n~~07152024~~\n~~07212025~~\n\n**{{TODAY}} — ikke overstreget.**",
+      prompt: "Læs listen igen, top til bund. Hver linje har præcis én ting til fælles, som aldrig ændrer sig, uanset året. Find den — og omsæt det du finder til ét ciffer, 0 til 9.",
+      rewardText: "7. Hver eneste dato starter med 07 — juli, den syvende måned, uden undtagelse, gennem seksten år. Nogen har holdt styr på det. Hvert år. De overstreger altid datoen.",
+      failureText: "De sidste seks cifre ændrer sig hver linje. De første to gør aldrig.",
     },
   },
 
@@ -719,63 +719,66 @@ export const QUESTS: Quest[] = [
       failureText: "Tre ord. Ét fra hvert soveværelse. Køjestuens spiller kan ikke skrive — se på dem.",
     },
   },
+  // --- THE TOILET ---
   {
-    id: "living-room-radio-a",
-    roomId: "living-room",
+    id: "toilet-last-a",
+    roomId: "the-toilet",
     forTeam: "team-a",
     type: "puzzle",
-    title: "The Static",
+    title: "The Roll",
     description:
-      "From the living room, you can hear the radio in the dining room. The static is low but constant, and it keeps catching on the same shape — like it's trying to say one specific word.",
+      "The toilet. Mercifully unoccupied. The dining room radio reaches even here — faint through the wall, but latched onto the same one word it can't seem to get past. Taped to the wall at eye level, in handwriting you've seen all over this house: another note.",
     prompt:
-      "Listen closely. The static hums the same shape over and over: first, then next, then next again — until suddenly nothing follows. What single word means 'the one after which there is no other'?",
-    order: 2,
+      "The note reads: \"Whoever finds it like THIS is, undeniably and without appeal, the ____ one who gets to use it before somebody has to go buy more.\" You look down. One square left. What single word means 'the one after which there is no other'?",
+    order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Think about a list. This word describes the end of it." },
+      { order: 1, offerCost: 1, text: "Think about a list. This word describes the end of it — and, right now, the end of the roll." },
     ],
     answer: {
       correct: ["last", "sidste"],
       normalized: true,
     },
-    rewardClueId: "radio-fragment-living",
-    rewardText: "Last. A fragment heard: *\"...the last one...\"* The radio is trying to tell you something.",
-    failureText: "It's the word for the end of a list — nothing comes after it.",
+    rewardClueId: "radio-fragment-toilet",
+    rewardText:
+      "Last. A fragment heard, right on cue: *\"...the last one...\"* Somewhere between relief and dread, you understand the radio a little better. Also: buy more toilet paper.",
+    failureText: "It's the word for the end of a list — nothing comes after it. Also, still, no more paper.",
     da: {
-      title: "Statikken",
-      description: "Fra stuen kan du høre radioen i spisestuen. Statikken er lav men konstant, og den bliver ved med at hænge fast på den samme form — som om den prøver at sige ét bestemt ord.",
-      prompt: "Lyt nøje. Statikken brummer den samme form igen og igen: først, så næste, så næste igen — indtil pludselig intet følger. Hvilket ord betyder 'den efter hvilken der ikke er nogen anden'?",
-      rewardText: "Sidste. Et fragment hørt: *\"...den sidste...\"*",
-      failureText: "Det er ordet for enden af en liste — intet kommer efter det.",
+      title: "Rullen",
+      description: "Toilettet. Nådigt ubesat. Radioen fra spisestuen når selv herind — svagt gennem væggen, men fast besluttet på det samme ord den ikke kan komme forbi. Tapet på væggen i øjenhøjde, i en håndskrift du har set alle vegne i dette hus: endnu en seddel.",
+      prompt: "Sedlen lyder: \"Den der finder den sådan HER, er, uden appel, den ____ der får lov at bruge den før nogen skal ud og købe mere.\" Du kigger ned. Ét stykke tilbage. Hvilket ord betyder 'den efter hvilken der ikke er nogen anden'?",
+      rewardText: "Sidste. Et fragment hørt, lige på det rette tidspunkt: *\"...den sidste...\"* Køb mere toiletpapir.",
+      failureText: "Det er ordet for enden af en liste — intet kommer efter det. Og stadig intet papir.",
     },
   },
   {
-    id: "living-room-radio-b",
-    roomId: "living-room",
+    id: "toilet-last-b",
+    roomId: "the-toilet",
     forTeam: "team-b",
     type: "puzzle",
-    title: "The Static",
+    title: "The Roll",
     description:
-      "From the living room, you can hear the radio in the dining room. The static is low but constant, and it keeps catching on the same shape — like it's trying to say one specific word.",
+      "The toilet. Small, functional, and — like everywhere else tonight — within earshot of the dining room radio. Taped above the sink at eye level, impossible to miss while washing your hands: another note in the same handwriting.",
     prompt:
-      "Listen closely. Whatever this word means, it isn't 'first.' It's the far end of a list — the one nobody follows, because nobody's left to follow. What single word means that?",
-    order: 2,
+      "It reads: \"House rule, non-negotiable: whoever is the ____ person to use this room before midnight has to check the roll. No exceptions, no delegating.\" What single word means 'the one after which there is no other'?",
+    order: 1,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Think about a list. This word describes the end of it." },
+      { order: 1, offerCost: 1, text: "Think about a list. This word describes the end of it — and, apparently, house rules too." },
     ],
     answer: {
       correct: ["last", "sidste"],
       normalized: true,
     },
-    rewardClueId: "radio-fragment-living",
-    rewardText: "Last. A fragment heard: *\"...the last one...\"* The radio is trying to tell you something.",
+    rewardClueId: "radio-fragment-toilet",
+    rewardText:
+      "Last. A fragment heard, right as you dry your hands: *\"...the last one...\"* The radio is trying to tell you something, and so, apparently, is the bathroom.",
     failureText: "It's the word for the end of a list — nothing comes after it.",
     da: {
-      title: "Statikken",
-      description: "Fra stuen kan du høre radioen i spisestuen. Statikken er lav men konstant, og den bliver ved med at hænge fast på den samme form — som om den prøver at sige ét bestemt ord.",
-      prompt: "Lyt nøje. Uanset hvad dette ord betyder, er det ikke 'først.' Det er den anden ende af en liste — den ingen følger, fordi ingen er tilbage. Hvilket ord betyder det?",
-      rewardText: "Sidste. Et fragment hørt: *\"...den sidste...\"*",
+      title: "Rullen",
+      description: "Toilettet. Lille, funktionelt, og — som alle andre steder i aften — inden for hørevidde af spisestuens radio. Tapet over vasken i øjenhøjde, umuligt at overse mens du vasker hænder: endnu en seddel i samme håndskrift.",
+      prompt: "Den lyder: \"Husregel, ufravigelig: den der er den ____ person til at bruge dette rum før midnat, skal tjekke rullen. Ingen undtagelser, ingen uddelegering.\" Hvilket ord betyder 'den efter hvilken der ikke er nogen anden'?",
+      rewardText: "Sidste. Et fragment hørt lige som du tørrer hænder: *\"...den sidste...\"* Radioen prøver at fortælle dig noget, og det gør badeværelset åbenbart også.",
       failureText: "Det er ordet for enden af en liste — intet kommer efter det.",
     },
   },
@@ -943,7 +946,7 @@ export const QUESTS: Quest[] = [
       { order: 1, offerCost: 1, text: "It's the opposite of starting." },
     ],
     answer: {
-      correct: ["finish", "afslut", "afslutte"],
+      correct: ["finish", "finished", "afslut", "afslutte", "afsluttet"],
       normalized: true,
     },
     rewardClueId: "radio-fragment-activity",
@@ -967,14 +970,14 @@ export const QUESTS: Quest[] = [
     description:
       "The activity room is the acoustic sweet spot. The dining room radio is clearest from here — clear enough this time to catch the shape of a whole word.",
     prompt:
-      "The static settles on a single idea: the last action before a job stops being unfinished. What single word means 'to complete'?",
+      "The static settles on a single idea: the one thing left to do when nothing else remains on the list. What single word means 'to bring a task to its end'?",
     order: 1,
     isRequired: true,
     hints: [
       { order: 1, offerCost: 1, text: "It's the opposite of starting." },
     ],
     answer: {
-      correct: ["finish", "afslut", "afslutte"],
+      correct: ["finish", "finished", "afslut", "afslutte", "afsluttet"],
       normalized: true,
     },
     rewardClueId: "radio-fragment-activity",
