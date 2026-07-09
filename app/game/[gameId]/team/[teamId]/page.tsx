@@ -128,14 +128,13 @@ const ACT_GEO: Record<string, ActGeo> = {
     bossNode: { cx: 170, cy: 88 },
     titleCY: 42,
     nodes: [
-      { id: "revelation-circle", cx: 155, cy: 162, sz: 13 },
       { id: "door-nobody-tried", cx: 107, cy: 238, sz: 12 },
       { id: "shed-dark",         cx: 215, cy: 238, sz: 12 },
       { id: "meter-cupboard",    cx: 100, cy: 273, sz: 10 },
       { id: "sealed-wall",       cx: 95,  cy: 308, sz: 11 },
       { id: "conservatory",      cx: 152, cy: 308, sz: 11 },
       { id: "kitchen-dark",      cx: 232, cy: 308, sz: 12 },
-      { id: "rattling-window",   cx: 242, cy: 238, sz: 10, isOptional: true },
+      { id: "broken-window",     cx: 242, cy: 238, sz: 10, isOptional: true },
       { id: "behind-the-shed",   cx: 165, cy: 382, sz: 12 },
       { id: "fuse-box",          cx: 235, cy: 382, sz: 11 },
       // Bottom spine — pulled up and tightened so the starting room
@@ -153,13 +152,12 @@ const ACT_GEO: Record<string, ActGeo> = {
       ["back-corridor",     "fuse-box"],
       ["door-nobody-tried", "meter-cupboard"],
       ["meter-cupboard",    "sealed-wall"],
-      ["door-nobody-tried", "revelation-circle"],
+      ["door-nobody-tried", "boss"],
       ["behind-the-shed",   "conservatory"],
       ["behind-the-shed",   "shed-dark"],
       ["fuse-box",          "kitchen-dark"],
-      ["kitchen-dark",      "rattling-window"],
-      ["shed-dark",         "revelation-circle"],
-      ["revelation-circle", "boss"],
+      ["kitchen-dark",      "broken-window"],
+      ["shed-dark",         "boss"],
     ],
   },
 };
@@ -421,18 +419,30 @@ export default function TeamQuestBoardPage({ params }: Props) {
 
   const handleUnlock = async () => {
     if (!pendingUnlock) return;
+    const roomId = pendingUnlock;
     setUnlocking(true);
-    const result = await unlockRoom(gameId, teamId, pendingUnlock);
+    const result = await unlockRoom(gameId, teamId, roomId);
     setUnlocking(false);
     setPendingUnlock(null);
     if (result.success) {
-      const cost = result.data.offerCost;
-      setMessage(cost > 0 ? `Room unlocked! (${cost} Offer used)` : "Room unlocked!");
-      fetchData();
+      // Walk straight into the room (or the boss fight) instead of making
+      // the player tap the node a second time now that it's unlocked.
+      const unlockedRoom = getRoom(roomId);
+      if (unlockedRoom?.type === "boss_room" && chapter) {
+        router.push(`/game/${gameId}/boss/${chapter.bossId}?team=${teamId}`);
+        return;
+      }
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          `tlcb_depart_clues_${gameId}_${teamId}`,
+          JSON.stringify(teamClues.map((c) => c.id))
+        );
+      }
+      router.push(`/game/${gameId}/team/${teamId}/room/${roomId}`);
     } else {
       setMessage(result.error ?? "Failed to unlock.");
+      setTimeout(() => setMessage(null), 3000);
     }
-    setTimeout(() => setMessage(null), 3000);
   };
 
   // ── Guard ─────────────────────────────────────────────────────────────────
@@ -464,6 +474,9 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const bossUnlockable = boss?.requiredRoomIds
     ? boss.requiredRoomIds.every((r) => getRoomStatus(r) === "complete")
     : completedCount >= Math.ceil(totalRooms * 0.8);
+  // The Act 3 boss ("yourselves") is a twist — its identity must stay hidden
+  // as "???" on the map even once it's unlockable, revealed only on entry.
+  const bossIdentityHidden = chapter?.bossId === "yourselves";
 
   // SVG scale math
   const { svgW, svgH, scale } = geo;
@@ -552,9 +565,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
             {/* ── Map background ── */}
             {/* Act 3 only: swaps to a "lit" variant once the fuse box is
                 fixed, and back to the normal dark map once the door nobody
-                tried is finished (the main switch outside gets thrown).
-                NOTE: /map/act3/map-lit.png does not exist yet — needs to be
-                created as a companion asset to the existing map.png. */}
+                tried is finished (the main switch outside gets thrown). */}
             <image
               href={mapLit ? `/map/${actFolder}/map-lit.png` : `/map/${actFolder}/map.png`}
               x="0" y="0"
@@ -663,7 +674,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                     filter={theme.darkLabels ? "url(#tlcb-shadow-light)" : "url(#tlcb-shadow)"}
                     opacity={0.95}
                   >
-                    {(bossUnlockable ? boss?.title ?? "BOSS" : "???").toUpperCase()}
+                    {(bossUnlockable && !bossIdentityHidden ? boss?.title ?? "BOSS" : "???").toUpperCase()}
                   </text>
                 </g>
               );
@@ -797,8 +808,8 @@ export default function TeamQuestBoardPage({ params }: Props) {
           </div>
           <GameTimer
             startedAt={game?.started_at}
-            className="block text-[11px] mt-0.5 tracking-wide"
-            style={{ color: theme.accent, opacity: 0.55, fontFamily: "Georgia,serif" }}
+            className="block text-xs mt-0.5 tracking-wide font-bold"
+            style={{ color: "rgba(255,255,255,0.92)", textShadow: "0 1px 4px rgba(0,0,0,0.9)", fontFamily: "Georgia,serif" }}
           />
         </div>
 
@@ -949,7 +960,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                   <span className="text-xl">{bossUnlockable ? "⚔️" : "🔒"}</span>
                   <div>
                     <div className="text-sm font-bold" style={{ color: bossUnlockable ? "rgb(252,165,165)" : "rgba(120,80,40,0.6)", fontFamily: "Georgia,serif" }}>
-                      {bossUnlockable ? boss?.title ?? chapter.bossId : "???"}
+                      {bossUnlockable && !bossIdentityHidden ? boss?.title ?? chapter.bossId : "???"}
                     </div>
                     <div className="text-xs" style={{ color: bossUnlockable ? "rgba(220,100,100,0.6)" : "rgba(100,60,20,0.4)", fontFamily: "Georgia,serif" }}>
                       {bossUnlockable ? "Ready for battle" : "Something is waiting. Keep exploring."}

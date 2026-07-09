@@ -58,7 +58,7 @@ export function GameLayout({
             {/* Elapsed game timer */}
             <GameTimer
               startedAt={startedAt}
-              className="text-xs text-amber-700/80"
+              className="text-xs font-bold text-white/90"
               style={{ fontFamily: "Georgia, serif" }}
             />
 

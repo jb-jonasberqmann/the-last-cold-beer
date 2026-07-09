@@ -425,6 +425,40 @@ export const BOSSES: Boss[] = [
     },
     maxHp: 150,
     requiredRoomIds: ["shed-dark", "door-nobody-tried"],
+    // The finale boss — deliberately harder than Act 1/2: more counterattack
+    // variety, a heal that can recur every time HP drops below 50% (not just
+    // once), and wrong puzzle answers cost the team sips (punishWrongAnswers).
+    punishWrongAnswers: true,
+    counterAttacks: [
+      {
+        id: "defend",
+        label: "The House Deflects",
+        description: "The accusation slides off. Nobody wants to be the one who admits it first. Your next move only deals 70% damage.",
+        weight: 3,
+        effect: { type: "defend", defenseMultiplier: 0.70 },
+      },
+      {
+        id: "attack",
+        label: "The House Remembers",
+        description: "A detail surfaces that nobody wants to sit with. Team drinks 1 sip.",
+        weight: 3,
+        effect: { type: "attack", teamOfferDamage: 1 },
+      },
+      {
+        id: "attack-heavy",
+        label: "Cold Judgment",
+        description: "The house doesn't ask this time. It states it. Team drinks 2 sips.",
+        weight: 2,
+        effect: { type: "attack", teamOfferDamage: 2 },
+      },
+      {
+        id: "heal",
+        label: "The Denial Resurfaces",
+        description: "\"This still isn't us.\" Someone says it and half the room believes it again. The house un-hears what you just admitted — Recognition climbs back up, hard.",
+        weight: 2,
+        effect: { type: "heal", healPercent: 0.28, isOnce: false },
+      },
+    ],
     phases: [
       {
         phase: 1,
@@ -473,21 +507,21 @@ export const BOSSES: Boss[] = [
             id: "yourselves-shed-note-recall",
             label: "Describe the shed note without looking at it",
             description:
-              "Your team found the shed date list in Act 1. Describe it from memory — what was crossed out, what wasn't, what the last entry said.",
+              "Your team found the shed date list in Act 1. Recall it from memory — every date on it was crossed out except one.",
             type: "puzzle",
             damage: 30,
             puzzle: {
               prompt:
-                "Describe the shed date list from memory. What was on it? What made it wrong?\n\nAccepted: describe the list of dates, that today's date is uncrossed, that all others are crossed out.",
+                "Without looking at a photo or going back to check: every date on the shed's list was crossed out except one. Was the uncrossed date the very FIRST entry on the list, or the very LAST one?",
               answer: [
-                "crossed out", "overstreget", "today", "i dag", "uncrossed", "ikke overstreget",
-                "july", "juli", "dates", "datoer", "list", "liste",
+                "last", "the last", "last one", "the last one", "last entry", "last date",
+                "sidste", "den sidste", "sidste en", "sidste dato",
               ],
             },
-            hint: "The list of dates. All crossed out except the last one. The last one is today.",
+            hint: "The list runs oldest to newest. The one still uncrossed is the most recent — the bottom of the list.",
             rewardText:
-              "The group remembers. Without looking at a photo, without checking notes. You just knew. 30 HP.",
-            failureText: "The memory is fuzzy. Look at the clue if you need to — but this should be familiar.",
+              "The last one. Not the oldest, the newest. Tonight. The group remembers it without looking — you just knew. 30 HP.",
+            failureText: "Think about which end of the list runs newest — oldest or most recent entries.",
           },
         ],
       },

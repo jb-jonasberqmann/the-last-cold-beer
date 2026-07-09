@@ -241,14 +241,29 @@ export async function submitQuestAnswer(
   if (!quest) return { success: false, error: "Quest not found." };
   if (!quest.answer) return { success: false, error: "This quest has no answer to check." };
 
-  const isCorrect = checkAnswer(answer, quest.answer.correct, quest.answer.normalized);
+  let isCorrect = checkAnswer(answer, quest.answer.correct, quest.answer.normalized);
+
+  // Gimmick quests (e.g. Sunroom plant count): the first N attempts are
+  // always wrong regardless of value, no matter what's typed. Once past
+  // that threshold, fall through to the normal answer check above.
+  if (quest.forceWrongForFirstNAttempts) {
+    const rows = await sql`
+      SELECT wrong_attempts FROM quest_progress
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND quest_id = ${questId}
+      LIMIT 1
+    `;
+    const priorWrongAttempts = (rows[0]?.wrong_attempts as number | undefined) ?? 0;
+    if (isCorrect && priorWrongAttempts < quest.forceWrongForFirstNAttempts) {
+      isCorrect = false;
+    }
+  }
 
   if (!isCorrect) {
     await sql`
-      INSERT INTO quest_progress (game_id, team_id, quest_id, room_id, status, answer_submitted)
-      VALUES (${gameId}, ${teamId}, ${questId}, ${quest.roomId}, 'active', ${answer})
+      INSERT INTO quest_progress (game_id, team_id, quest_id, room_id, status, answer_submitted, wrong_attempts)
+      VALUES (${gameId}, ${teamId}, ${questId}, ${quest.roomId}, 'active', ${answer}, 1)
       ON CONFLICT (game_id, team_id, quest_id)
-      DO UPDATE SET answer_submitted = ${answer}
+      DO UPDATE SET answer_submitted = ${answer}, wrong_attempts = quest_progress.wrong_attempts + 1
     `;
     return { success: true, data: { correct: false, failureText: quest.failureText } };
   }
@@ -337,6 +352,14 @@ export async function completeQuest(
   if (quest.type === "unlock" && quest.offerCost) {
     offerCost = quest.offerCost;
     await _logOffer(gameId, teamId, offerCost, `Unlocked: ${quest.title}`, questId);
+  }
+
+  // Any other quest type can also carry a flat Offer cost (e.g. a social
+  // challenge that ends in a mandatory toast) — covers cases beyond the
+  // choice/unlock branches above.
+  if (quest.type !== "choice" && quest.type !== "unlock" && quest.offerCost) {
+    offerCost = quest.offerCost;
+    await _logOffer(gameId, teamId, offerCost, `Completed: ${quest.title}`, questId);
   }
 
   const now = new Date().toISOString();
@@ -544,9 +567,23 @@ export async function dealBossDamage(
     }
     const correct = checkAnswer(answer, foundAction.puzzle.answer, true);
     if (!correct) {
+      // Some bosses (e.g. the Act 3 finale) punish wrong answers with a
+      // random 1-3 sip penalty on top of the miss, making guessing costly.
+      let wrongSips: number | undefined;
+      if (boss.punishWrongAnswers) {
+        wrongSips = Math.floor(Math.random() * 3) + 1;
+        await _logOffer(gameId, teamId, wrongSips, `Wrong answer: ${foundAction.label}`, bossId);
+      }
       return {
         success: true,
-        data: { damage: 0, newHp: bp.current_hp, defeated: false, failureText: foundAction.failureText ?? "Wrong answer. Try again." },
+        data: {
+          damage: 0,
+          newHp: bp.current_hp,
+          defeated: false,
+          failureText: wrongSips
+            ? `${foundAction.failureText ?? "Wrong answer."} Take ${wrongSips} sip${wrongSips > 1 ? "s" : ""} — the house doesn't forgive mistakes here.`
+            : (foundAction.failureText ?? "Wrong answer. Try again."),
+        },
       };
     }
   }
@@ -618,12 +655,17 @@ export async function dealBossDamage(
   const defeated = newHp === 0;
   const hpPercent = (newHp / boss.maxHp) * 100;
 
-  // Determine new phase
+  // Determine new phase — phases are listed in ascending order with
+  // DESCENDING hpThresholds (e.g. 100, 60, 20). We want the deepest phase
+  // whose threshold the current HP% has dropped to, so we keep overwriting
+  // as we walk the list rather than stopping at the first (always-true,
+  // since hpPercent is never above phase 1's 100% threshold) match — that
+  // early `break` was a bug that pinned every boss fight to phase 1 forever,
+  // hiding phase 2 / phase 3 actions no matter how much damage was dealt.
   let newPhase = bp.current_phase;
   for (const phase of boss.phases) {
     if (hpPercent <= phase.hpThreshold) {
       newPhase = phase.phase;
-      break;
     }
   }
 
@@ -663,28 +705,32 @@ export async function dealBossDamage(
       ? (lastCounterEvRows[0] as { event_data: { move: string } }).event_data.move
       : null;
 
-    // Check if heal has already been used this fight
-    const healUsedRows = await sql`
-      SELECT id FROM game_events
+    // Moves already used this fight, for `isOnce` gating. Generalized to any
+    // counterattack id (not just heal) so per-boss content controls whether a
+    // move can recur — e.g. the Act 3 boss's heal is deliberately repeatable
+    // (isOnce: false) so it can punish the team every time they drag it below
+    // 50% HP, not just the first time.
+    const usedMoveRows = await sql`
+      SELECT event_data->>'move' AS move FROM game_events
       WHERE game_id = ${gameId}
         AND team_id = ${teamId}
         AND event_type = 'boss_counter_attacked'
         AND event_data->>'boss_id' = ${bossId}
-        AND event_data->>'move' = 'heal'
-      LIMIT 1
     `;
-    const healAlreadyUsed = healUsedRows.length > 0;
+    const usedMoveIds = new Set(usedMoveRows.map((r) => (r as { move: string }).move));
 
     // Heal is a late-fight desperation move: only eligible when the boss is
     // below 50% HP AND the strike that just landed was heavy (≥20 damage).
-    // Combined with the once-per-fight rule and the no-counter roll above,
-    // some fights it triggers — many fights it never does.
+    // Combined with the no-counter roll above, some fights it triggers —
+    // many fights it never does.
     const hpPercentAfterHit = (newHp / boss.maxHp) * 100;
-    const healEligible = !healAlreadyUsed && hpPercentAfterHit < 50 && damage >= 20;
+    const healEligible = hpPercentAfterHit < 50 && damage >= 20;
 
-    // Filter eligible attacks: no immediate repeat, heal only when desperate
+    // Filter eligible attacks: no immediate repeat, isOnce moves already
+    // used this fight are excluded, heal only fires when desperate.
     const eligible = boss.counterAttacks.filter((ca) => {
       if (ca.id === lastMove) return false;
+      if (ca.effect.isOnce === true && usedMoveIds.has(ca.id)) return false;
       if (ca.effect.type === "heal" && !healEligible) return false;
       return true;
     });
@@ -1513,7 +1559,7 @@ async function _checkAndCompleteRoom(gameId: string, teamId: TeamId, roomId: str
     status: r.status,
     // fill required fields with defaults for type compat
     id: "", game_id: gameId, team_id: teamId, room_id: roomId,
-    answer_submitted: null, hints_used: 0, offer_spent: 0, completed_at: null,
+    answer_submitted: null, hints_used: 0, offer_spent: 0, completed_at: null, wrong_attempts: 0,
   }));
 
   if (!isRoomComplete(roomId, asDbRows, teamId)) return;
@@ -1571,4 +1617,62 @@ export async function startPhysicalChallenge(
     )
   `;
   return { success: true, data: {} };
+}
+
+// ==========================================
+// SUBMIT PRECISION STOP (Darts — stop the stopwatch as close to the target as possible)
+// ==========================================
+
+const PRECISION_STOP_TIERS: { maxDelta: number; sips: number }[] = [
+  { maxDelta: 2,  sips: 0 },
+  { maxDelta: 5,  sips: 1 },
+  { maxDelta: 10, sips: 2 },
+  { maxDelta: 15, sips: 3 },
+];
+
+export async function submitPrecisionStop(
+  gameId: string,
+  teamId: TeamId,
+  questId: string,
+  elapsedSeconds: number
+): Promise<ActionResult<{ completed: boolean; deltaSeconds: number; sips: number; rewardText?: string }>> {
+  const quest = getQuest(questId);
+  if (!quest) return { success: false, error: "Quest not found." };
+  const target = quest.physicalChallenge?.targetStopSeconds;
+  if (target == null) return { success: false, error: "This quest has no stop target." };
+
+  const deltaSeconds = Math.abs(elapsedSeconds - target);
+  const tier = PRECISION_STOP_TIERS.find((t) => deltaSeconds <= t.maxDelta);
+
+  if (!tier) {
+    // Too far off — no penalty, no progress, just try again.
+    return { success: true, data: { completed: false, deltaSeconds, sips: 0 } };
+  }
+
+  if (tier.sips > 0) {
+    await _logOffer(gameId, teamId, tier.sips, `Off target on: ${quest.title}`, questId);
+  }
+
+  const now = new Date().toISOString();
+  await sql`
+    INSERT INTO quest_progress (game_id, team_id, quest_id, room_id, status, answer_submitted, offer_spent, completed_at)
+    VALUES (${gameId}, ${teamId}, ${questId}, ${quest.roomId}, 'completed', ${String(elapsedSeconds)}, ${tier.sips}, ${now})
+    ON CONFLICT (game_id, team_id, quest_id)
+    DO UPDATE SET status = 'completed', answer_submitted = ${String(elapsedSeconds)}, offer_spent = ${tier.sips}, completed_at = ${now}
+  `;
+
+  if (quest.rewardClueId) await _awardClue(gameId, teamId, quest.rewardClueId);
+
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (${gameId}, ${teamId}, 'quest_completed',
+            ${JSON.stringify({ quest_id: questId, room_id: quest.roomId })}::jsonb)
+  `;
+
+  await _checkAndCompleteRoom(gameId, teamId, quest.roomId);
+
+  return {
+    success: true,
+    data: { completed: true, deltaSeconds, sips: tier.sips, rewardText: quest.rewardText },
+  };
 }

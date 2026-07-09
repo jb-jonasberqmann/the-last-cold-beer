@@ -4,8 +4,7 @@ import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { dealBossDamage, applyBossDamage, getTeamPhoto, clearSunBlindForTeam } from "@/lib/game/actions";
-import { AgedPhoto } from "@/components/game/AgedPhoto";
+import { dealBossDamage, applyBossDamage, getCulpritReveal, clearSunBlindForTeam } from "@/lib/game/actions";
 import { formatOfferCost } from "@/lib/game/formatOffer";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { getBoss } from "@/content/bosses";
@@ -103,8 +102,9 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const [activeTab, setActiveTab] = useState<"fight" | "clues" | "log">("fight");
 
   // Drunk gamble mechanic
-  // YOURSELVES: the team's own ritual photo becomes the boss
-  const [teamPhoto, setTeamPhoto] = useState<string | null>(null);
+  // YOURSELVES: once defeated, the culprit's name replaces the hero image
+  // (never a photo — see getCulpritReveal below)
+  const [culpritName, setCulpritName] = useState<string | null>(null);
 
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
@@ -200,13 +200,16 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
 
-  // Load the team's ritual photo once for the final boss
+  // Once the final boss is defeated, fetch the culprit's name — the hero
+  // image is replaced with their name, never a photo (see hero art below).
   useEffect(() => {
     if (bossId !== "yourselves" || !gameId) return;
-    getTeamPhoto(gameId, teamId, true).then((res) => {
-      if (res.success && res.data.photo) setTeamPhoto(res.data.photo);
+    const myBp = teamId === "team-a" ? bossProgressA : bossProgressB;
+    if (myBp?.status !== "defeated") return;
+    getCulpritReveal(gameId, teamId).then((res) => {
+      if (res.success && res.data?.culpritName) setCulpritName(res.data.culpritName);
     });
-  }, [bossId, gameId, teamId]);
+  }, [bossId, gameId, teamId, bossProgressA, bossProgressB]);
 
   // ── Auto-apply clue damage ─────────────────────────────────────────────────
   useEffect(() => {
@@ -496,18 +499,24 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
         className="relative overflow-hidden"
         style={{ height: "clamp(130px, 38vw, 190px)", marginTop: -4 }}
       >
-        {bossId === "yourselves" && teamPhoto ? (
-          <AgedPhoto
-            src={teamPhoto}
-            alt={boss.title}
-            className="absolute inset-0"
-            style={{
-              animation: resistAnim
-                ? "resistBounce 0.9s ease-in-out"
-                : isLowHp ? "angryShake 0.75s ease-in-out infinite" : undefined,
-            }}
-            imgStyle={isLowHp ? { filter: "sepia(0.78) contrast(1.25) brightness(0.6) saturate(0.7) blur(0.4px)" } : undefined}
-          />
+        {bossId === "yourselves" && isDefeated ? (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center text-center px-4"
+            style={{ background: "radial-gradient(ellipse at center, #241408 0%, #0a0603 100%)" }}
+          >
+            <div
+              className="text-[10px] tracking-[0.3em] uppercase mb-2"
+              style={{ color: "rgba(220,150,90,0.55)", fontFamily: "Georgia,serif" }}
+            >
+              The one missing from the photo
+            </div>
+            <div
+              className="text-2xl sm:text-3xl font-black"
+              style={{ color: "rgba(252,165,165,0.95)", fontFamily: "Georgia,serif", textShadow: "0 2px 14px rgba(0,0,0,0.85)" }}
+            >
+              {culpritName ?? "…"}
+            </div>
+          </div>
         ) : bossImage ? (
           <img
             src={bossImage}
@@ -902,43 +911,13 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                           🔒 {getClue(action.requiredClueId!)?.title ?? "Clue required"}
                         </div>
                       ) : action.type === "puzzle" && action.puzzle ? (
-                        isExpanded ? (
-                          <div className="space-y-1.5 mt-1">
-                            <p className="text-[10px] text-amber-200/75 italic leading-snug" style={{ fontFamily: "Georgia, serif" }}>
-                              {action.puzzle.prompt}
-                            </p>
-                            {action.hint && (
-                              <p className="text-[10px] text-stone-600" style={{ fontFamily: "Georgia, serif" }}>
-                                Hint: {action.hint}
-                              </p>
-                            )}
-                            <input
-                              type="text"
-                              value={puzzleAnswer}
-                              onChange={(e) => setPuzzleAnswer(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && handleAction(action)}
-                              placeholder="Answer…"
-                              className="w-full bg-stone-900 border border-amber-900/40 rounded-lg px-2.5 py-2 text-amber-100 placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-amber-700"
-                              style={{ fontSize: "16px", touchAction: "manipulation", fontFamily: "Georgia, serif" }}
-                            />
-                            <button
-                              onClick={() => handleAction(action)}
-                              disabled={!!loading}
-                              className="w-full py-2 text-xs font-bold rounded-lg border border-stone-700/50 text-stone-200 disabled:opacity-50"
-                              style={{ background: "rgba(22,18,12,0.9)", fontFamily: "Georgia, serif" }}
-                            >
-                              {loading === action.id ? "…" : "Submit Answer"}
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setActiveActionId(action.id)}
-                            className="w-full py-2 text-xs font-bold rounded-lg border border-stone-700/50 text-stone-300"
-                            style={{ background: "rgba(18,16,12,0.85)", fontFamily: "Georgia, serif" }}
-                          >
-                            Solve Puzzle
-                          </button>
-                        )
+                        <button
+                          onClick={() => { setActiveActionId(action.id); setPuzzleAnswer(""); }}
+                          className="w-full py-2 text-xs font-bold rounded-lg border border-stone-700/50 text-stone-300"
+                          style={{ background: "rgba(18,16,12,0.85)", fontFamily: "Georgia, serif" }}
+                        >
+                          Solve Puzzle
+                        </button>
                       ) : action.type === "offer_boost" ? (
                         <button
                           onClick={() => handleAction(action)}
@@ -1103,6 +1082,73 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
           </button>
         </div>
       )}
+
+      {/* ── Puzzle answer modal — near-full-viewport-width for readability ── */}
+      {activeActionId && (() => {
+        const puzzleAction = phase.actions.find((a) => a.id === activeActionId && a.type === "puzzle" && a.puzzle);
+        if (!puzzleAction || !puzzleAction.puzzle) return null;
+        return (
+          <div
+            className="fixed inset-0 z-[60] flex items-end"
+            style={{ background: "rgba(0,0,0,0.75)" }}
+            onClick={() => setActiveActionId(null)}
+          >
+            <div
+              className="w-full rounded-t-2xl p-5"
+              style={{
+                background: "rgba(8,5,2,0.99)",
+                border: "1px solid rgba(180,130,50,0.25)",
+                paddingBottom: "max(28px, env(safe-area-inset-bottom, 28px))",
+                fontFamily: "Georgia, serif",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center mb-3">
+                <div className="w-8 h-[3px] rounded-full bg-stone-700" />
+              </div>
+
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <h3 className="text-base font-bold text-amber-100 leading-tight">{puzzleAction.label}</h3>
+                <button
+                  onClick={() => setActiveActionId(null)}
+                  className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-stone-500"
+                  style={{ background: "rgba(180,130,50,0.12)" }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-sm text-amber-200/80 italic leading-relaxed mb-3 whitespace-pre-line">
+                {puzzleAction.puzzle.prompt}
+              </p>
+
+              {puzzleAction.hint && (
+                <p className="text-xs text-stone-500 mb-3">Hint: {puzzleAction.hint}</p>
+              )}
+
+              <input
+                type="text"
+                autoFocus
+                value={puzzleAnswer}
+                onChange={(e) => setPuzzleAnswer(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAction(puzzleAction)}
+                placeholder="Answer…"
+                className="w-full bg-stone-900 border border-amber-900/40 rounded-lg px-3 py-3 text-amber-100 placeholder-stone-700 focus:outline-none focus:ring-1 focus:ring-amber-700 mb-3"
+                style={{ fontSize: "16px", touchAction: "manipulation" }}
+              />
+
+              <button
+                onClick={() => handleAction(puzzleAction)}
+                disabled={!!loading}
+                className="w-full py-3 text-sm font-bold rounded-xl border border-stone-700/50 text-stone-100 disabled:opacity-50"
+                style={{ background: "rgba(22,18,12,0.95)" }}
+              >
+                {loading === puzzleAction.id ? "…" : "Submit Answer"}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Drunk gamble modal ── */}
       {drunkModal && (

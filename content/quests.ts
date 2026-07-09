@@ -62,11 +62,11 @@ export const QUESTS: Quest[] = [
     id: "driveway-mads-call",
     roomId: "driveway",
     type: "puzzle",
-    title: "Where is Mads?",
+    title: "Where Is the Keybearer?",
     description:
-      "Mads has the code. Mads is not here. His phone is going to voicemail. How many times does someone need to call before everyone agrees to stop?",
+      "Whoever holds the code isn't here. Their phone is going to voicemail. How many times does someone need to call before everyone agrees to stop?",
     prompt:
-      "Your team calls Mads. No answer. You call again. Still nothing. On which call does the group agree to stop waiting and start exploring? Enter the number.",
+      "Your team calls. No answer. You call again. Still nothing. On which call does the group agree to stop waiting and start exploring? Enter the number.",
     order: 2,
     isRequired: false,
     hints: [
@@ -76,11 +76,11 @@ export const QUESTS: Quest[] = [
       correct: ["3", "three", "tre", "2", "two", "to", "4", "four", "fire", "5", "five", "fem"],
       normalized: true,
     },
-    rewardText: "The decision is made. Explore now, deal with Mads later. He has the code fragment — but it can wait.",
+    rewardText: "The decision is made. Explore now, deal with the code later. Whoever has it can wait.",
     da: {
-      title: "Hvor er Mads?",
-      description: "Mads har koden. Mads er ikke her. Hans telefon går på voicemail.",
-      prompt: "Jeres hold ringer til Mads. Intet svar. I ringer igen. Stadig ingenting. Ved hvilket opkald er gruppen enige om at stoppe med at vente og begynde at udforske?",
+      title: "Hvor Er Nøgleholderen?",
+      description: "Den der holder koden er her ikke. Telefonen går på voicemail.",
+      prompt: "Jeres hold ringer. Intet svar. I ringer igen. Stadig ingenting. Ved hvilket opkald er gruppen enige om at stoppe med at vente og begynde at udforske?",
     },
   },
 
@@ -143,25 +143,6 @@ export const QUESTS: Quest[] = [
       prompt: "Læst fra venstre mod højre kan du se ryggene: 5, 8, 1, 9, 4, 0, 7, 3, 6. Hvilket ciffer nåede aldrig hylden?",
       rewardText: "2. Den manglende ryg. Nogen fjernede den fra hylden med vilje.",
       failureText: "Streg hvert ciffer du kan se ud, ét ad gangen. Det der er tilbage er svaret.",
-    },
-  },
-  {
-    id: "terrace-view",
-    roomId: "terrace",
-    type: "social_challenge",
-    title: "Through the Glass",
-    description:
-      "You can see inside through the glass doors. The living room, the shelf of paperbacks, the dining room beyond. Without entering, what's on the shelf to the right of the stove?",
-    prompt:
-      "Look through the terrace glass. Describe exactly what you can see on the shelf to the right of the stove — one player calls it out, others confirm.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "Noted. The layout is familiar before you've even stepped inside.",
-    da: {
-      title: "Gennem Glasset",
-      description: "Du kan se ind gennem glasdørene. Stuen, boghylden, spisestuen bagved.",
-      prompt: "Kig gennem terrassens glas. Beskriv præcis hvad du kan se på hylden til højre for ovnen.",
     },
   },
 
@@ -290,7 +271,7 @@ export const QUESTS: Quest[] = [
       "The canvas bag has a full set of pétanque balls — except one. The bag has a handwritten tag: \"Set of 8. Return all 8. If you find the 8th, you'll know where it's been.\" The 8th ball is not here.",
     prompt: "The bag holds 7 balls. The missing 8th — where would it logically be, based on the tag?",
     order: 1,
-    isRequired: false,
+    isRequired: true,
     hints: [
       { order: 1, offerCost: 1, text: "The tag implies the missing ball has been somewhere specific. Where do you find things that have been missing for years?" },
     ],
@@ -331,15 +312,16 @@ export const QUESTS: Quest[] = [
     description:
       "Two chalk arrows on the back wall of the carport, low down near the floor. One pointing down. One pointing right. They're careful — too deliberate to be accidental. No label, no date, no signature.",
     prompt:
-      "The group must agree on what the arrows mean. Any interpretation — as long as everyone commits to the same one. The house accepts what you collectively decide.",
+      "The group must agree on what the arrows mean. Any interpretation — as long as everyone commits to the same one. Seal the agreement with a toast before you move on.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "Agreed. Whatever the arrows meant, you'll recognize the moment when it arrives.",
     da: {
       title: "Kridit-pilene",
       description: "To kridt-pile på bagevæggen af carporten, lavt nede ved gulvet. Én peger ned. Én peger til højre. De er omhyggelige — for bevidste til at være tilfældige.",
-      prompt: "Gruppen skal blive enige om hvad pilene betyder. Enhver fortolkning — bare alle er enige om den samme.",
+      prompt: "Gruppen skal blive enige om hvad pilene betyder. Enhver fortolkning — bare alle er enige om den samme. Beseglet aftalen med en skål før I går videre.",
       rewardText: "Aftalt. Uanset hvad pilene betød, genkender I øjeblikket når det kommer.",
     },
   },
@@ -793,17 +775,23 @@ export const QUESTS: Quest[] = [
       "The plants in the sunroom are thriving. Better than they should be for a house that's supposedly been unoccupied. Someone has been watering them.",
     prompt: "How many plants are in the sunroom? Count them. Enter the number.",
     order: 1,
-    isRequired: false,
-    hints: [],
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Count again. Slower this time." },
+    ],
+    forceWrongForFirstNAttempts: 2,
     answer: {
-      correct: ["3", "4", "5", "6", "7", "8", "three", "four", "five", "six", "seven", "eight"],
+      correct: ["1", "2", "3", "4", "5", "6", "7", "8", "9",
+                "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"],
       normalized: true,
     },
+    failureText: "Wrong. Count again.",
     rewardText: "Counted. They're healthy. The house hasn't been as empty as you thought.",
     da: {
       title: "Planterne",
       description: "Planterne i vinterhaven har det godt. Bedre end de burde for et hus der angiveligt har stået tomt.",
       prompt: "Hvor mange planter er der i vinterhaven? Tæl dem.",
+      failureText: "Forkert. Tæl igen.",
     },
   },
   {
@@ -1021,7 +1009,7 @@ export const QUESTS: Quest[] = [
     prompt:
       "Player 3 stopped scoring after writing 301. Two possibilities: they won without needing to score, or they left. The group must agree on which and say why.",
     order: 1,
-    isRequired: false,
+    isRequired: true,
     hints: [],
     rewardText: "The conclusion is noted. Player 3 is part of the story now.",
     da: {
@@ -1035,23 +1023,25 @@ export const QUESTS: Quest[] = [
     roomId: "darts-board",
     type: "physical_challenge",
     title: "Finish the Game",
-    description: "Player 2 was at 84 when the game stopped. Finish it. Get from 84 to 0.",
-    prompt: "One player picks up the darts and finishes Player 2's game from 84. The others watch. No hints — just finish it.",
+    description:
+      "Player 2 was at 84 when the game stopped. Not a score to add up — a clock to match. Start the stopwatch and stop it exactly on 84 seconds. Closer is better. Miss badly and you're just wasting time.",
+    prompt: "Start the stopwatch. Stop it as close to 1:24 (84 seconds) as you can. The house doesn't care how — count in your head, count out loud, guess. It only cares how close.",
     order: 2,
     isRequired: false,
     hints: [],
     physicalChallenge: {
-      timerSeconds: 120,
-      startLabel: "Begin — finish from 84",
+      timerSeconds: 180,
+      startLabel: "Start the clock",
       activeEmoji: "🎯",
-      bannerText: "Someone is at the darts board",
-      completeLabel: "Game finished (or time's up)",
+      bannerText: "Someone is trying to stop the clock at 84",
+      completeLabel: "Stop",
+      targetStopSeconds: 84,
     },
-    rewardText: "The game is finished. Player 2's score is cleared.",
+    rewardText: "Game's finished. Player 2's score is cleared.",
     da: {
       title: "Afslut Spillet",
-      description: "Spiller 2 var på 84 da spillet stoppede. Afslut det.",
-      prompt: "Én spiller tager dartene og afslutter Spiller 2's spil fra 84.",
+      description: "Spiller 2 var på 84 da spillet stoppede. Ikke et tal at lægge sammen — et ur at ramme. Start stopuret og stop det præcis på 84 sekunder.",
+      prompt: "Start stopuret. Stop det så tæt på 1:24 (84 sekunder) som du kan.",
     },
   },
 
@@ -1064,10 +1054,12 @@ export const QUESTS: Quest[] = [
     description: "One of the goalie rods is slightly bent — not broken, just wrong. The ball is sealed inside the table, the goals covered by the goalies at a specific angle.",
     prompt: "The goalie rod is bent at approximately how many degrees off-straight? Examine it and estimate.",
     order: 1,
-    isRequired: false,
+    isRequired: true,
     hints: [],
     answer: {
-      correct: ["15", "20", "25", "10", "30", "fifteen", "twenty", "tyve", "femten", "tredive"],
+      correct: ["10", "15", "20", "25", "30", "35",
+                "ten", "fifteen", "twenty", "twenty five", "thirty", "thirty five",
+                "ti", "femten", "tyve", "femogtyve", "tredive", "femogtredive"],
       normalized: true,
     },
     rewardText: "The angle noted. The rod was bent deliberately — it keeps the goalies at exactly the angle needed to trap the ball.",
@@ -1176,30 +1168,59 @@ export const QUESTS: Quest[] = [
 
   // --- UTILITY CORNER ---
   {
-    id: "utility-find-flashlight",
+    id: "utility-find-flashlight-a",
     roomId: "utility-corner",
+    forTeam: "team-a",
     type: "puzzle",
-    title: "Find the Flashlight",
+    title: "The Thing in the Basket",
     description:
-      "A utility corner off the dining room. Hooks on the wall. A basket of house items — things that belong to the property, not to any visitor. One of them is a flashlight.",
+      "A utility corner off the dining room. Hooks on the wall. A basket of house items — things that belong to the property, not to any visitor.",
     prompt:
-      "In the basket of house items in the utility corner, you find: a measuring tape, a corkscrew, a flashlight, two birthday candles, and a first aid kit. What do you take?",
+      "It needs no outlet, no matches, no wick. A squeeze or a switch, and it decides how far the dark is allowed to come. What is it?",
     order: 1,
     isRequired: true,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "It runs on batteries, not power lines." },
+      { order: 2, offerCost: 2, text: "You're about to need it for the rest of the house." },
+    ],
     answer: {
       correct: ["flashlight", "torch", "lommelygte", "lygten", "the flashlight"],
       normalized: true,
     },
     rewardClueId: "artifact-flashlight",
     rewardText: "The flashlight. It works. The batteries are warm. Someone used this recently.",
-    failureText: "Take the thing that lets you see.",
+    failureText: "Think about what a squeeze or a switch controls.",
     da: {
-      title: "Find Lommelygten",
-      description: "Et redskabshjørnet ved spisestuen. Kroge på væggen. En kurv med hus-ting.",
-      prompt: "I kurven med hus-ting i redskabshjørnet finder du: et målebånd, en proptrækker, en lommelygte, to fødselsdagslys og et førstehjælpssæt. Hvad tager du?",
+      title: "Tingen I Kurven",
+      description: "Et redskabshjørne ved spisestuen. Kroge på væggen. En kurv med hus-ting.",
+      prompt: "Den skal ikke bruge stikkontakt, tændstikker eller væge. Et tryk eller et klik, og den bestemmer hvor tæt mørket må komme. Hvad er det?",
       rewardText: "Lommelygten. Den virker. Batterierne er varme.",
-      failureText: "Tag det der lader dig se.",
+      failureText: "Tænk på hvad et tryk eller et klik styrer.",
+    },
+  },
+  {
+    id: "utility-find-flashlight-b",
+    roomId: "utility-corner",
+    forTeam: "team-b",
+    type: "letter_tiles",
+    title: "Spell It Out",
+    description:
+      "A utility corner off the dining room. Hooks on the wall. A basket of house items — things that belong to the property, not to any visitor. Whatever's in there, the letters already know.",
+    prompt: "Ten letters. One thing in the basket that decides how far the dark is allowed to come. Place them.",
+    order: 1,
+    isRequired: true,
+    hints: [],
+    letterTiles: {
+      letters: ["T", "H", "F", "I", "L", "G", "A", "H", "S", "L"],
+      targetWord: "FLASHLIGHT",
+    },
+    rewardClueId: "artifact-flashlight",
+    rewardText: "FLASHLIGHT. The letters land and the screen catches up — it works. The batteries are warm. Someone used this recently.",
+    da: {
+      title: "Stav Det",
+      description: "Et redskabshjørne ved spisestuen. Kroge på væggen. En kurv med hus-ting.",
+      prompt: "Ti bogstaver. Én ting i kurven der bestemmer hvor tæt mørket må komme. Placer dem.",
+      rewardText: "FLASHLIGHT. Bogstaverne lander og skærmen følger med — den virker.",
     },
   },
 
@@ -1449,26 +1470,27 @@ export const QUESTS: Quest[] = [
     description:
       "A smear of mud across the handle. Fresh — still wet. Whoever did this didn't want the fuse box's fix to last. They wanted you doing something else instead. Something you can only do without electric light.",
     prompt:
-      "Somewhere in this house tonight, something is sitting on a windowsill, unlit, waiting for exactly this kind of dark. What single object is it?",
+      "Somewhere in this house tonight, something is sitting on a windowsill, unlit, waiting for exactly this kind of dark. It burns without needing any power at all, and you'll need it soon to read what's on the sealed wall. What single object is it?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "You'll need it to read the sealed wall. It burns." },
+      { order: 1, offerCost: 1, text: "It's on a windowsill — but not one inside the house itself. Think of the glass room behind the shed." },
+      { order: 2, offerCost: 2, text: "You light it with a match. Wax. A wick. It's a candle." },
     ],
     answer: {
-      correct: ["candle", "a candle", "the candle", "stearinlys", "et stearinlys", "lyset"],
+      correct: ["candle", "a candle", "the candle", "candlestick", "wax candle", "stearinlys", "et stearinlys", "lyset", "lys"],
       normalized: true,
     },
     rewardClueId: "meter-cupboard-cut",
     rewardText:
       "Candle. Of course. Whoever's doing this doesn't want you seeing clearly — they want you seeing by flame, the way it would've looked back then. Find it. You'll need it here too, now.",
-    failureText: "Think about what light source doesn't need the power at all.",
+    failureText: "Think about what light source doesn't need the power at all — and where you'd find one sitting out, unlit, on a sill.",
     da: {
       title: "Vådt Mudder",
       description: "En klat mudder tværs over håndtaget. Frisk — stadig vådt. Den der gjorde dette ville ikke have sikringsskabets reparation til at holde.",
-      prompt: "Et sted i dette hus i aften står noget på en vindueskarm, uantændt, og venter præcis på denne slags mørke. Hvilken ene genstand er det?",
+      prompt: "Et sted i dette hus i aften står noget på en vindueskarm, uantændt, og venter præcis på denne slags mørke. Det brænder uden strøm, og I får brug for det snart for at læse den forseglede væg. Hvilken ene genstand er det?",
       rewardText: "Stearinlys. Selvfølgelig. Hvem end der gør dette vil ikke have jer til at se klart.",
-      failureText: "Tænk på hvilken lyskilde der slet ikke behøver strøm.",
+      failureText: "Tænk på hvilken lyskilde der slet ikke behøver strøm — og hvor I ville finde en stående fremme, uantændt.",
     },
   },
 
@@ -1507,7 +1529,8 @@ export const QUESTS: Quest[] = [
       { order: 1, offerCost: 1, text: "The shed. Act 1. The date list on the wall." },
     ],
     answer: {
-      correct: ["shed", "skuret", "date list", "datolisten", "the list", "listen", "act 1", "akt 1"],
+      correct: ["shed", "the shed", "skuret", "det skur", "date list", "the date list", "datolisten",
+                "the list", "listen", "act 1", "akt 1", "shed date list", "shed list", "the shed date list"],
       normalized: true,
     },
     rewardText: "The shed date list. The oldest entry — the first date. This wall was sealed on the first visit.",
@@ -1572,11 +1595,14 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "The Candle on the Windowsill",
     description:
-      "Glass on three sides. Cold. The wind audible. On the windowsill — a full red candle in a holder, with a matchbox. Someone placed this deliberately.",
-    prompt: "The candle is on the windowsill. The matchbox is beside it. What colour is the candle?",
+      "Glass on three sides. Cold. The wind audible. On the windowsill — a candle in a holder, full and unlit, with a matchbox beside it. Someone placed this deliberately.",
+    prompt:
+      "Hold the candle up to what little light gets in. Its wax is the colour of a stop sign, of a fire truck, of the warning light on the dashboard. Not pink. Not orange. What colour is it, exactly?",
     order: 1,
     isRequired: true,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "Think of the colour that means danger, not the colour that means love." },
+    ],
     answer: {
       correct: ["red", "rød", "dark red", "mørkerød", "crimson", "deep red"],
       normalized: true,
@@ -1585,8 +1611,8 @@ export const QUESTS: Quest[] = [
     rewardText: "Red. A deep red candle, full and unlit. Someone brought this specifically for something.",
     da: {
       title: "Stearinlyset på Vindueskarmens",
-      description: "Glas på tre sider. Koldt. Vinden hørbar. På vindueskarmens — et fuldt rødt stearinlys i en lysestage.",
-      prompt: "Stearinlyset er på vindueskarmens. Hvilken farve er stearinlyset?",
+      description: "Glas på tre sider. Koldt. Vinden hørbar. På vindueskarmens — et stearinlys i en lysestage, fuldt og uantændt, med en tændstikæske ved siden af.",
+      prompt: "Hold lyset op mod det svage lys der slipper ind. Voksen har farven af et stopskilt, af en brandbil, af advarselslampen på et instrumentbræt. Ikke pink. Ikke orange. Hvilken farve er det, præcist?",
       rewardText: "Rødt. Et dybt rødt stearinlys, fuldt og uantændt.",
     },
   },

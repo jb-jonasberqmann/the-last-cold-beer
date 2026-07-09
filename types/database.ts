@@ -72,6 +72,7 @@ export interface DbQuestProgress {
   status: QuestStatus;
   answer_submitted: string | null;
   hints_used: number;
+  wrong_attempts: number;
   offer_spent: number;
   completed_at: string | null;
 }

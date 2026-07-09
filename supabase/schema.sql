@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS quest_progress (
     CHECK (status IN ('active', 'completed', 'failed', 'skipped')),
   answer_submitted TEXT,
   hints_used INTEGER NOT NULL DEFAULT 0,
+  wrong_attempts INTEGER NOT NULL DEFAULT 0,
   offer_spent INTEGER NOT NULL DEFAULT 0,
   completed_at TIMESTAMPTZ,
   UNIQUE(game_id, team_id, quest_id)

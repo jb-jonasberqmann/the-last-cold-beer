@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, enterBedroom, setScaredSilent, setSunBlind, advanceAct, saveRitualPhoto } from "@/lib/game/actions";
+import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, submitPrecisionStop, enterBedroom, setScaredSilent, setSunBlind, advanceAct, saveRitualPhoto } from "@/lib/game/actions";
 import { fileToJpegDataUrl } from "@/lib/photoCapture";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -24,6 +24,7 @@ type CombatState = "idle" | "hit" | "miss";
 
 import { formatOfferCost } from "@/lib/game/formatOffer";
 import SlidingPuzzleQuest from "@/components/quests/SlidingPuzzleQuest";
+import LetterTileQuest from "@/components/quests/LetterTileQuest";
 
 export default function RoomPage({ params }: Props) {
   const { gameId, teamId, roomId } = params;
@@ -378,10 +379,10 @@ export default function RoomPage({ params }: Props) {
             </div>
             <GameTimer
               startedAt={game?.started_at}
-              className="block text-[10px] mt-0.5"
+              className="block text-xs mt-0.5 font-bold"
               style={{
                 fontFamily: "Georgia,serif",
-                color: "rgba(200,175,120,0.7)",
+                color: "rgba(255,255,255,0.92)",
                 textShadow: "0 1px 4px rgba(0,0,0,0.9)",
               }}
             />
@@ -699,9 +700,11 @@ export default function RoomPage({ params }: Props) {
                     teamId={teamId}
                     isReadOnly={false}
                     challengeStartedAt={activeChallenges[activeQuest.id] ?? null}
-                    onComplete={async (clueId) => {
+                    onComplete={async () => {
                       triggerHit();
-                      if (clueId) setClueBanners((prev) => [...prev, clueId]);
+                      // New clues are surfaced via the forced-clue modal when the
+                      // player returns to the map, not here — they're unreadable
+                      // this close to the completion overlay anyway.
                       // Wire special post-quest effects
                       if (activeQuest.setsScaredSilent && session?.playerId) {
                         await setScaredSilent(gameId, session.playerId);
@@ -744,9 +747,8 @@ export default function RoomPage({ params }: Props) {
                         teamId={teamId}
                         isReadOnly={false}
                         challengeStartedAt={activeChallenges[quest.id] ?? null}
-                        onComplete={(clueId) => {
+                        onComplete={() => {
                           triggerHit();
-                          if (clueId) setClueBanners((prev) => [...prev, clueId]);
                           fetchData();
                         }}
                         onMiss={triggerMiss}
@@ -964,6 +966,38 @@ function QuestBlock({
     );
   }
 
+  if (quest.type === "letter_tiles" && quest.letterTiles) {
+    return (
+      <div
+        className={cn("rounded-xl border p-4 space-y-3 transition-all duration-300", isComplete && "opacity-55")}
+        style={{ background: "rgba(20,14,4,0.85)", borderColor: "rgba(180,130,50,0.25)", fontFamily: "Georgia,serif" }}
+      >
+        <div className="flex items-center gap-1.5">
+          {isComplete && <span style={{ color: "rgba(140,100,40,0.8)", fontSize: "11px" }}>✓</span>}
+          <span
+            className="text-[10px] uppercase tracking-[0.24em]"
+            style={{ color: isComplete ? "rgba(120,80,20,0.55)" : "rgba(160,110,40,0.6)" }}
+          >
+            {isComplete ? "✓ Done" : quest.isRequired ? "Required" : "Bonus"}
+          </span>
+        </div>
+        <h3
+          className="font-bold leading-tight"
+          style={{ fontSize: "1.1rem", color: isComplete ? "rgba(160,120,50,0.65)" : "rgba(245,235,205,0.97)" }}
+        >
+          {quest.title}
+        </h3>
+        <RichText as="p" className="text-sm text-stone-400 leading-relaxed" text={quest.description} />
+        <LetterTileQuest
+          config={quest.letterTiles}
+          isComplete={isComplete}
+          isReadOnly={isReadOnly}
+          onComplete={handleSlidingPuzzleSolved}
+        />
+      </div>
+    );
+  }
+
   if (quest.type === "sliding_puzzle" && quest.slidingPuzzle) {
     return (
       <div
@@ -993,6 +1027,23 @@ function QuestBlock({
           onComplete={handleSlidingPuzzleSolved}
         />
       </div>
+    );
+  }
+
+  if (quest.type === "physical_challenge" && quest.physicalChallenge?.targetStopSeconds != null) {
+    return (
+      <PrecisionStopChallenge
+        quest={quest}
+        config={quest.physicalChallenge}
+        isComplete={isComplete}
+        isReadOnly={isReadOnly}
+        challengeStartedAt={challengeStartedAt}
+        gameId={gameId}
+        teamId={teamId}
+        offerDefinition={offerDefinition}
+        onStart={handleStartPhysicalChallenge}
+        onComplete={onComplete}
+      />
     );
   }
 
@@ -1303,6 +1354,142 @@ function PhysicalChallengeBlock({
           >
             {loading ? "Completing…" : config.completeLabel}
           </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Precision-stop challenge (Darts) — a stopwatch counts UP; the team
+// taps Stop as close to the target time as they can. Closer = fewer sips. ───
+function PrecisionStopChallenge({
+  quest, config, isComplete, isReadOnly, challengeStartedAt, gameId, teamId, offerDefinition, onStart, onComplete,
+}: {
+  quest: Quest;
+  config: PhysicalChallengeConfig;
+  isComplete: boolean;
+  isReadOnly: boolean;
+  challengeStartedAt: string | null;
+  gameId: string;
+  teamId: TeamId;
+  offerDefinition: string;
+  onStart: () => void;
+  onComplete: (clueId?: string) => void;
+}) {
+  const [elapsed, setElapsed] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ completed: boolean; deltaSeconds: number; sips: number; rewardText?: string } | null>(null);
+  const target = config.targetStopSeconds ?? 0;
+  const targetLabel = `${Math.floor(target / 60)}:${String(Math.floor(target % 60)).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (!challengeStartedAt || result) return;
+    const tick = () => setElapsed((Date.now() - new Date(challengeStartedAt).getTime()) / 1000);
+    tick();
+    const id = setInterval(tick, 100);
+    return () => clearInterval(id);
+  }, [challengeStartedAt, result]);
+
+  const handleStop = async () => {
+    if (!challengeStartedAt || submitting) return;
+    const finalElapsed = (Date.now() - new Date(challengeStartedAt).getTime()) / 1000;
+    setSubmitting(true);
+    const res = await submitPrecisionStop(gameId, teamId, quest.id, finalElapsed);
+    setSubmitting(false);
+    if (res.success) {
+      setResult(res.data);
+      if (res.data.completed) onComplete();
+    }
+  };
+
+  const handleRestart = () => {
+    setResult(null);
+    setElapsed(0);
+    onStart();
+  };
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = (elapsed % 60).toFixed(1);
+  const timeStr = `${mins}:${secs.padStart(4, "0")}`;
+
+  if (isComplete) {
+    return (
+      <div className="rounded-xl px-4 py-4 border border-emerald-800/40 opacity-60" style={{ background: "rgba(6,24,12,0.85)", fontFamily: "Georgia,serif" }}>
+        <div className="text-[9px] uppercase tracking-widest text-emerald-700 mb-1">✓ Done</div>
+        <div className="font-bold text-emerald-500 text-sm">{quest.title}</div>
+        <RichText as="div" className="text-xs text-emerald-800 mt-1" text={quest.rewardText ?? "Challenge complete."} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: challengeStartedAt ? "rgba(251,191,36,0.4)" : "rgba(180,130,50,0.2)", fontFamily: "Georgia,serif" }}>
+      <div className="px-4 pt-4 pb-3" style={{ background: "rgba(20,14,4,0.9)" }}>
+        <div className="text-[9px] uppercase tracking-widest mb-1" style={{ color: "rgba(160,110,40,0.55)" }}>
+          {quest.isRequired ? "Required" : "Bonus"} · Stop It On The Number
+        </div>
+        <div className="font-bold text-base mb-2" style={{ color: "rgba(245,235,205,0.97)" }}>{quest.title}</div>
+        <RichText as="p" className="text-sm leading-relaxed" style={{ color: "rgba(200,175,130,0.8)" }} text={quest.description} />
+      </div>
+
+      <div className="px-4 pb-4 pt-3" style={{ background: challengeStartedAt && !result ? "rgba(60,40,6,0.8)" : "rgba(14,10,4,0.7)" }}>
+        {!challengeStartedAt && !result && (
+          <button
+            onClick={onStart}
+            disabled={isReadOnly}
+            className="w-full py-3 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, #7a4800, #c07010)", color: "rgb(255,235,170)" }}
+          >
+            {config.startLabel} →
+          </button>
+        )}
+
+        {challengeStartedAt && !result && (
+          <div className="flex flex-col items-center gap-3">
+            <div className="text-4xl font-black tabular-nums" style={{ color: "rgb(251,191,36)", textShadow: "0 0 20px rgba(251,191,36,0.5)" }}>
+              {timeStr}
+            </div>
+            <div className="text-xs text-center" style={{ color: "rgba(220,185,120,0.8)" }}>
+              Stop it as close to <span className="font-bold text-amber-300">{targetLabel}</span> as you can.
+            </div>
+            <button
+              onClick={handleStop}
+              disabled={submitting}
+              className="w-full py-4 rounded-xl font-black text-lg active:scale-[0.97] transition-transform disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg, #7a1010, #c02020)", color: "rgb(255,220,220)" }}
+            >
+              {submitting ? "…" : "STOP"}
+            </button>
+          </div>
+        )}
+
+        {result && (
+          <div className="text-center space-y-2">
+            {result.completed ? (
+              <>
+                <div className="text-2xl font-black" style={{ color: result.sips === 0 ? "rgb(160,255,160)" : "rgb(251,191,36)" }}>
+                  {result.sips === 0 ? "🎯 Bullseye!" : `Off by ${result.deltaSeconds.toFixed(1)}s`}
+                </div>
+                {result.sips > 0 && (
+                  <div className="text-sm" style={{ color: "rgba(220,185,120,0.9)" }}>
+                    🍺 Team drinks {formatOfferCost(result.sips, offerDefinition)}
+                  </div>
+                )}
+                <RichText as="div" className="text-xs text-stone-500 mt-1" text={result.rewardText ?? ""} />
+              </>
+            ) : (
+              <>
+                <div className="text-lg font-bold text-red-400">Nowhere close. Try again.</div>
+                <button
+                  onClick={handleRestart}
+                  className="w-full py-3 mt-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform"
+                  style={{ background: "linear-gradient(135deg, #7a4800, #c07010)", color: "rgb(255,235,170)" }}
+                >
+                  {config.startLabel} →
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -1738,7 +1925,7 @@ function SealedDocArtifact({
 
 // ─── Social challenge ───────────────────────────────────────
 function TornFlyerArtifact({
-  quest, isComplete, feedback, loading, isReadOnly, onComplete, onSkip,
+  quest, isComplete, feedback, loading, isReadOnly, offerDefinition, onComplete, onSkip,
 }: ArtifactProps & { onComplete: () => void; onSkip: () => void }) {
   return (
     <div className={cn("relative rounded-sm shadow-lg overflow-visible transition-all duration-300", isComplete ? "opacity-70" : "")}>
@@ -1795,8 +1982,13 @@ function TornFlyerArtifact({
           )}
           {!isComplete && !isReadOnly && (
             <div className="space-y-2">
+              {quest.offerCost ? (
+                <div className="text-xs text-center" style={{ color: "rgba(200,160,80,0.75)", fontFamily: "Georgia,serif" }}>
+                  🍺 Sealing this costs {formatOfferCost(quest.offerCost, offerDefinition)}
+                </div>
+              ) : null}
               <Button variant="secondary" className="w-full" onClick={onComplete} loading={loading}>
-                ✓ Challenge Complete (Group Approved)
+                {quest.offerCost ? `✓ Agreed — Toast to it (${formatOfferCost(quest.offerCost, offerDefinition)})` : "✓ Challenge Complete (Group Approved)"}
               </Button>
               <button
                 onClick={onSkip}

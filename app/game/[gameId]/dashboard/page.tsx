@@ -171,8 +171,8 @@ export default function DashboardPage({ params }: Props) {
         </div>
         <GameTimer
           startedAt={game.started_at}
-          className="font-mono text-xs tracking-widest"
-          style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
+          className="font-mono text-xs tracking-widest font-bold"
+          style={{ color: "rgba(255,255,255,0.9)", fontFamily: "Georgia,serif" }}
         />
         {session.isHost && (
           <Link

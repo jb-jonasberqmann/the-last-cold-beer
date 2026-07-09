@@ -80,7 +80,8 @@ export type QuestType =
   | "boss_phase" // used inside boss encounters
   | "sliding_puzzle" // interactive tile-sliding puzzle
   | "physical_challenge" // real-world timed activity broadcast to all players
-  | "photo"; // take a team photo (the Ritual Record — secretly the culprit mechanic)
+  | "photo" // take a team photo (the Ritual Record — secretly the culprit mechanic)
+  | "letter_tiles"; // drag/tap letter tiles into slots to spell a target word
 
 export interface Quest {
   id: string;
@@ -96,6 +97,7 @@ export interface Quest {
   answer?: QuestAnswer; // undefined for social challenges
   choices?: QuestChoice[]; // for type === 'choice'
   slidingPuzzle?: SlidingPuzzleConfig; // for type === 'sliding_puzzle'
+  letterTiles?: LetterTilesConfig; // for type === 'letter_tiles'
   physicalChallenge?: PhysicalChallengeConfig; // for type === 'physical_challenge'
   offerCost?: number; // for type === 'unlock' — cost to resolve
   rewardClueId?: string; // clue granted on completion
@@ -105,6 +107,7 @@ export interface Quest {
   clearsScaredSilent?: boolean; // if true, completing this room clears scared_silent for the team
   setsSunBlind?: boolean; // if true, completing this quest sets the player's sun_blind flag (Sunroom dare) — cleared automatically on reaching the Act 2 boss
   isPrivate?: boolean; // if true, the prompt is hidden behind press-and-hold ("the room speaks only to you")
+  forceWrongForFirstNAttempts?: number; // gimmick: the first N submitted attempts are always marked wrong (even if they'd otherwise match), regardless of value — used by e.g. the Sunroom plant count
   da?: QuestDa; // Danish locale overrides
 }
 
@@ -130,12 +133,18 @@ export interface SlidingPuzzleConfig {
   solvedText: string; // flavor text shown when solved
 }
 
+export interface LetterTilesConfig {
+  letters: string[]; // the shuffled bank of individual letters (must contain exactly the letters of targetWord)
+  targetWord: string; // the word to spell, uppercase, no spaces (e.g. "FLASHLIGHT")
+}
+
 export interface PhysicalChallengeConfig {
-  timerSeconds: number; // how long the challenge runs
+  timerSeconds: number; // how long the challenge runs (ignored for precision-stop challenges — they run until stopped)
   startLabel: string; // button label to kick off the challenge e.g. "Send to Hammock"
   activeEmoji: string; // emoji shown in the running banner e.g. "🏕"
   bannerText: string; // short text shown in team-wide countdown banner e.g. "Someone is in the hammock"
   completeLabel: string; // "Back from Hammock — Report In"
+  targetStopSeconds?: number; // if set, this becomes a precision-stop challenge: a stopwatch counts UP from 0 and the team must tap Stop as close to this many seconds as possible
 }
 
 export interface QuestChoice {
@@ -190,6 +199,7 @@ export interface Boss {
   maxHp: number;
   phases: BossPhase[];
   counterAttacks?: BossCounterAttack[]; // boss responds after each successful player action
+  punishWrongAnswers?: boolean; // if true, a wrong puzzle answer costs the team a random 1-3 sips
   defeatText: string; // shown when boss is defeated
   victoryAdvantage: string; // advantage granted to the winning team in next chapter
   requiredRoomIds?: string[]; // rooms that must be complete before boss is accessible
@@ -206,7 +216,7 @@ export interface BossCounterAttack {
     defenseMultiplier?: number; // 0.75 → next player hit does 75% damage (one-shot, consumed on use)
     teamOfferDamage?: number;   // sips team must drink (offer cost charged to team)
     healPercent?: number;       // fraction of maxHp healed (e.g. 0.20 = 20%)
-    isOnce?: boolean;           // can only trigger once per fight
+    isOnce?: boolean;           // if true, this move can only trigger once per fight (default: repeatable)
   };
 }
 
