@@ -20,6 +20,7 @@ export interface DbGame {
   team_b_name: string;
   chapter_1_winner: TeamId | null;
   chapter_2_winner: TeamId | null;
+  started_at: string | null; // set once by startGame() — origin for the live elapsed-time timer
   created_at: string;
   updated_at: string;
 }

@@ -66,7 +66,7 @@ export const CHAPTERS: Chapter[] = [
       "dining-room-dark", "utility-corner",
       "back-corridor", "fuse-box",
       "kitchen-dark", "broken-window",
-      "door-nobody-tried", "sealed-wall",
+      "door-nobody-tried", "meter-cupboard", "sealed-wall",
       "behind-the-shed", "conservatory", "shed-dark",
       "living-room-boss",
     ],

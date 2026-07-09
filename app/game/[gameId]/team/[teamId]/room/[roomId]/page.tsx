@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { RichText } from "@/components/ui/RichText";
 import { ClueCard } from "@/components/game/ClueCard";
 import { RoomSceneFullscreen } from "@/components/game/RoomSceneFullscreen";
+import { GameTimer } from "@/components/game/GameTimer";
 import { getRoom, getQuestsByRoom, getClue } from "@/content/index";
 import type { DbGame, DbQuestProgress, DbTeamClue, DbGameEvent, DbPlayer } from "@/types/database";
 import type { TeamId, Quest, PhysicalChallengeConfig } from "@/types/content";
@@ -365,7 +366,7 @@ export default function RoomPage({ params }: Props) {
           </a>
 
           <div className="flex-1 text-center">
-            <span
+            <div
               className="text-sm font-bold tracking-wide"
               style={{
                 fontFamily: "Georgia,serif",
@@ -374,7 +375,16 @@ export default function RoomPage({ params }: Props) {
               }}
             >
               {room.title}
-            </span>
+            </div>
+            <GameTimer
+              startedAt={game?.started_at}
+              className="block text-[10px] mt-0.5"
+              style={{
+                fontFamily: "Georgia,serif",
+                color: "rgba(200,175,120,0.7)",
+                textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+              }}
+            />
           </div>
 
           {visibleRewardClueIds.length > 0 ? (

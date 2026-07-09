@@ -1420,6 +1420,58 @@ export const QUESTS: Quest[] = [
     },
   },
 
+  // --- METER CUPBOARD ---
+  {
+    id: "meter-cupboard-switch",
+    roomId: "meter-cupboard",
+    type: "social_challenge",
+    title: "The Main Switch",
+    description:
+      "The cupboard where the house's real power comes in — heavier hardware than the fuse box you just fixed inside, the kind that takes both hands to move. It's down. Not tripped, not blown. Thrown.",
+    prompt:
+      "One player examines the switch and describes it to the group out loud: what does 'thrown, not tripped' actually look like? Is there anything else on or around it worth mentioning?",
+    order: 1,
+    isRequired: true,
+    hints: [],
+    rewardText: "Described. Whatever the fuse box fixed, this undoes — completely, on purpose.",
+    da: {
+      title: "Hovedafbryderen",
+      description: "Skabet hvor husets rigtige strøm kommer ind — tungere udstyr end sikringsskabet I lige reparerede indenfor. Den er nede. Ikke udløst. Slået om.",
+      prompt: "Én spiller undersøger afbryderen og beskriver den højt for gruppen: hvordan ser 'slået om, ikke udløst' egentlig ud?",
+      rewardText: "Beskrevet. Hvad end sikringsskabet reparerede, gør denne til intet — fuldstændigt, med vilje.",
+    },
+  },
+  {
+    id: "meter-cupboard-candle-hint",
+    roomId: "meter-cupboard",
+    type: "puzzle",
+    title: "Wet Mud",
+    description:
+      "A smear of mud across the handle. Fresh — still wet. Whoever did this didn't want the fuse box's fix to last. They wanted you doing something else instead. Something you can only do without electric light.",
+    prompt:
+      "Somewhere in this house tonight, something is sitting on a windowsill, unlit, waiting for exactly this kind of dark. What single object is it?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "You'll need it to read the sealed wall. It burns." },
+    ],
+    answer: {
+      correct: ["candle", "a candle", "the candle", "stearinlys", "et stearinlys", "lyset"],
+      normalized: true,
+    },
+    rewardClueId: "meter-cupboard-cut",
+    rewardText:
+      "Candle. Of course. Whoever's doing this doesn't want you seeing clearly — they want you seeing by flame, the way it would've looked back then. Find it. You'll need it here too, now.",
+    failureText: "Think about what light source doesn't need the power at all.",
+    da: {
+      title: "Vådt Mudder",
+      description: "En klat mudder tværs over håndtaget. Frisk — stadig vådt. Den der gjorde dette ville ikke have sikringsskabets reparation til at holde.",
+      prompt: "Et sted i dette hus i aften står noget på en vindueskarm, uantændt, og venter præcis på denne slags mørke. Hvilken ene genstand er det?",
+      rewardText: "Stearinlys. Selvfølgelig. Hvem end der gør dette vil ikke have jer til at se klart.",
+      failureText: "Tænk på hvilken lyskilde der slet ikke behøver strøm.",
+    },
+  },
+
   // --- SEALED WALL ---
   {
     id: "sealed-wall-read",

@@ -11,6 +11,7 @@ import { relativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { getChapter } from "@/content/chapters";
 import { getBoss } from "@/content/bosses";
+import { GameTimer } from "@/components/game/GameTimer";
 
 interface Props {
   params: { gameId: string };
@@ -168,6 +169,11 @@ export default function DashboardPage({ params }: Props) {
         >
           ⚔ The Last Cold Beer
         </div>
+        <GameTimer
+          startedAt={game.started_at}
+          className="font-mono text-xs tracking-widest"
+          style={{ color: "rgba(180,130,50,0.5)", fontFamily: "Georgia,serif" }}
+        />
         {session.isHost && (
           <Link
             href={`/game/${gameId}/host`}

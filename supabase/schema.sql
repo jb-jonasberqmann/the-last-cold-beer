@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS games (
   team_b_name TEXT NOT NULL DEFAULT 'Team B',
   chapter_1_winner TEXT, -- 'team-a' | 'team-b' | null
   chapter_2_winner TEXT,
+  started_at TIMESTAMPTZ, -- set once, when the GM starts the game — origin for the live elapsed-time timer
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

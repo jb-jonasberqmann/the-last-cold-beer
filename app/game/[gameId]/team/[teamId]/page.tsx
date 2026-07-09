@@ -12,6 +12,7 @@ import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
 import { getQuest } from "@/content/quests";
 import { RichText } from "@/components/ui/RichText";
+import { GameTimer } from "@/components/game/GameTimer";
 
 interface Props {
   params: { gameId: string; teamId: TeamId };
@@ -130,15 +131,19 @@ const ACT_GEO: Record<string, ActGeo> = {
       { id: "revelation-circle", cx: 155, cy: 162, sz: 13 },
       { id: "door-nobody-tried", cx: 107, cy: 238, sz: 12 },
       { id: "shed-dark",         cx: 215, cy: 238, sz: 12 },
+      { id: "meter-cupboard",    cx: 100, cy: 273, sz: 10 },
       { id: "sealed-wall",       cx: 95,  cy: 308, sz: 11 },
       { id: "conservatory",      cx: 152, cy: 308, sz: 11 },
       { id: "kitchen-dark",      cx: 232, cy: 308, sz: 12 },
       { id: "rattling-window",   cx: 242, cy: 238, sz: 10, isOptional: true },
       { id: "behind-the-shed",   cx: 165, cy: 382, sz: 12 },
       { id: "fuse-box",          cx: 235, cy: 382, sz: 11 },
-      { id: "back-corridor",     cx: 170, cy: 455, sz: 14 },
-      { id: "utility-corner",    cx: 170, cy: 528, sz: 12 },
-      { id: "dining-room-dark",  cx: 170, cy: 600, sz: 14 },
+      // Bottom spine — pulled up and tightened so the starting room
+      // (dining-room-dark) doesn't sit flush against the fixed bottom
+      // nav bar and become hard to tap on first load.
+      { id: "back-corridor",     cx: 170, cy: 445, sz: 14 },
+      { id: "utility-corner",    cx: 170, cy: 495, sz: 12 },
+      { id: "dining-room-dark",  cx: 170, cy: 545, sz: 14 },
     ],
     paths: [
       ["dining-room-dark",  "utility-corner"],
@@ -146,7 +151,8 @@ const ACT_GEO: Record<string, ActGeo> = {
       ["back-corridor",     "door-nobody-tried"],
       ["back-corridor",     "behind-the-shed"],
       ["back-corridor",     "fuse-box"],
-      ["door-nobody-tried", "sealed-wall"],
+      ["door-nobody-tried", "meter-cupboard"],
+      ["meter-cupboard",    "sealed-wall"],
       ["door-nobody-tried", "revelation-circle"],
       ["behind-the-shed",   "conservatory"],
       ["behind-the-shed",   "shed-dark"],
@@ -355,6 +361,30 @@ export default function TeamQuestBoardPage({ params }: Props) {
   const getRoomStatus = (roomId: string): DbRoomProgress["status"] =>
     roomProgress.find((r) => r.room_id === roomId)?.status ?? "locked";
 
+  // Act 3 power-cut gimmick: fixing the fuse box "lights" the map; opening
+  // the door nobody tried cuts the main switch outside (Meter Cupboard) and
+  // the map goes dark again for the rest of the act. mapLit only needs the
+  // fuse fixed and the door not yet fully explored — order-independent.
+  const mapLit =
+    teamChapterId === "act-3" &&
+    getRoomStatus("fuse-box") === "complete" &&
+    getRoomStatus("door-nobody-tried") !== "complete";
+
+  // One-time banner the moment the door-nobody-tried room is finished in
+  // Act 3 — the narrative beat where the main switch outside gets thrown
+  // and the map goes dark again. Guarded by sessionStorage so it only
+  // fires once per game/team, not on every poll.
+  useEffect(() => {
+    if (!gameId || !teamId || teamChapterId !== "act-3") return;
+    if (getRoomStatus("door-nobody-tried") !== "complete") return;
+    const key = `tlcb_powercut_${gameId}_${teamId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    setMessage("The lights just went out again. Somewhere outside, the main switch has been thrown.");
+    setTimeout(() => setMessage(null), 4500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomProgress, gameId, teamId, teamChapterId]);
+
   const canUnlock = (roomId: string): boolean => {
     const room = getRoom(roomId);
     if (!room) return false;
@@ -520,8 +550,13 @@ export default function TeamQuestBoardPage({ params }: Props) {
             </defs>
 
             {/* ── Map background ── */}
+            {/* Act 3 only: swaps to a "lit" variant once the fuse box is
+                fixed, and back to the normal dark map once the door nobody
+                tried is finished (the main switch outside gets thrown).
+                NOTE: /map/act3/map-lit.png does not exist yet — needs to be
+                created as a companion asset to the existing map.png. */}
             <image
-              href={`/map/${actFolder}/map.png`}
+              href={mapLit ? `/map/${actFolder}/map-lit.png` : `/map/${actFolder}/map.png`}
               x="0" y="0"
               width={svgW} height={svgH}
               preserveAspectRatio="xMidYMid slice"
@@ -760,6 +795,11 @@ export default function TeamQuestBoardPage({ params }: Props) {
           <div className="font-bold text-xl leading-tight truncate" style={{ color: "rgba(245,225,170,0.97)", fontFamily: "Georgia,serif" }}>
             {teamName}
           </div>
+          <GameTimer
+            startedAt={game?.started_at}
+            className="block text-[11px] mt-0.5 tracking-wide"
+            style={{ color: theme.accent, opacity: 0.55, fontFamily: "Georgia,serif" }}
+          />
         </div>
 
         {/* VS progress pill */}

@@ -67,6 +67,7 @@ function CaseFileContent({ gameId }: { gameId: string }) {
       backHref={`/game/${gameId}/dashboard`}
       backLabel="Dashboard"
       title={`${teamName} — Case File`}
+      startedAt={game.started_at}
     >
       <div className="rounded-xl bg-gradient-to-br from-amber-950 to-stone-900 border border-amber-700/50 p-4 mb-5 text-center">
         <div className="text-3xl mb-2">📁</div>

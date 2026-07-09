@@ -255,7 +255,7 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
       (rid) => !roomProgress.some((rp) => rp.room_id === rid && rp.status === "complete")
     );
     return (
-      <GameLayout gameId={gameId} teamId={teamId} backHref={`/game/${gameId}/team/${teamId}`} backLabel="Quest Board" title="???">
+      <GameLayout gameId={gameId} teamId={teamId} backHref={`/game/${gameId}/team/${teamId}`} backLabel="Quest Board" title="???" startedAt={game?.started_at}>
         <div className="rounded-xl bg-stone-950 border border-red-900/50 p-6 text-center mt-6" style={{ fontFamily: "Georgia, serif" }}>
           <div className="text-4xl mb-3">🔒</div>
           <h2 className="text-xl font-bold text-red-300 mb-2">Not Yet</h2>
@@ -429,6 +429,7 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
       backHref={`/game/${gameId}/team/${teamId}`}
       backLabel="Quest Board"
       title={boss.title}
+      startedAt={game?.started_at}
     >
       {/* ── CSS animations ── */}
       <style>{`

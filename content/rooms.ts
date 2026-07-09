@@ -804,6 +804,37 @@ export const ROOMS: Room[] = [
   },
 
   {
+    id: "meter-cupboard",
+    chapterId: "act-3",
+    title: "The Meter Cupboard",
+    type: "mystery_room",
+    look: {
+      icon: "🔌",
+      theme: "dark-outside",
+      atmosphere:
+        "Just outside the door nobody tried, a weathered cupboard where the house's real power comes in — heavier hardware than the fuse box inside, the kind that takes both hands to move on purpose. The main switch is down. Not tripped. Thrown.",
+      backgroundStyle: "dark-outside-metal",
+      colorFrom: "from-zinc-950",
+      colorTo: "to-stone-950",
+    },
+    description:
+      "Right outside the door nobody tried — the house's main power switch. Somebody was out here in the last few minutes. Whatever the fuse box fixed inside, this undoes.",
+    lockedDescription: "Something out there cut the power for real this time. Open the door first.",
+    unlockCost: 0,
+    unlockRequires: ["door-nobody-tried"],
+    questIds: ["meter-cupboard-switch", "meter-cupboard-candle-hint"],
+    rewardClueIds: ["meter-cupboard-cut"],
+    isOptional: false,
+    order: 7.5,
+    da: {
+      title: "Målerskabet",
+      description: "Lige uden for døren ingen prøvede — husets hovedafbryder. Nogen var herude for få minutter siden. Hvad end sikringsskabet reparerede indenfor, gør dette til intet.",
+      lockedDescription: "Noget derude har afbrudt strømmen for alvor denne gang. Åbn døren først.",
+      atmosphere: "Lige uden for døren ingen prøvede, et vejrbidt skab hvor husets rigtige strøm kommer ind. Hovedafbryderen er nede. Ikke udløst. Slået om.",
+    },
+  },
+
+  {
     id: "sealed-wall",
     chapterId: "act-3",
     title: "The Sealed Wall",
@@ -821,7 +852,7 @@ export const ROOMS: Room[] = [
       "The sealed wall, visible through the door nobody tried. Not a room — a walled-up entrance. Hold the candle close. The heat reveals writing on the plaster.",
     lockedDescription: "Something behind the door. You need a candle to see it.",
     unlockCost: 0,
-    unlockRequires: ["door-nobody-tried"],
+    unlockRequires: ["meter-cupboard"],
     unlockRequiresArtifacts: ["artifact-candle"],
     questIds: ["sealed-wall-read", "sealed-wall-understand"],
     rewardClueIds: ["sealed-wall-writing"],

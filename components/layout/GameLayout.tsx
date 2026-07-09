@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { GameTimer } from "@/components/game/GameTimer";
 
 interface GameLayoutProps {
   children: ReactNode;
@@ -11,6 +12,7 @@ interface GameLayoutProps {
   title?: string;
   backHref?: string;
   backLabel?: string;
+  startedAt?: string | null;
 }
 
 export function GameLayout({
@@ -20,6 +22,7 @@ export function GameLayout({
   title,
   backHref,
   backLabel = "Back",
+  startedAt,
 }: GameLayoutProps) {
   const { lang, toggle } = useLanguage();
 
@@ -52,6 +55,13 @@ export function GameLayout({
           )}
 
           <div className="flex items-center gap-2 ml-auto">
+            {/* Elapsed game timer */}
+            <GameTimer
+              startedAt={startedAt}
+              className="text-xs text-amber-700/80"
+              style={{ fontFamily: "Georgia, serif" }}
+            />
+
             {/* Language toggle */}
             <button
               onClick={toggle}

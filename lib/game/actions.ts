@@ -141,7 +141,7 @@ export async function startGame(gameId: string): Promise<ActionResult> {
     }
   }
 
-  await sql`UPDATE games SET status = 'active', updated_at = ${now} WHERE id = ${gameId}`;
+  await sql`UPDATE games SET status = 'active', started_at = ${now}, updated_at = ${now} WHERE id = ${gameId}`;
 
   // Randomly assign culprit (one non-host player)
   await _assignCulprit(gameId);

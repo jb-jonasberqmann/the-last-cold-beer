@@ -407,6 +407,21 @@ export const CLUES: Clue[] = [
   },
 
   // ==========================================
+  // ACT 3 — THE METER CUPBOARD
+  // Not a key clue — atmospheric marker for the deliberate power cut
+  // ==========================================
+  {
+    id: "meter-cupboard-cut",
+    chapterId: "act-3",
+    title: "The Main Switch, Thrown",
+    description:
+      "The house's main power switch, outside near the door nobody tried. Thrown, not tripped — and wet mud smeared across the handle. Fresh. Whatever the fuse box fixed, this undoes.",
+    icon: "🔌",
+    flavor: "Someone was out here in the last few minutes. Time to find a candle.",
+    isKeyClue: false,
+  },
+
+  // ==========================================
   // ACT 3 — THE SEALED WALL
   // Revealed by candle. Three lines written at different times.
   // ==========================================
