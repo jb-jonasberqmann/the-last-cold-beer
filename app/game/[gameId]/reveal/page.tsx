@@ -5,7 +5,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { getCulpritReveal, getEndingChoice, submitEndingChoice } from "@/lib/game/actions";
-import { AgedPhoto } from "@/components/game/AgedPhoto";
 import type { TeamId } from "@/types/content";
 
 type RevealStage = "loading" | "radio-words" | "building" | "culprit" | "done";
@@ -28,7 +27,6 @@ function RevealContent() {
   const [radioLineIndex, setRadioLineIndex] = useState(0);
   const [culpritName, setCulpritName] = useState<string | null>(null);
   const [isCulprit, setIsCulprit] = useState(false);
-  const [photo, setPhoto] = useState<string | null>(null);
 
   // The culprit's final choice: drink alone (corrupted) or share a toast.
   const [endingChoice, setEndingChoice] = useState<{ choice: "alone" | "toast"; playerName: string } | null>(null);
@@ -42,7 +40,6 @@ function RevealContent() {
     if (result.success && result.data) {
       setCulpritName(result.data.culpritName);
       setIsCulprit(result.data.culpritPlayerId === playerId);
-      setPhoto(result.data.photo);
     }
   }, [gameId, teamId, playerId]);
 
@@ -171,22 +168,6 @@ function RevealContent() {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        {photo && (
-          <div className="mb-8">
-            <AgedPhoto
-              src={photo}
-              alt="The ritual record"
-              className="w-full rounded-lg border border-stone-800"
-              style={{ aspectRatio: "4 / 3" }}
-            />
-            <p className="text-stone-500 text-xs italic mt-3">
-              The ritual record. Taken tonight — or was it?
-              <br />
-              Count the faces. Someone is missing.
-            </p>
-          </div>
-        )}
-
         <p className="text-stone-500 text-xs tracking-widest uppercase mb-8">
           The last cold beer was taken by
         </p>
@@ -209,8 +190,6 @@ function RevealContent() {
         <p className="text-stone-500 text-sm leading-relaxed mb-2">
           {isCulprit
             ? "You knew. You always knew. You held the camera so no one would see your hands."
-            : photo
-            ? `${culpritName ?? "They"} took the photo. ${culpritName ?? "They"} took the beer. The one missing from the record is the one who made it necessary.`
             : `${culpritName ?? "They"} took the last one. While everyone else was settling in.`}
         </p>
         <p className="text-stone-600 text-xs mt-4">

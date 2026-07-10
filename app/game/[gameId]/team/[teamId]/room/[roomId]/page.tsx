@@ -15,6 +15,7 @@ import type { DbGame, DbQuestProgress, DbTeamClue, DbGameEvent, DbPlayer } from 
 import type { TeamId, Quest, PhysicalChallengeConfig } from "@/types/content";
 import { getQuest } from "@/content/quests";
 import { cn } from "@/lib/utils";
+import { resolveClueDescription } from "@/lib/game/clueDisplay";
 
 interface Props {
   params: { gameId: string; teamId: TeamId; roomId: string };
@@ -594,7 +595,12 @@ export default function RoomPage({ params }: Props) {
                     );
                   }
                   return (
-                    <ClueCard key={clueId} clue={clue} discoveredAt={discovered.discovered_at} />
+                    <ClueCard
+                      key={clueId}
+                      clue={clue}
+                      discoveredAt={discovered.discovered_at}
+                      descriptionOverride={resolveClueDescription(clue, players, teamId)}
+                    />
                   );
                 })}
               </div>
@@ -646,7 +652,11 @@ export default function RoomPage({ params }: Props) {
             </p>
 
             <a
-              href={`/game/${gameId}/team/${teamId}`}
+              href={
+                roomId === "front-door"
+                  ? `/game/${gameId}/team/${teamId}/intermission/mads`
+                  : `/game/${gameId}/team/${teamId}`
+              }
               className="flex items-center justify-center gap-2 w-full font-bold px-6 py-4 rounded-xl text-base transition-all active:scale-95"
               style={{
                 background: "linear-gradient(160deg, rgba(140,90,15,0.6), rgba(80,50,5,0.55))",
@@ -656,7 +666,7 @@ export default function RoomPage({ params }: Props) {
                 boxShadow: "0 4px 24px rgba(120,80,0,0.25), inset 0 1px 0 rgba(255,220,80,0.1)",
               }}
             >
-              ← Back to Quest Board
+              {roomId === "front-door" ? "The door opens →" : "← Back to Quest Board"}
             </a>
           </div>
         </div>

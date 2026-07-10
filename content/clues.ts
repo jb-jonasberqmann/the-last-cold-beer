@@ -394,14 +394,14 @@ export const CLUES: Clue[] = [
     chapterId: "act-3",
     title: "The Note from the Shed",
     description:
-      "Found inside the shed, on the floor under the date list. A handwritten note — signed with names that are almost, but not quite, your names.\n\n*\"We came. We stayed. We failed... This time.. Finish it... Every last drop.\"*\n\n*[Signed with anagrammed player names — rendered dynamically]*",
+      "Found inside the shed, on the floor under the date list. A handwritten note — signed with names that are almost, but not quite, your names.\n\n*\"We came. We stayed. We failed... This time.. Finish it... Every last drop.\"*",
     icon: "📄",
     flavor: "The handwriting is familiar in a way you cannot explain.",
     isKeyClue: true,
     isArtifact: true,
     da: {
       title: "Sedlen fra Skuret",
-      description: "Fundet inde i skuret, på gulvet under datolisten. En håndskrevet seddel — underskrevet med navne der er næsten, men ikke helt, jeres navne.\n\n*\"Vi kom. Vi blev. Vi fejlede... Denne gang.. Afslut det... Til allersidste dråbe.\"*\n\n*[Underskrevet med anagrammerede spillernavne — renderet dynamisk]*",
+      description: "Fundet inde i skuret, på gulvet under datolisten. En håndskrevet seddel — underskrevet med navne der er næsten, men ikke helt, jeres navne.\n\n*\"Vi kom. Vi blev. Vi fejlede... Denne gang.. Afslut det... Til allersidste dråbe.\"*",
       flavor: "Håndskriften er bekendt på en måde du ikke kan forklare.",
     },
   },

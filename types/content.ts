@@ -103,6 +103,7 @@ export interface Quest {
   rewardClueId?: string; // clue granted on completion
   rewardText?: string; // flavor text shown on success
   failureText?: string; // shown on wrong answer (before hint)
+  wrongAnswerSips?: number; // if set, a wrong puzzle answer costs the team this many sips (mirrors Boss.punishWrongAnswers, but per-quest and fixed rather than random)
   setsScaredSilent?: boolean; // if true, completing this quest sets the player's scared_silent flag
   clearsScaredSilent?: boolean; // if true, completing this room clears scared_silent for the team
   setsSunBlind?: boolean; // if true, completing this quest sets the player's sun_blind flag (Sunroom dare) — cleared automatically on reaching the Act 2 boss

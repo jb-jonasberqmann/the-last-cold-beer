@@ -92,7 +92,7 @@ export const ROOMS: Room[] = [
     lockedDescription: "The garden. Finish the terrace first.",
     unlockCost: 1,
     unlockRequires: ["terrace"],
-    questIds: ["garden-search", "garden-oak-riddle-a", "garden-oak-riddle-b"],
+    questIds: ["garden-oak-riddle-a", "garden-oak-riddle-b"],
     rewardClueIds: ["fragment-garden-a", "fragment-garden-b"],
     isOptional: false,
     order: 3,
@@ -207,7 +207,7 @@ export const ROOMS: Room[] = [
       icon: "🚙",
       theme: "outdoor-warm",
       atmosphere:
-        "Covered concrete, oil stains, a workbench with old tools. A tarp folded in the corner, weighed down with a loose brick. And on the back wall, low down near the floor: two chalk arrows. One pointing down. One pointing right. Someone drew these deliberately.",
+        "Covered concrete, oil stains, a workbench with old tools. A tarp folded in the corner, weighed down with a loose brick. And on the back wall, low down near the floor: two chalk arrows. Both pointing right — one just a little further along the wall than the other. Someone drew these deliberately.",
       backgroundStyle: "outdoor-golden",
       colorFrom: "from-stone-800",
       colorTo: "to-amber-950",
@@ -215,7 +215,7 @@ export const ROOMS: Room[] = [
     description:
       "An optional detour. The covered parking bay at the side of the house — empty now, but not untouched. Someone has been here. There are chalk marks on the wall that weren't made by accident. If you figure out what they mean, it might give you an edge later.",
     lockedDescription: "The carport. An optional side route from the garden.",
-    unlockCost: 0,
+    unlockCost: 1,
     unlockRequires: ["garden"],
     questIds: ["carport-chalk"],
     rewardClueIds: [],
@@ -225,7 +225,7 @@ export const ROOMS: Room[] = [
       title: "Carporten",
       description: "En valgfri omvej. Den overdækkede parkeringsplads ved siden af huset — tom nu, men ikke urørt. Nogen har været her.",
       lockedDescription: "Carporten. En valgfri sidevej fra haven.",
-      atmosphere: "Dækket beton, olieindfarvet, et arbejdsbord med gammelt værktøj. Et presenning foldet i hjørnet, holdt nede af en løs mursten. Og på bagevæggen, lavt nede ved gulvet: to kridt-pile.",
+      atmosphere: "Dækket beton, olieindfarvet, et arbejdsbord med gammelt værktøj. Et presenning foldet i hjørnet, holdt nede af en løs mursten. Og på bagevæggen, lavt nede ved gulvet: to kridt-pile. Begge peger til højre — den ene lidt længere hen ad væggen end den anden.",
     },
   },
 
@@ -316,7 +316,7 @@ export const ROOMS: Room[] = [
     description:
       "The bunk room. Someone who knew exactly what they were doing stayed here. The note is not on the desk. The note is on the underside of the top bunk mattress. You have to lie down to read it. One player enters alone.",
     lockedDescription: "The bunk room. One player at a time.",
-    unlockCost: 0,
+    unlockCost: 2,
     unlockRequires: [],
     questIds: ["bunk-room-explore", "bunk-room-note-a", "bunk-room-note-b"],
     rewardClueIds: ["word-taken", "word-buried"],
@@ -378,7 +378,7 @@ export const ROOMS: Room[] = [
     description:
       "A conservatory off the living room. Glass walls, a few hardy plants. Slightly cooler than the rest of the house — the wind is audible here. Optional investigation.",
     lockedDescription: "The sunroom. Finish the living room first.",
-    unlockCost: 0,
+    unlockCost: 1,
     unlockRequires: ["living-room"],
     questIds: ["sunroom-plants", "sunroom-wind", "sunroom-sunblind"],
     rewardClueIds: ["sunroom-blind-mark"],
@@ -564,7 +564,7 @@ export const ROOMS: Room[] = [
     description:
       "A side investigation. The foosball table has a slight mechanical quirk — and a ball sealed inside it. Figure out why.",
     lockedDescription: "The foosball table. Off the activity room.",
-    unlockCost: 0,
+    unlockCost: 1,
     unlockRequires: ["activity-room"],
     questIds: ["foosball-bent-rod", "foosball-social"],
     rewardClueIds: [],
@@ -602,7 +602,7 @@ export const ROOMS: Room[] = [
     lockedDescription: "The dining room. This is where Act 3 begins.",
     unlockCost: 0,
     unlockRequires: [],
-    questIds: ["dark-dining-orient"],
+    questIds: ["dark-dining-orient", "dark-dining-riddle"],
     rewardClueIds: [],
     isOptional: false,
     order: 1,
@@ -661,10 +661,9 @@ export const ROOMS: Room[] = [
     },
     description:
       "The back corridor, visible now with the flashlight. Under the stairs. Doors you didn't notice in Act 2. One is ajar — that's the fuse box.",
-    lockedDescription: "The back corridor. You need the flashlight first.",
+    lockedDescription: "The back corridor. Whatever you found in the last room should help you find your way.",
     unlockCost: 0,
     unlockRequires: ["utility-corner"],
-    unlockRequiresArtifacts: ["artifact-flashlight"],
     questIds: ["corridor-explore", "corridor-door-check"],
     rewardClueIds: [],
     isOptional: false,
@@ -672,7 +671,7 @@ export const ROOMS: Room[] = [
     da: {
       title: "Bagkorridoren",
       description: "Bagkorridoren, synlig nu med lommelygten. Under trappen. Døre du ikke lagde mærke til i Akt 2.",
-      lockedDescription: "Bagkorridoren. Du har brug for lommelygten først.",
+      lockedDescription: "Bagkorridoren. Hvad end I fandt i det sidste rum burde hjælpe jer med at finde vej.",
       atmosphere: "Med lommelygten kan du nu se det — en korridor du gik forbi hele aftenen.",
     },
   },
@@ -694,7 +693,7 @@ export const ROOMS: Room[] = [
     description:
       "The fuse box. One blown fuse. Find the replacement and you can restore power to one circuit — enough to light one room.",
     lockedDescription: "The fuse box. Find it in the back corridor.",
-    unlockCost: 0,
+    unlockCost: 1,
     unlockRequires: ["back-corridor"],
     questIds: ["fusebox-identify", "fusebox-repair"],
     rewardClueIds: ["artifact-fuse"],
@@ -724,10 +723,9 @@ export const ROOMS: Room[] = [
     },
     description:
       "The kitchen, partially lit. The fuse gives you one working light. Look in the drawers — something useful was in here all along.",
-    lockedDescription: "The kitchen. Restore partial power with the fuse first.",
+    lockedDescription: "The kitchen. Whatever you fixed in the last room should bring some power back.",
     unlockCost: 0,
     unlockRequires: ["fuse-box"],
-    unlockRequiresArtifacts: ["artifact-fuse"],
     questIds: ["dark-kitchen-drawer", "dark-kitchen-observe"],
     rewardClueIds: ["artifact-wrench"],
     isOptional: false,
@@ -735,7 +733,7 @@ export const ROOMS: Room[] = [
     da: {
       title: "Køkkenet",
       description: "Køkkenet, delvist oplyst. Sikringen giver dig ét arbejdende lys. Kig i skufferne.",
-      lockedDescription: "Køkkenet. Gendan delvis strøm med sikringen først.",
+      lockedDescription: "Køkkenet. Hvad end I reparerede i det sidste rum burde bringe noget strøm tilbage.",
       atmosphere: "Med sikringen på plads blinker ét lys i køkkenet. Ikke lyst — bare nok.",
     },
   },
@@ -756,10 +754,9 @@ export const ROOMS: Room[] = [
     },
     description:
       "A rattling window latch off the kitchen. A dead end — no artifact here — but the silence after you fix it is notable. The house sounds different.",
-    lockedDescription: "A rattling window. You need the wrench first.",
+    lockedDescription: "A rattling window. Something from the kitchen should quiet it.",
     unlockCost: 0,
     unlockRequires: ["kitchen-dark"],
-    unlockRequiresArtifacts: ["artifact-wrench"],
     questIds: ["window-fix", "window-silence"],
     rewardClueIds: [],
     isOptional: true,
@@ -767,7 +764,7 @@ export const ROOMS: Room[] = [
     da: {
       title: "Det Ødelagte Vindue",
       description: "En knatrende vindueshængsle ud fra køkkenet. En blindgyde — intet artefakt her — men stilheden efter du fikser det er bemærkelsesværdig.",
-      lockedDescription: "Et knatrende vindue. Du har brug for skruenøglen først.",
+      lockedDescription: "Et knatrende vindue. Noget fra køkkenet burde kunne stilne det.",
       atmosphere: "En vindueshængsle der rasler. Du har hørt den hele natten.",
     },
   },
@@ -851,7 +848,7 @@ export const ROOMS: Room[] = [
     description:
       "The sealed wall, visible through the door nobody tried. Not a room — a walled-up entrance. Hold the candle close. The heat reveals writing on the plaster.",
     lockedDescription: "Something behind the door.",
-    unlockCost: 0,
+    unlockCost: 3,
     unlockRequires: ["meter-cupboard"],
     questIds: ["sealed-wall-read", "sealed-wall-understand"],
     rewardClueIds: ["sealed-wall-writing"],
@@ -860,7 +857,7 @@ export const ROOMS: Room[] = [
     da: {
       title: "Den Forseglede Væg",
       description: "Den forseglede væg, synlig gennem døren ingen prøvede. Ikke et rum — en tilmuret indgang. Hold lyset tæt.",
-      lockedDescription: "Noget bag døren. Du har brug for et stearinlys for at se det.",
+      lockedDescription: "Noget bag døren.",
       atmosphere: "Lyset holdt tæt til den forseglede flade afslører noget.",
     },
   },
@@ -882,7 +879,7 @@ export const ROOMS: Room[] = [
     description:
       "Back outside, in the dark. Behind the shed is a section of the garden that wasn't on the Act 1 map. Peak eeriness of Act 3. Branches lead to the conservatory and back to the shed itself.",
     lockedDescription: "Behind the shed. You need to reach it through the corridor.",
-    unlockCost: 0,
+    unlockCost: 2,
     unlockRequires: ["back-corridor"],
     questIds: ["behind-shed-explore", "behind-shed-dark"],
     rewardClueIds: [],

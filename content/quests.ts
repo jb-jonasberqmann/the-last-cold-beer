@@ -21,7 +21,7 @@ export const QUESTS: Quest[] = [
     description:
       "The house keeps a record of everyone who visits. Tonight is no different. Before anything else, your arrival must be documented.",
     prompt:
-      "One of you holds the camera. Gather the rest of your team in front of the house and take ONE photo of them — everyone, together, all in frame. The house will not accept anything less.",
+      "One of you holds the camera. Gather the rest of your team in front of the house and take ONE photo of them — everyone, together, all in frame, phone held sideways (landscape, not portrait). The house will not accept anything less.",
     order: 1,
     isRequired: true,
     hints: [],
@@ -44,7 +44,7 @@ export const QUESTS: Quest[] = [
     description:
       "The house keeps a record of everyone who visits. Tonight is no different. Before anything else, your arrival must be documented.",
     prompt:
-      "One of you holds the camera. Gather the rest of your team in front of the house and take ONE photo of them — everyone, together, all in frame. The house will not accept anything less.",
+      "One of you holds the camera. Gather the rest of your team in front of the house and take ONE photo of them — everyone, together, all in frame, phone held sideways (landscape, not portrait). The house will not accept anything less.",
     order: 1,
     isRequired: true,
     hints: [],
@@ -147,26 +147,6 @@ export const QUESTS: Quest[] = [
   },
 
   // --- GARDEN ---
-  {
-    id: "garden-search",
-    roomId: "garden",
-    type: "social_challenge",
-    title: "Search the Garden",
-    description:
-      "1,250 square metres. Natural. Coastal. The group splits up to search. Someone will find the hollow in the old oak near the back fence.",
-    prompt:
-      "Split up and search the garden. One player goes to the old oak tree near the back fence and checks the hollow. Report what they find.",
-    order: 1,
-    isRequired: true,
-    hints: [],
-    rewardText: "The hollow itself is empty. But something is carved into the bark right beside it, worth reading closely.",
-    da: {
-      title: "Søg Haven",
-      description: "1.250 kvadratmeter. Naturlig. Kystmæssig. Gruppen deler sig for at søge.",
-      prompt: "Del op og søg haven. Én spiller går til den gamle egetræ ved baghegnet og tjekker hulheden.",
-      rewardText: "Selve hulheden er tom. Men noget er ridset ind i barken lige ved siden af den, værd at læse nøje.",
-    },
-  },
   {
     id: "garden-oak-riddle-a",
     roomId: "garden",
@@ -310,7 +290,7 @@ export const QUESTS: Quest[] = [
     type: "social_challenge",
     title: "The Chalk Arrows",
     description:
-      "Two chalk arrows on the back wall of the carport, low down near the floor. One pointing down. One pointing right. They're careful — too deliberate to be accidental. No label, no date, no signature.",
+      "Two chalk arrows on the back wall of the carport, low down near the floor. Both pointing right — one just a little further along than the other. They're careful — too deliberate to be accidental. No label, no date, no signature.",
     prompt:
       "The group must agree on what the arrows mean. Any interpretation — as long as everyone commits to the same one. Seal the agreement with a toast before you move on.",
     order: 1,
@@ -375,10 +355,11 @@ export const QUESTS: Quest[] = [
     description:
       "A couple stayed in this room. They left in a hurry. A half-packed bag, open on the floor. Something still plugged in that nobody unpacked. The bedside lamp on. What three specific details does the player notice?",
     prompt:
-      "The player in the double room describes three specific details they notice. The rest of the team (listening) confirms each one makes sense.",
+      "The player in the double room describes three specific details they notice. The rest of the team (listening) confirms each one makes sense — then seals it with a toast, the way the house seems to expect.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "Three details noted. The room has a story. You just don't know it yet.",
     da: {
       title: "Nogen Var Her",
@@ -460,10 +441,11 @@ export const QUESTS: Quest[] = [
     description:
       "Some things in this room were placed with care. Others were abandoned mid-action. The player inside identifies which is which.",
     prompt:
-      "Name one thing in the single room that was clearly placed deliberately, and one thing that was clearly abandoned mid-action.",
+      "Name one thing in the single room that was clearly placed deliberately, and one thing that was clearly abandoned mid-action. Seal it with a toast before you move on.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "The contrast is the story. Someone started this room with intention.",
     da: {
       title: "Bevidst og Spredt",
@@ -545,12 +527,13 @@ export const QUESTS: Quest[] = [
     description:
       "The bunk bed. The top is unmade — the bottom has been slept in. The player enters and claims a bunk. Which one?",
     prompt:
-      "The player in the bunk room chooses: top or bottom bunk. The choice matters — but not in the way you'd expect.",
+      "The player in the bunk room chooses: top or bottom bunk, out loud, and the team agrees on it together. The choice matters — but not in the way you'd expect.",
     order: 1,
     isRequired: true,
     hints: [
       { order: 1, offerCost: 1, text: "The note is on the underside of the top mattress. You need to be in the bottom to read it." },
     ],
+    offerCost: 1,
     answer: {
       correct: ["bottom", "bottom bunk", "nedre", "nederste", "den nederste"],
       normalized: true,
@@ -802,10 +785,11 @@ export const QUESTS: Quest[] = [
     description:
       "The sunroom is the first place in the house where you notice the wind has picked up. It's coming from the west. That matters for the tone of Act 3, though you don't know that yet.",
     prompt:
-      "Stand in the sunroom and listen to the wind. One player describes what they hear. The description must include a direction.",
+      "Stand in the sunroom and listen to the wind. One player describes what they hear, and must include a direction. The house asks for a small toast to mark it.",
     order: 2,
     isRequired: false,
     hints: [],
+    offerCost: 1,
     rewardText: "The wind noted. It will be louder by midnight.",
     da: {
       title: "Vinden",
@@ -845,10 +829,11 @@ export const QUESTS: Quest[] = [
     title: "The Kitchen at Evening",
     description:
       "The kitchen in the evening light. Someone made coffee — the pot is still warm. The dishes are clean. The fridge is stocked.",
-    prompt: "One player checks the fridge and reports what's in it. The group votes on one item that definitely shouldn't be there.",
+    prompt: "One player checks the fridge and reports what's in it. The group votes on one item that definitely shouldn't be there, then drinks to it.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "The kitchen is accounted for. One item is noted as wrong.",
     da: {
       title: "Køkkenet Om Aftenen",
@@ -1002,20 +987,30 @@ export const QUESTS: Quest[] = [
   {
     id: "darts-missing-player",
     roomId: "darts-board",
-    type: "social_challenge",
+    type: "puzzle",
     title: "The Incomplete Game",
     description:
-      "Three players scored on the chalkboard. Player 1: 301 → 0. Player 2: 301 → 84. Player 3: no scores after 301.",
+      "Three players scored on the chalkboard, standard 301, three darts a turn. Player 1 finished clean: 301 down to 0. Player 2 never finished — their last three darts, before the game stopped, are chalked up as 60, 97, and 60. Player 3 has no scores written after the starting 301 at all.",
     prompt:
-      "Player 3 stopped scoring after writing 301. Two possibilities: they won without needing to score, or they left. The group must agree on which and say why.",
+      "Add up Player 2's three darts, then subtract that total from the starting score of 301. What number was Player 2 sitting on when the game stopped?",
     order: 1,
     isRequired: true,
-    hints: [],
-    rewardText: "The conclusion is noted. Player 3 is part of the story now.",
+    hints: [
+      { order: 1, offerCost: 1, text: "60 + 97 + 60 first. Then 301 minus that." },
+    ],
+    answer: {
+      correct: ["84"],
+      normalized: true,
+    },
+    rewardText: "84. Player 2 was sitting on 84 when whatever happened, happened. Remember that number — it isn't done with you yet.",
+    failureText: "60 + 97 + 60 = 217. Now subtract that from 301.",
     da: {
       title: "Det Ufuldstændige Spil",
-      description: "Tre spillere scorede på kridttavlen. Spiller 3 stoppede med at score efter at have skrevet 301.",
-      prompt: "To muligheder: de vandt uden at behøve score, eller de forlod. Gruppen skal blive enige om hvilken og sige hvorfor.",
+      description: "Tre spillere scorede på kridttavlen, standard 301, tre dart per tur. Spiller 1 afsluttede rent: 301 ned til 0. Spiller 2 blev aldrig færdig — deres sidste tre dart, før spillet stoppede, står noteret som 60, 97 og 60.",
+      prompt: "Læg Spiller 2's tre dart sammen, og træk summen fra startscoren på 301. Hvilket tal sad Spiller 2 på da spillet stoppede?",
+      hints: ["60 + 97 + 60 først. Så 301 minus det."],
+      rewardText: "84. Husk det tal — det er ikke færdig med jer endnu.",
+      failureText: "60 + 97 + 60 = 217. Træk det fra 301.",
     },
   },
   {
@@ -1024,8 +1019,8 @@ export const QUESTS: Quest[] = [
     type: "physical_challenge",
     title: "Finish the Game",
     description:
-      "Player 2 was at 84 when the game stopped. Not a score to add up — a clock to match. Start the stopwatch and stop it exactly on 84 seconds. Closer is better. Miss badly and you're just wasting time.",
-    prompt: "Start the stopwatch. Stop it as close to 1:24 (84 seconds) as you can. The house doesn't care how — count in your head, count out loud, guess. It only cares how close.",
+      "The number you just worked out for Player 2 wasn't only a score. It's a clock. Start the stopwatch and stop it exactly on that many seconds — the same number, counted out in time instead of points. Closer is better. Miss badly and you're just wasting time.",
+    prompt: "Start the stopwatch. Stop it as close as you can to the number you calculated for Player 2. The house doesn't care how — count in your head, count out loud, guess. It only cares how close.",
     order: 2,
     isRequired: false,
     hints: [],
@@ -1033,15 +1028,15 @@ export const QUESTS: Quest[] = [
       timerSeconds: 180,
       startLabel: "Start the clock",
       activeEmoji: "🎯",
-      bannerText: "Someone is trying to stop the clock at 84",
+      bannerText: "Someone is trying to finish Player 2's game",
       completeLabel: "Stop",
       targetStopSeconds: 84,
     },
     rewardText: "Game's finished. Player 2's score is cleared.",
     da: {
       title: "Afslut Spillet",
-      description: "Spiller 2 var på 84 da spillet stoppede. Ikke et tal at lægge sammen — et ur at ramme. Start stopuret og stop det præcis på 84 sekunder.",
-      prompt: "Start stopuret. Stop det så tæt på 1:24 (84 sekunder) som du kan.",
+      description: "Tallet I lige regnede ud for Spiller 2 var ikke kun en score. Det er et ur. Start stopuret og stop det præcis på det samme antal sekunder.",
+      prompt: "Start stopuret. Stop det så tæt som muligt på tallet I regnede ud for Spiller 2.",
     },
   },
 
@@ -1051,22 +1046,30 @@ export const QUESTS: Quest[] = [
     roomId: "foosball-table",
     type: "puzzle",
     title: "The Bent Rod",
-    description: "One of the goalie rods is slightly bent — not broken, just wrong. The ball is sealed inside the table, the goals covered by the goalies at a specific angle.",
-    prompt: "The goalie rod is bent at approximately how many degrees off-straight? Examine it and estimate.",
+    description:
+      "One of the goalie rods isn't just bent — it's bent in half. Not broken, just turned to face the exact opposite way it should. The ball is sealed inside the table, the goalies frozen at whatever angle that leaves them.",
+    prompt:
+      "If straight-ahead is 0°, and a full turn all the way around is 360°, how many degrees off-straight is a rod that's been bent exactly in half — turned to face the opposite direction? Estimate is fine within about 5% either side.",
     order: 1,
     isRequired: true,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "Half of a full 360° turn. That's the angle." },
+    ],
+    wrongAnswerSips: 1,
     answer: {
-      correct: ["10", "15", "20", "25", "30", "35",
-                "ten", "fifteen", "twenty", "twenty five", "thirty", "thirty five",
-                "ti", "femten", "tyve", "femogtyve", "tredive", "femogtredive"],
+      // 180° ± ~5% (171–189), matching how far off a real estimate could land
+      correct: Array.from({ length: 19 }, (_, i) => String(171 + i)),
       normalized: true,
     },
-    rewardText: "The angle noted. The rod was bent deliberately — it keeps the goalies at exactly the angle needed to trap the ball.",
+    rewardText: "180°. Bent exactly in half — turned to face the opposite direction. That's not an accident, that's a decision.",
+    failureText: "Think in halves of a full circle, not small degrees. A miss here costs a sip — try again.",
     da: {
       title: "Den Bøjede Stang",
-      description: "Én af keeperstængerne er let bøjet — ikke knækket, bare forkert.",
-      prompt: "Keeperstangen er bøjet med omtrent hvor mange grader fra ret? Undersøg den og estimer.",
+      description: "Én af keeperstængerne er ikke bare bøjet — den er bøjet halvt om. Ikke knækket, bare vendt til at pege den præcis modsatte vej.",
+      prompt: "Hvis lige-frem er 0°, og en hel omgang rundt er 360°, hvor mange grader fra ret er en stang der er bøjet præcis halvt om — vendt til at pege den modsatte vej? Et skøn er fint inden for ca. 5% til hver side.",
+      hints: ["Halvdelen af en hel 360° omgang. Det er vinklen."],
+      rewardText: "180°. Bøjet præcis halvt om. Det er ikke et uheld, det er en beslutning.",
+      failureText: "Tænk i halvdele af en hel cirkel, ikke små grader. Et forkert gæt koster en slurk — prøv igen.",
     },
   },
   {
@@ -1147,22 +1150,50 @@ export const QUESTS: Quest[] = [
     id: "dark-dining-orient",
     roomId: "dining-room-dark",
     type: "social_challenge",
-    title: "Orient Yourselves",
+    title: "Steady Yourselves",
     description:
-      "The house is dark. You know this room — you were just here. Eyes adjusting. The radio shelf is to the right. The door to the corridor is ahead. Utility corner is to your left.",
+      "The house is dark. Eyes adjusting, hearts going a little faster than they should for a room you were just standing in an hour ago. Before anyone moves by feel alone, the group steadies its nerves the only way this house has ever asked for.",
     prompt:
-      "Without using any light source, one player describes the layout of the dining room from memory. Get the radio shelf, the table, and the door to the corridor right.",
+      "Everyone in the group takes a steadying sip together — three sips, out loud, counted down. Once you're steady, describe the room from memory without any light: the radio shelf, the table, the door to the corridor.",
     order: 1,
     isRequired: true,
-    hints: [
-      { order: 1, offerCost: 1, text: "Radio shelf: right. Table: center. Corridor door: ahead. Utility corner: left." },
-    ],
-    rewardText: "Orientation confirmed. The utility corner is on your left. That's where to start.",
+    hints: [],
+    offerCost: 3,
+    rewardText: "Steadier now. Radio shelf: right. Table: center. Corridor door: ahead. Utility corner: left.",
     da: {
-      title: "Orienter Jer",
-      description: "Huset er mørkt. I kender dette rum — I var netop her.",
-      prompt: "Uden at bruge nogen lyskilde, beskriver én spiller layoutet af spisestuen fra hukommelsen.",
-      rewardText: "Orientering bekræftet. Redskabshjørnet er til venstre. Der starter I.",
+      title: "Saml Jer",
+      description: "Huset er mørkt. Øjnene vænner sig til det, hjerterne banker lidt hurtigere end de burde for et rum I stod i for en time siden.",
+      prompt: "Hele gruppen tager en samlende slurk sammen — tre slurke, højt, talt ned. Når I er rolige, beskriv rummet fra hukommelsen uden lys: radiohylden, bordet, korridordøren.",
+      rewardText: "Roligere nu. Radiohylde: højre. Bord: midten. Korridordør: ligeud. Redskabshjørne: venstre.",
+    },
+  },
+  {
+    id: "dark-dining-riddle",
+    roomId: "dining-room-dark",
+    type: "puzzle",
+    title: "Counted By Touch",
+    description:
+      "No light. No radio. Just the long pine table, exactly where it's always been. Something about it can be counted without seeing it.",
+    prompt:
+      "Feel your way around the table, touching the back of every chair as you go. How many chairs are you counting?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "You sat around this same table for the sentence puzzle in Act 2. Nothing's moved since." },
+    ],
+    answer: {
+      correct: ["8", "eight", "otte"],
+      normalized: true,
+    },
+    rewardText: "Eight. The same eight chairs from Act 2 — the table hasn't changed. You have. Time to move.",
+    failureText: "Think back to the dining room in Act 2 — how many chairs were around this exact table?",
+    da: {
+      title: "Talt Ved Berøring",
+      description: "Intet lys. Ingen radio. Bare det lange fyrretræsbord, præcis hvor det altid har været.",
+      prompt: "Følg bordet rundt med hånden, rør ved ryggen af hver stol undervejs. Hvor mange stole tæller du?",
+      hints: ["I sad omkring det samme bord til sætningsgåden i Akt 2. Intet har flyttet sig siden."],
+      rewardText: "Otte. De samme otte stole fra Akt 2 — bordet har ikke ændret sig. Det har I.",
+      failureText: "Tænk tilbage til spisestuen i Akt 2 — hvor mange stole var der om dette bord?",
     },
   },
 
@@ -1232,10 +1263,11 @@ export const QUESTS: Quest[] = [
     title: "The Corridor",
     description:
       "The back corridor, visible now with the flashlight. You walked past this all evening. Under the stairs. Three doors — one slightly ajar.",
-    prompt: "With the flashlight, sweep the corridor. One player describes what they see. The ajar door — what's behind it?",
+    prompt: "With the flashlight, sweep the corridor. One player describes what they see. The ajar door — what's behind it? Toast to finding your bearings in the dark.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "The ajar door is the fuse box. Now you know where it is.",
     da: {
       title: "Korridoren",
@@ -1246,19 +1278,30 @@ export const QUESTS: Quest[] = [
   {
     id: "corridor-door-check",
     roomId: "back-corridor",
-    type: "social_challenge",
+    type: "puzzle",
     title: "Three Doors",
-    description: "Three doors. One ajar (the fuse box). One locked. One — the one nobody tried.",
+    description:
+      "Three doors down the corridor, evenly spaced along the same wall. The flashlight finds them one at a time. One stands ajar — that's the fuse box, second along from the dining room. One won't budge no matter what you try tonight — locked, and it's the last one before the corridor ends. The third has never had a reason to be tried until now.",
     prompt:
-      "Try all three doors. Report: which opens, which is locked, which is the ajar one. The door nobody tried — what does it look like?",
+      "Ajar door: second position. Locked door: last position. By elimination — which position, first, second, or third, is the door nobody tried?",
     order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "Doors assessed. Two will matter. One already matters.",
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Second is ajar. Third is locked. That only leaves one position free." },
+    ],
+    answer: {
+      correct: ["first", "1", "one", "første", "1."],
+      normalized: true,
+    },
+    rewardText: "First position. The door nobody tried is the one closest to the dining room — you walked past it all night without a second look.",
+    failureText: "Second is the fuse box. Third is locked. Work out what's left.",
     da: {
       title: "Tre Døre",
-      description: "Tre døre. Én på klem (sikringsskabet). Én låst. Én — den ingen prøvede.",
-      prompt: "Prøv alle tre døre. Rapporter: hvilken åbner, hvilken er låst, hvilken er den der er på klem.",
+      description: "Tre døre nede ad korridoren, jævnt fordelt på samme væg. Én står på klem — det er sikringsskabet, anden dør fra spisestuen. Én rører sig ikke uanset hvad I prøver i aften — låst, og det er den sidste dør før korridoren ender.",
+      prompt: "Dør på klem: anden position. Låst dør: sidste position. Ved udelukkelse — hvilken position, første, anden eller tredje, er døren ingen prøvede?",
+      hints: ["Anden er på klem. Tredje er låst. Der er kun én position tilbage."],
+      rewardText: "Første position. Døren ingen prøvede er den tættest på spisestuen.",
+      failureText: "Anden er sikringsskabet. Tredje er låst. Regn resten ud.",
     },
   },
 
@@ -1269,23 +1312,27 @@ export const QUESTS: Quest[] = [
     type: "puzzle",
     title: "Identify the Problem",
     description:
-      "The fuse box panel. Multiple breakers. Most are fine. One is clearly tripped. One glass-tube fuse is blown — you can see the filament is gone.",
+      "The fuse box panel. Four glass-tube fuses in a row, rated 5A, 10A, 15A and 20A. Three of them hum faintly warm under your fingers — still doing their job. The fourth is stone cold. Hold that one up to the flashlight and you can see straight through the glass: the hair-thin wire that should run its length is gone, snapped into two dead ends.",
     prompt:
-      "In the fuse box, you find one blown glass-tube fuse. What does a blown glass-tube fuse look like?",
+      "Feel each of the four fuses, then hold the odd one up to the light. Which rating, in amps, is the blown fuse — 5A, 10A, 15A, or 20A?",
     order: 1,
     isRequired: true,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "Three are warm. Only one is cold — and it's the one you can see straight through." },
+    ],
     answer: {
-      correct: ["filament", "black", "burnt", "dark", "broken wire", "gone", "smoke", "dark inside", "charred",
-                "filament er væk", "sort", "brændt"],
+      correct: ["15", "15a", "15 a", "fifteen"],
       normalized: true,
     },
-    rewardText: "Identified. The filament is gone. There's a replacement inside the panel door.",
+    rewardText: "15A. Cold, broken, empty inside. There's a replacement taped inside the panel door.",
+    failureText: "Feel all four again — three are warm and working, one is cold and broken. That's the one.",
     da: {
       title: "Identificer Problemet",
-      description: "Sikringsskabets panel. De fleste afbrydere er fine. Én glasrørssikring er sprunget.",
-      prompt: "Hvad ser en sprunget glasrørssikring ud som?",
-      rewardText: "Identificeret. Filamentet er væk. Der er en erstatning inden i paneldøren.",
+      description: "Sikringsskabets panel. Fire glasrørssikringer på række, mærket 5A, 10A, 15A og 20A. Tre af dem summer svagt varme under fingrene — stadig i gang. Den fjerde er stenkold. Hold den op mod lommelygten, og du kan se lige igennem glasset: den hårtynde tråd der skulle løbe hele vejen er væk.",
+      prompt: "Følg alle fire sikringer med fingrene, og hold den mærkelige en op mod lyset. Hvilken værdi, i ampere, er den sprungne sikring — 5A, 10A, 15A eller 20A?",
+      hints: ["Tre er varme. Kun én er kold — og det er den du kan se lige igennem."],
+      rewardText: "15A. Kold, sprunget, tom indeni. Der er en erstatning tapet fast inden i paneldøren.",
+      failureText: "Følg alle fire igen — tre er varme og virker, én er kold og sprunget. Det er den.",
     },
   },
   {
@@ -1404,10 +1451,11 @@ export const QUESTS: Quest[] = [
     title: "Try the Door",
     description:
       "You've walked past this door all evening. In the dark, you finally try it. The handle turns.",
-    prompt: "One player tries the door. It opens. What does the player say when they see what's behind it?",
+    prompt: "One player tries the door. It opens. What does the player say when they see what's behind it? Toast to the door finally giving in.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "The door opens. What's behind it is not a room.",
     da: {
       title: "Prøv Døren",
@@ -1450,10 +1498,11 @@ export const QUESTS: Quest[] = [
     description:
       "The cupboard where the house's real power comes in — heavier hardware than the fuse box you just fixed inside, the kind that takes both hands to move. It's down. Not tripped, not blown. Thrown.",
     prompt:
-      "One player examines the switch and describes it to the group out loud: what does 'thrown, not tripped' actually look like? Is there anything else on or around it worth mentioning?",
+      "One player examines the switch and describes it to the group out loud: what does 'thrown, not tripped' actually look like? Is there anything else on or around it worth mentioning? Toast to the house's cruelty.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "Described. Whatever the fuse box fixed, this undoes — completely, on purpose.",
     da: {
       title: "Hovedafbryderen",
@@ -1553,10 +1602,11 @@ export const QUESTS: Quest[] = [
     description:
       "Back outside. The garden is completely dark. Behind the shed — a section you didn't explore in Act 1. Something is here.",
     prompt:
-      "One player goes behind the shed. Describe what they find. Two things are back here: the conservatory, and the shed itself approached from the other side.",
+      "One player goes behind the shed. Describe what they find. Two things are back here: the conservatory, and the shed itself approached from the other side. Toast to stepping into the dark.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "The conservatory is visible. The shed is behind you. Two things to investigate.",
     da: {
       title: "Ind i Mørket",
@@ -1569,22 +1619,29 @@ export const QUESTS: Quest[] = [
     id: "behind-shed-dark",
     roomId: "behind-the-shed",
     type: "puzzle",
-    title: "How Far is Too Far",
-    description: "The darkness behind the shed is different from any other darkness tonight. Why?",
-    prompt: "What makes the darkness behind the shed feel different? One player answers. The others vote on whether the answer is real.",
+    title: "The Oak in the Dark",
+    description:
+      "The darkness behind the shed is different from any other darkness tonight — no walls to catch a sound and throw it back at you. But this ground isn't unfamiliar. Somewhere out here, past the fence line, stands the same tree that already had something to say to you once tonight.",
+    prompt:
+      "Reach out into the dark, toward the back fence. What tree are you feeling for — the same one that had a digit carved into its bark, back in Act 1?",
     order: 2,
-    isRequired: false,
-    hints: [],
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Garden. Back fence. Something you read the bark of, hours ago." },
+    ],
     answer: {
-      correct: ["outside", "total", "no light", "open", "sky", "wind", "sound", "nature",
-                "udenfor", "totalt", "intet lys", "åbent", "himmel", "vind", "lyd"],
+      correct: ["oak", "the oak", "old oak", "the old oak", "oak tree", "egetræet", "egen", "det gamle egetræ"],
       normalized: true,
     },
-    rewardText: "Total darkness. No walls to bounce light off. Just the garden and the wind.",
+    rewardText: "The old oak. Same tree, same fence line — just impossible to see now. The garden hasn't changed. You have.",
+    failureText: "Think back to Act 1's garden — one tree there had something carved into it.",
     da: {
-      title: "Hvor Langt er For Langt",
-      description: "Mørket bag skuret er anderledes end noget andet mørke i aften.",
-      prompt: "Hvad gør mørket bag skuret føles anderledes?",
+      title: "Egetræet i Mørket",
+      description: "Mørket bag skuret er anderledes end noget andet mørke i aften — ingen vægge til at fange en lyd og kaste den tilbage. Men denne jord er ikke ukendt. Et sted herude, bag hegnet, står det samme træ der allerede havde noget at sige til jer én gang i aften.",
+      prompt: "Ræk ud i mørket, mod baghegnet. Hvilket træ leder du efter — det samme som havde et ciffer ridset i barken, tilbage i Akt 1?",
+      hints: ["Haven. Baghegnet. Noget du læste barken af, timer siden."],
+      rewardText: "Det gamle egetræ. Samme træ, samme hegn — bare umuligt at se nu. Haven har ikke ændret sig. Det har I.",
+      failureText: "Tænk tilbage til Akt 1's have — ét træ der havde noget ridset ind i sig.",
     },
   },
 

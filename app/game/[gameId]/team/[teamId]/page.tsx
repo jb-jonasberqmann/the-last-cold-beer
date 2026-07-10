@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { unlockRoom, markCluesRead as markCluesReadAction } from "@/lib/game/actions";
-import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue } from "@/types/database";
+import type { DbGame, DbRoomProgress, DbGameEvent, DbTeamClue, DbQuestProgress, DbPlayer } from "@/types/database";
 import type { TeamId, Clue } from "@/types/content";
 import { getChapter, getRoom } from "@/content/index";
 import { getBoss } from "@/content/bosses";
 import { getClue } from "@/content/clues";
 import { getQuest } from "@/content/quests";
+import { resolveClueDescription } from "@/lib/game/clueDisplay";
 import { RichText } from "@/components/ui/RichText";
 import { GameTimer } from "@/components/game/GameTimer";
 
@@ -205,6 +206,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
   }, [gameId, teamId]);
   const [activeChallenges, setActiveChallenges] = useState<Record<string, string>>({});
   const [forcedClueModal, setForcedClueModal] = useState<Clue[]>([]);
+  const [players, setPlayers] = useState<DbPlayer[]>([]);
 
   // ── Map scroll refs ───────────────────────────────────────────────────────
   const mapScrollRef = useRef<HTMLDivElement>(null);
@@ -220,6 +222,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
     setGame(g);
     const rp = data.roomProgress ?? [];
     setRoomProgress(rp);
+    setPlayers(data.players ?? []);
 
     const dbClues: DbTeamClue[] = data.clues ?? [];
     // Newest clues first — the drawer shows them in this order
@@ -286,14 +289,23 @@ export default function TeamQuestBoardPage({ params }: Props) {
       }
     }
 
-    // Physical challenge detection
+    // Physical challenge detection — a challenge that's already been
+    // completed (quest_completed) must never keep showing its countdown
+    // banner on the map, even if its timer window (up to 180s) hasn't
+    // technically elapsed yet.
     const nowMs = Date.now();
+    const completedQuestIds = new Set(
+      (data.questProgress as DbQuestProgress[] ?? [])
+        .filter((qp) => qp.status === "completed")
+        .map((qp) => qp.quest_id)
+    );
     const running: Record<string, string> = {};
     for (const ev of events) {
       if (ev.event_type === "physical_challenge_started" && ev.team_id === teamId) {
         const questId = ev.event_data?.quest_id as string | undefined;
         const startedAt = ev.event_data?.started_at as string | undefined;
         if (!questId || !startedAt) continue;
+        if (completedQuestIds.has(questId)) continue;
         const quest = getQuest(questId);
         const timerSec = quest?.physicalChallenge?.timerSeconds ?? 60;
         const elapsed = (nowMs - new Date(startedAt).getTime()) / 1000;
@@ -1008,7 +1020,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                 </div>
                 <button onClick={() => setSelectedClue(null)} className="text-lg leading-none" style={{ color: "rgba(180,130,50,0.4)" }}>✕</button>
               </div>
-              <p className="text-sm leading-relaxed mb-3" style={{ color: "rgba(220,200,155,0.85)", fontFamily: "Georgia,serif" }}>{selectedClue.description}</p>
+              <p className="text-sm leading-relaxed mb-3" style={{ color: "rgba(220,200,155,0.85)", fontFamily: "Georgia,serif" }}>{resolveClueDescription(selectedClue, players, teamId)}</p>
               <p className="text-xs italic" style={{ color: "rgba(140,100,40,0.6)", fontFamily: "Georgia,serif" }}>{selectedClue.flavor}</p>
             </div>
           ) : (
@@ -1097,7 +1109,7 @@ export default function TeamQuestBoardPage({ params }: Props) {
                           <span className="text-[8px] uppercase tracking-widest" style={{ color: "rgba(251,191,36,0.6)", fontFamily: "Georgia,serif" }}>Key</span>
                         )}
                       </div>
-                      <RichText as="p" className="text-xs leading-relaxed" style={{ color: "rgba(200,175,120,0.8)", fontFamily: "Georgia,serif" }} text={clue.description} />
+                      <RichText as="p" className="text-xs leading-relaxed" style={{ color: "rgba(200,175,120,0.8)", fontFamily: "Georgia,serif" }} text={resolveClueDescription(clue, players, teamId)} />
                       {clue.flavor && (
                         <RichText as="p" className="text-[11px] italic mt-1.5" style={{ color: "rgba(130,95,35,0.55)", fontFamily: "Georgia,serif" }} text={clue.flavor} />
                       )}

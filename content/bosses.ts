@@ -186,7 +186,7 @@ export const BOSSES: Boss[] = [
       colorTo: "to-stone-900",
       backgroundStyle: "warm-dining-radio",
     },
-    maxHp: 120,
+    maxHp: 240,
     requiredRoomIds: ["living-room", "the-toilet", "kitchen-act2", "activity-room", "dining-room"],
     counterAttacks: [
       {
@@ -224,9 +224,9 @@ export const BOSSES: Boss[] = [
             description:
               "The antenna is bent at a wrong angle — not broken, just wrong. Someone has been at it. Straighten it. Try different positions. The static changes pitch when you're close.",
             type: "social",
-            damage: 25,
+            damage: 8,
             rewardText:
-              "The antenna finds a position. The static thins slightly. Signal strength climbing. 25 HP restored.",
+              "The antenna finds a position. The static thins slightly. Signal strength climbing. 8 HP restored.",
             failureText: "The static is unchanged. Try a different angle.",
           },
           {
@@ -235,7 +235,7 @@ export const BOSSES: Boss[] = [
             description:
               "The back panel is held on by four tiny screws. Nobody's fingernails will do it. Somewhere in this house there is exactly one tool for this.",
             type: "puzzle",
-            damage: 20,
+            damage: 16,
             puzzle: {
               prompt:
                 "The kitchen junk drawer rattles with odds and ends: rubber bands, birthday candles, a corkscrew, batteries — and the one thing that turns four tiny screws. What do you fetch?",
@@ -243,7 +243,7 @@ export const BOSSES: Boss[] = [
             },
             hint: "Flat head. Lives in every junk drawer in the country.",
             rewardText:
-              "The screwdriver. Four screws out, panel off. The radio's insides glow faintly — now you can actually work on it. 20 HP restored.",
+              "The screwdriver. Four screws out, panel off. The radio's insides glow faintly — now you can actually work on it. 16 HP restored.",
             failureText: "Fingernails won't do it. Fetch the right tool.",
           },
           {
@@ -252,7 +252,7 @@ export const BOSSES: Boss[] = [
             description:
               "Behind the back panel — a small fuse block with four slots, wired in parallel. Three are already fitted, each stamped with its rating. The fourth is empty. A note and a tin of loose spare fuses sit beside it.",
             type: "puzzle",
-            damage: 30,
+            damage: 22,
             puzzle: {
               prompt:
                 "The note reads: \"Total draw: 500mA. Undershoot it and it blows again. Overshoot it and it won't fit.\" The three fitted fuses read 200mA, 150mA, and 100mA. What rating, in mA, does the last slot need?",
@@ -260,7 +260,7 @@ export const BOSSES: Boss[] = [
             },
             hint: "Add up the three fuses already fitted. The gap between that and 500 is your answer.",
             rewardText:
-              "50mA. The last fuse clicks in — 200 + 150 + 100 + 50 = 500, exactly. The green dial brightens. Something is waking up in there. 30 HP restored.",
+              "50mA. The last fuse clicks in — 200 + 150 + 100 + 50 = 500, exactly. The green dial brightens. Something is waking up in there. 22 HP restored.",
             failureText: "Add up the three fuses already fitted. The difference between that and 500mA is what's missing.",
           },
           {
@@ -269,21 +269,21 @@ export const BOSSES: Boss[] = [
             description:
               "The dial clicks in small increments. You have three fragments of the broadcast from across the house. Try to find the frequency where all three resolve into one sentence.",
             type: "clue_check",
-            damage: 35,
+            damage: 28,
             requiredClueId: "radio-fragment-activity",
             rewardText:
-              "The dial locks in. The green light blazes. Signal strength at maximum. One more action and the broadcast will be clear.",
+              "The dial locks in. The green light blazes. Signal strength climbing. 28 HP restored.",
             failureText:
               "You need all three radio fragments first — from the toilet, the kitchen, and the activity room.",
           },
           {
             id: "radio-offer-boost",
             label: "Pour one out for the radio",
-            description: "Pay the ritual cost. The radio responds to sincerity.",
+            description: "Pay the ritual cost. The radio responds to sincerity — this is one of the few moves that really hurts it.",
             type: "offer_boost",
-            damage: 20,
+            damage: 34,
             offerCost: 2,
-            rewardText: "The static softens. 20 HP restored.",
+            rewardText: "The static softens, then screams. 34 HP restored.",
           },
           {
             id: "radio-sunroom-bonus",
@@ -291,10 +291,10 @@ export const BOSSES: Boss[] = [
             description:
               "Whoever went sun-blind in the sunroom knows exactly what it feels like to lose a sense to this house. That familiarity hits automatically the moment you walk in.",
             type: "clue_check",
-            damage: 20,
+            damage: 14,
             requiredClueId: "sunroom-blind-mark",
             rewardText:
-              "Losing your sight once already made this easier to face. Applied automatically. 20 HP restored.",
+              "Losing your sight once already made this easier to face. Applied automatically. 14 HP restored.",
             failureText: "Nobody on your team went sun-blind in the sunroom.",
           },
         ],
@@ -311,9 +311,9 @@ export const BOSSES: Boss[] = [
             description:
               "The grille is dusty — years of it. A cloth, a gentle hand. The sound needs somewhere to go.",
             type: "social",
-            damage: 40,
+            damage: 10,
             rewardText:
-              "The grille is clear. The radio is ready. Complete the signal.",
+              "The grille is clearer. 10 HP restored.",
             failureText: "The grille resists. Try harder.",
           },
           {
@@ -322,9 +322,9 @@ export const BOSSES: Boss[] = [
             description:
               "There is one wire inside the back that is nearly disconnected. Someone pulled it most of the way out. Re-seat it.",
             type: "social",
-            damage: 40,
+            damage: 10,
             rewardText:
-              "The wire clicks in. The green light holds steady. The radio is ready to speak.",
+              "The wire clicks in a little further. 10 HP restored.",
           },
           {
             id: "radio-needle",
@@ -332,9 +332,9 @@ export const BOSSES: Boss[] = [
             description:
               "The dial glass is cracked, and the tuner needle catches on the crack — it can't reach the frequency it wants. Tilt the radio. Tap the glass. Gently. Let the needle swing free.",
             type: "social",
-            damage: 35,
+            damage: 9,
             rewardText:
-              "One careful tap. The needle jumps the crack and swings true. The dial hums under your fingers. 35 HP restored.",
+              "One careful tap. The needle inches past the crack. 9 HP restored.",
             failureText: "Too hard and the glass gives way. Gently.",
           },
           {
@@ -343,19 +343,19 @@ export const BOSSES: Boss[] = [
             description:
               "The signal is there — locked, waiting, under the last of the static. The volume knob is stiff with age. Turn it all the way. Let the house hear what the radio has been trying to say all evening.",
             type: "social",
-            damage: 45,
+            damage: 11,
             rewardText:
-              "The knob turns. The static peels away. The green light burns brighter than it should. The radio draws every watt in the house — the broadcast is coming.",
+              "The knob turns a little further. 11 HP restored.",
             failureText: "The knob resists. Turn harder.",
           },
           {
             id: "radio-final-offer",
             label: "Grand Offering to the Signal",
-            description: "Pay the maximum tribute. The radio will respond.",
+            description: "Pay the maximum tribute. The radio will respond — this is the move that actually finishes it.",
             type: "offer_boost",
-            damage: 50,
+            damage: 42,
             offerCost: 4,
-            rewardText: "The signal locks. The broadcast begins.",
+            rewardText: "The signal locks. The static peels away for good. 42 HP restored.",
           },
         ],
       },
@@ -379,22 +379,22 @@ export const BOSSES: Boss[] = [
         {
           phase: 1, title: "Statisk", description: "Signalet er næppe der. Start med at gendanne.",
           actions: [
-            { id: "radio-antenna", label: "Juster antennen", rewardText: "Antennen finder en position. Signalstyrken stiger. 25 HP genoprettet.", failureText: "Statikken er uændret." },
-            { id: "radio-panel", label: "Åbn bagpanelet", puzzlePrompt: "Køkkenets rodeskuffe rasler med løsdele: elastikker, fødselsdagslys, en proptrækker, batterier — og den ene ting der kan dreje fire bittesmå skruer. Hvad henter du?", hint: "Fladt hoved. Bor i enhver rodeskuffe i landet.", rewardText: "Skruetrækkeren. Fire skruer ude, panelet af. Radioens indre gløder svagt. 20 HP genoprettet.", failureText: "Negle duer ikke. Hent det rigtige værktøj." },
-            { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Sedlen lyder: \"Samlet belastning: 500mA. For lidt, og den springer igen. For meget, og den passer ikke.\" De tre monterede sikringer viser 200mA, 150mA og 100mA. Hvilken værdi, i mA, skal den sidste plads bruge?", hint: "Læg de tre monterede sikringer sammen. Forskellen op til 500 er dit svar.", rewardText: "50mA. Den sidste sikring klikker på plads — 200 + 150 + 100 + 50 = 500, præcis. Den grønne skive lyser op. 30 HP genoprettet.", failureText: "Læg de tre monterede sikringer sammen. Forskellen op til 500mA er hvad der mangler." },
-            { id: "radio-frequency", label: "Stem frekvensen", rewardText: "Skiven låser. Det grønne lys blusser. 35 HP genoprettet.", failureText: "Du har brug for alle tre radiofragmenter først." },
-            { id: "radio-offer-boost", label: "Hæld en ud til radioen", rewardText: "Statikken dæmpes. 20 HP genoprettet." },
-            { id: "radio-sunroom-bonus", label: "Har allerede mistet en sans i aften", rewardText: "At have mistet synet én gang gjorde dette lettere at møde. Anvendt automatisk. 20 HP genoprettet.", failureText: "Ingen på jeres hold blev solblinde i vinterhaven." },
+            { id: "radio-antenna", label: "Juster antennen", rewardText: "Antennen finder en position. Signalstyrken stiger. 8 HP genoprettet.", failureText: "Statikken er uændret." },
+            { id: "radio-panel", label: "Åbn bagpanelet", puzzlePrompt: "Køkkenets rodeskuffe rasler med løsdele: elastikker, fødselsdagslys, en proptrækker, batterier — og den ene ting der kan dreje fire bittesmå skruer. Hvad henter du?", hint: "Fladt hoved. Bor i enhver rodeskuffe i landet.", rewardText: "Skruetrækkeren. Fire skruer ude, panelet af. Radioens indre gløder svagt. 16 HP genoprettet.", failureText: "Negle duer ikke. Hent det rigtige værktøj." },
+            { id: "radio-fuse", label: "Udskift sikringen", puzzlePrompt: "Sedlen lyder: \"Samlet belastning: 500mA. For lidt, og den springer igen. For meget, og den passer ikke.\" De tre monterede sikringer viser 200mA, 150mA og 100mA. Hvilken værdi, i mA, skal den sidste plads bruge?", hint: "Læg de tre monterede sikringer sammen. Forskellen op til 500 er dit svar.", rewardText: "50mA. Den sidste sikring klikker på plads — 200 + 150 + 100 + 50 = 500, præcis. Den grønne skive lyser op. 22 HP genoprettet.", failureText: "Læg de tre monterede sikringer sammen. Forskellen op til 500mA er hvad der mangler." },
+            { id: "radio-frequency", label: "Stem frekvensen", rewardText: "Skiven låser. Det grønne lys blusser. 28 HP genoprettet.", failureText: "Du har brug for alle tre radiofragmenter først." },
+            { id: "radio-offer-boost", label: "Hæld en ud til radioen", rewardText: "Statikken dæmpes, så skriger den. 34 HP genoprettet." },
+            { id: "radio-sunroom-bonus", label: "Har allerede mistet en sans i aften", rewardText: "At have mistet synet én gang gjorde dette lettere at møde. Anvendt automatisk. 14 HP genoprettet.", failureText: "Ingen på jeres hold blev solblinde i vinterhaven." },
           ],
         },
         {
           phase: 2, title: "Signal Låst", description: "Signalet er næsten klart.",
           actions: [
-            { id: "radio-speaker", label: "Rens højttalergitteret", rewardText: "Gitteret er rent. Radioen er klar.", failureText: "Gitteret modstår." },
-            { id: "radio-wire", label: "Genopret det løse kabel", rewardText: "Kablet klikker på plads. Det grønne lys holder stabil." },
-            { id: "radio-needle", label: "Befri den fastlåste nål", rewardText: "Ét forsigtigt slag. Nålen springer over revnen og svinger frit. 35 HP genoprettet.", failureText: "For hårdt og glasset giver efter. Forsigtigt." },
-            { id: "radio-full-volume", label: "Skru helt op for lyden", rewardText: "Knappen drejer. Statikken skræller af. Det grønne lys brænder klarere end det burde. Radioen trækker hver watt i huset — udsendelsen kommer.", failureText: "Knappen gør modstand. Drej hårdere." },
-            { id: "radio-final-offer", label: "Stoffer til Signalet", rewardText: "Signalet låser. Udsendelsen begynder." },
+            { id: "radio-speaker", label: "Rens højttalergitteret", rewardText: "Gitteret er lidt renere. 10 HP genoprettet.", failureText: "Gitteret modstår." },
+            { id: "radio-wire", label: "Genopret det løse kabel", rewardText: "Kablet klikker lidt længere ind. 10 HP genoprettet." },
+            { id: "radio-needle", label: "Befri den fastlåste nål", rewardText: "Ét forsigtigt slag. Nålen kravler forbi revnen. 9 HP genoprettet.", failureText: "For hårdt og glasset giver efter. Forsigtigt." },
+            { id: "radio-full-volume", label: "Skru helt op for lyden", rewardText: "Knappen drejer lidt længere. 11 HP genoprettet.", failureText: "Knappen gør modstand. Drej hårdere." },
+            { id: "radio-final-offer", label: "Stoffer til Signalet", rewardText: "Signalet låser. Statikken forsvinder for altid. 42 HP genoprettet." },
           ],
         },
       ],
@@ -423,11 +423,12 @@ export const BOSSES: Boss[] = [
       colorTo: "to-zinc-950",
       backgroundStyle: "dark-living-boss",
     },
-    maxHp: 150,
+    maxHp: 300,
     requiredRoomIds: ["shed-dark", "door-nobody-tried"],
     // The finale boss — deliberately harder than Act 1/2: more counterattack
     // variety, a heal that can recur every time HP drops below 50% (not just
     // once), and wrong puzzle answers cost the team sips (punishWrongAnswers).
+    // Given more HP than the Act 2 boss on purpose — this is the last fight.
     punishWrongAnswers: true,
     counterAttacks: [
       {
@@ -436,6 +437,13 @@ export const BOSSES: Boss[] = [
         description: "The accusation slides off. Nobody wants to be the one who admits it first. Your next move only deals 70% damage.",
         weight: 3,
         effect: { type: "defend", defenseMultiplier: 0.70 },
+      },
+      {
+        id: "deflect-heavy",
+        label: "Everyone Looks Away",
+        description: "Nobody meets anyone's eyes. The silence itself becomes a kind of defense. Your next move only deals 60% damage.",
+        weight: 2,
+        effect: { type: "defend", defenseMultiplier: 0.60 },
       },
       {
         id: "attack",
@@ -473,9 +481,9 @@ export const BOSSES: Boss[] = [
             description:
               "The note from the Double Room trails off mid-sentence: *\"I know we said we'd come back and finish what we—\"*\n\nSomeone in the group speaks the ending aloud. Any ending. The house accepts it.",
             type: "social",
-            damage: 30,
+            damage: 10,
             rewardText:
-              "Someone said it. The house registered it. Recognition creeping in. 30 HP.",
+              "Someone said it. The house registered it. Recognition creeping in. 10 HP.",
             failureText: "The sentence hangs unfinished. Someone must complete it.",
           },
           {
@@ -509,7 +517,7 @@ export const BOSSES: Boss[] = [
             description:
               "Your team found the shed date list in Act 1. Recall it from memory — every date on it was crossed out except one.",
             type: "puzzle",
-            damage: 30,
+            damage: 32,
             puzzle: {
               prompt:
                 "Without looking at a photo or going back to check: every date on the shed's list was crossed out except one. Was the uncrossed date the very FIRST entry on the list, or the very LAST one?",
@@ -520,8 +528,38 @@ export const BOSSES: Boss[] = [
             },
             hint: "The list runs oldest to newest. The one still uncrossed is the most recent — the bottom of the list.",
             rewardText:
-              "The last one. Not the oldest, the newest. Tonight. The group remembers it without looking — you just knew. 30 HP.",
+              "The last one. Not the oldest, the newest. Tonight. The group remembers it without looking — you just knew. 32 HP.",
             failureText: "Think about which end of the list runs newest — oldest or most recent entries.",
+          },
+          {
+            id: "yourselves-whos-missing-team-a",
+            label: "The arrival scan counted you",
+            description:
+              "The Driveway photo, hours ago. The house's arrival scanner gave a number the moment the photo was taken. Nobody questioned it at the time.",
+            type: "puzzle",
+            damage: 28,
+            puzzle: {
+              prompt: "Without checking the Case File: what number did the arrival scanner give your team in the Driveway, back in Act 1?",
+              answer: ["3", "three", "tre"],
+            },
+            hint: "It's in your Case File under Code Fragment — Driveway, if memory fails.",
+            rewardText: "Three. That's what it said. Nobody in the group has ever recounted the photo to check. 28 HP.",
+            failureText: "Check your memory of the Driveway fragment — the scanner gave an exact number.",
+          },
+          {
+            id: "yourselves-whos-missing-team-b",
+            label: "The arrival scan counted you",
+            description:
+              "The Driveway photo, hours ago. The house's arrival scanner gave a number the moment the photo was taken. Nobody questioned it at the time.",
+            type: "puzzle",
+            damage: 28,
+            puzzle: {
+              prompt: "Without checking the Case File: what number did the arrival scanner give your team in the Driveway, back in Act 1?",
+              answer: ["6", "six", "seks"],
+            },
+            hint: "It's in your Case File under Code Fragment — Driveway, if memory fails.",
+            rewardText: "Six. That's what it said. Nobody in the group has ever recounted the photo to check. 28 HP.",
+            failureText: "Check your memory of the Driveway fragment — the scanner gave an exact number.",
           },
         ],
       },
@@ -538,9 +576,9 @@ export const BOSSES: Boss[] = [
             description:
               "The half-finished note in the Double Room. The group must name a player — whoever they think wrote it. The correct answer is the culprit. Any name is accepted. The tension is in the debate.",
             type: "social",
-            damage: 35,
+            damage: 12,
             rewardText:
-              "A name is named. The house does not confirm or deny. But someone in the group feels it land. 35 HP.",
+              "A name is named. The house does not confirm or deny. But someone in the group feels it land. 12 HP.",
             failureText: "Someone must be named. The house requires it.",
           },
           {
@@ -549,50 +587,55 @@ export const BOSSES: Boss[] = [
             description:
               "The player who completed the bunk room reads the note aloud to the group. All of it. Their scared-silent status ended when the Living Room was cleared in Act 2 — they've been able to speak normally through all of Act 3.",
             type: "social",
-            damage: 30,
+            damage: 12,
             rewardText:
-              "*\"It was taken. It is always taken. The room where everyone gathers holds the rest.\"* Read aloud. The group hears it with different weight now. 30 HP.",
+              "*\"It was taken. It is always taken. The room where everyone gathers holds the rest.\"* Read aloud. The group hears it with different weight now. 12 HP.",
             failureText: "The bunk room player must read the note aloud.",
           },
           {
-            id: "yourselves-stand-where-you-slept",
-            label: "Stand where you slept",
+            id: "yourselves-single-room-recall-team-a",
+            label: "What did the Single Room give you?",
             description:
-              "Physical challenge. Each player moves to the room they entered in Act 2 — the bedroom they claimed. 30 seconds. Then return.",
-            type: "puzzle",
-            damage: 25,
-            physicalChallenge: {
-              timerSeconds: 45,
-              startLabel: "Begin — scatter to your rooms",
-              activeEmoji: "🛌",
-              bannerText: "Everyone is in the room they slept in",
-              completeLabel: "Back together — the house noticed",
-            },
-            puzzle: {
-              prompt: "Confirm: did everyone return to their bedroom and come back?",
-              answer: ["yes", "ja", "done", "færdig", "complete"],
-            },
-            rewardText: "The house watched. You moved through it like you'd done it before. 25 HP.",
-          },
-          {
-            id: "yourselves-silence",
-            label: "Say nothing for 45 seconds",
-            description:
-              "Physical challenge. The house waits. Full silence. Phones down. Nobody types. Nobody speaks. 45 seconds.",
+              "The note on the desk in the Single Room, back in Act 2. It ended in one word, growing bigger with every repeat. Recall it now, without checking the Case File.",
             type: "puzzle",
             damage: 30,
-            physicalChallenge: {
-              timerSeconds: 45,
-              startLabel: "Begin silence",
-              activeEmoji: "🤫",
-              bannerText: "The house is listening",
-              completeLabel: "The silence is over",
-            },
             puzzle: {
-              prompt: "Confirm: did the group hold silence for the full 45 seconds?",
-              answer: ["yes", "ja", "done", "færdig"],
+              prompt: "Without looking it up: what was the Single Room's word, back in Act 2?",
+              answer: ["borrowed", "lånt"],
             },
-            rewardText: "45 seconds of nothing. The house noticed. 30 HP.",
+            hint: "It's in your Case File under The Single Room Note, if memory fails.",
+            rewardText: "Borrowed. Nothing in this house was ever really yours to begin with. 30 HP.",
+            failureText: "Think back to the Single Room's note — the word grew bigger every time it repeated.",
+          },
+          {
+            id: "yourselves-single-room-recall-team-b",
+            label: "What did the Single Room give you?",
+            description:
+              "The note on the desk in the Single Room, back in Act 2. It ended in one word, growing bigger with every repeat. Recall it now, without checking the Case File.",
+            type: "puzzle",
+            damage: 30,
+            puzzle: {
+              prompt: "Without looking it up: what was the Single Room's word, back in Act 2?",
+              answer: ["broken", "i stykker", "ødelagt"],
+            },
+            hint: "It's in your Case File under The Single Room Note, if memory fails.",
+            rewardText: "Broken. It was always broken, long before tonight. 30 HP.",
+            failureText: "Think back to the Single Room's note — the word grew bigger every time it repeated.",
+          },
+          {
+            id: "yourselves-count-the-years",
+            label: "Count the years",
+            description:
+              "The shed's laminated date list, back in Act 1. Sixteen years of entries, all crossed out but the last one — tonight's, still uncrossed.",
+            type: "puzzle",
+            damage: 34,
+            puzzle: {
+              prompt: "Not counting tonight: how many years of dates were already crossed out on the shed's list?",
+              answer: ["16", "sixteen", "seksten"],
+            },
+            hint: "The list ran from 2010 to 2025 — every one of those years, crossed out.",
+            rewardText: "Sixteen years. Every single one, crossed out — until tonight refused to be. 34 HP.",
+            failureText: "2010 through 2025. Count the years — not counting tonight.",
           },
         ],
       },
@@ -609,7 +652,7 @@ export const BOSSES: Boss[] = [
             description:
               "One thing was taken from this house. Not furniture. Not money. The one thing that required the house to keep its books open, to keep the date list running, to never cross tonight off. Name it.",
             type: "puzzle",
-            damage: 40,
+            damage: 45,
             puzzle: {
               prompt: "What was taken?\n\n(The radio said it. The note in the Double Room implies it. The game is named after it.)",
               answer: [
@@ -619,7 +662,7 @@ export const BOSSES: Boss[] = [
             },
             hint: "The last. Cold. Beer.",
             rewardText:
-              "Named. The house closes one ledger. One account remains open. 40 HP.",
+              "Named. The house closes one ledger. One account remains open. 45 HP.",
             failureText: "The answer is in the name of the game.",
           },
           {
@@ -628,7 +671,7 @@ export const BOSSES: Boss[] = [
             description:
               "The whole group types — or speaks aloud — the broadcast line. All of it. Together.",
             type: "puzzle",
-            damage: 40,
+            damage: 45,
             puzzle: {
               prompt:
                 "Type the radio's broadcast — the exact words heard when the signal locked in Act 2.\n\n\"The last one to take it... will always be the one to finish it.\"",
@@ -649,7 +692,7 @@ export const BOSSES: Boss[] = [
             description:
               "The final action. No puzzle. No answer. One button. The house has made its case. The group has made their acknowledgement. Press it when you mean it.",
             type: "social",
-            damage: 50,
+            damage: 60,
             rewardText:
               "The partial light steadies.\n\n*(beat)*\n\n*\"You've been here before.\"*\n\n*(beat)*\n\n*\"All of you.\"*\n\n*(beat)*\n\n*\"Except one of you took something.\"*",
           },

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
-import { dealBossDamage, applyBossDamage, getCulpritReveal, clearSunBlindForTeam } from "@/lib/game/actions";
+import { dealBossDamage, applyBossDamage, clearSunBlindForTeam, getTeamPhoto } from "@/lib/game/actions";
 import { formatOfferCost } from "@/lib/game/formatOffer";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { getBoss } from "@/content/bosses";
@@ -18,8 +18,8 @@ import { RichText } from "@/components/ui/RichText";
 
 // ── Artwork mapping ────────────────────────────────────────────────────────────
 const BOSS_ARTWORK: Record<string, string> = {
-  "mads":       "/bosses/mads.png",
-  "the-radio":  "/bosses/the-radio.png",
+  "mads":       "/bosses/mads-v02.png",
+  "the-radio":  "/bosses/the-radio-v02.png",
   "yourselves": "/bosses/yourselves.png",
 };
 
@@ -101,10 +101,16 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const [loading, setLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"fight" | "clues" | "log">("fight");
 
-  // Drunk gamble mechanic
-  // YOURSELVES: once defeated, the culprit's name replaces the hero image
-  // (never a photo — see getCulpritReveal below)
-  const [culpritName, setCulpritName] = useState<string | null>(null);
+  // The team's real ritual photo (Driveway quest) — used as the hero art for
+  // this boss throughout the fight AND at defeat, instead of a generic
+  // placeholder image or a text-only "one missing from the photo" reveal.
+  const [teamPhoto, setTeamPhoto] = useState<string | null>(null);
+  useEffect(() => {
+    if (bossId !== "yourselves" || !gameId || !teamId) return;
+    getTeamPhoto(gameId, teamId, true).then((res) => {
+      if (res.success && res.data?.photo) setTeamPhoto(res.data.photo);
+    });
+  }, [bossId, gameId, teamId]);
 
   const [drunkModal, setDrunkModal] = useState(false);
   const [drunkSips, setDrunkSips] = useState(1);
@@ -199,17 +205,6 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useRealtimeGame(gameId ?? undefined, fetchData);
-
-  // Once the final boss is defeated, fetch the culprit's name — the hero
-  // image is replaced with their name, never a photo (see hero art below).
-  useEffect(() => {
-    if (bossId !== "yourselves" || !gameId) return;
-    const myBp = teamId === "team-a" ? bossProgressA : bossProgressB;
-    if (myBp?.status !== "defeated") return;
-    getCulpritReveal(gameId, teamId).then((res) => {
-      if (res.success && res.data?.culpritName) setCulpritName(res.data.culpritName);
-    });
-  }, [bossId, gameId, teamId, bossProgressA, bossProgressB]);
 
   // ── Auto-apply clue damage ─────────────────────────────────────────────────
   useEffect(() => {
@@ -353,12 +348,15 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
     const result = await dealBossDamage(gameId, teamId, bossId, action.id, puzzleAnswer);
     setLoading(null);
     if (result.success) {
+      const repeatNote = result.data.repeatToll
+        ? ` ⚠️ Same move again — team drinks ${result.data.repeatToll} sip${result.data.repeatToll !== 1 ? "s" : ""}.`
+        : "";
       setFeedback({
         actionId: action.id,
         text: result.data.defeated
           ? boss.defeatText
           : result.data.damage > 0
-          ? `💥 ${result.data.damage} damage! HP now ${result.data.newHp}. ${result.data.rewardText ?? ""}`
+          ? `💥 ${result.data.damage} damage! HP now ${result.data.newHp}. ${result.data.rewardText ?? ""}${repeatNote}`
           : result.data.failureText ?? "No damage dealt.",
         success: result.data.damage > 0,
       });
@@ -499,30 +497,31 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
         className="relative overflow-hidden"
         style={{ height: "clamp(130px, 38vw, 190px)", marginTop: -4 }}
       >
-        {bossId === "yourselves" && isDefeated ? (
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center text-center px-4"
-            style={{ background: "radial-gradient(ellipse at center, #241408 0%, #0a0603 100%)" }}
-          >
-            <div
-              className="text-[10px] tracking-[0.3em] uppercase mb-2"
-              style={{ color: "rgba(220,150,90,0.55)", fontFamily: "Georgia,serif" }}
-            >
-              The one missing from the photo
-            </div>
-            <div
-              className="text-2xl sm:text-3xl font-black"
-              style={{ color: "rgba(252,165,165,0.95)", fontFamily: "Georgia,serif", textShadow: "0 2px 14px rgba(0,0,0,0.85)" }}
-            >
-              {culpritName ?? "…"}
-            </div>
-          </div>
+        {bossId === "yourselves" && teamPhoto ? (
+          <img
+            src={teamPhoto}
+            alt="The ritual record"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              objectPosition: "center 30%",
+              animation: resistAnim
+                ? "resistBounce 0.9s ease-in-out"
+                : isLowHp ? "angryShake 0.75s ease-in-out infinite" : undefined,
+              filter: isDefeated
+                ? "brightness(0.9) contrast(1.05)"
+                : isLowHp ? "brightness(0.75) contrast(1.15) saturate(1.15)" : "brightness(0.85)",
+            }}
+          />
         ) : bossImage ? (
           <img
             src={bossImage}
             alt={boss.title}
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            className="absolute inset-0 w-full h-full object-cover"
             style={{
+              // v02 art (mads/the-radio) is 1584x672 (~21:9), matching this
+              // hero strip's own aspect ratio closely, so a plain centered
+              // crop no longer needs the top-bias hack the old 1:1 art required.
+              objectPosition: "center",
               animation: resistAnim
                 ? "resistBounce 0.9s ease-in-out"
                 : isLowHp ? "angryShake 0.75s ease-in-out infinite" : undefined,
@@ -731,10 +730,11 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
               📻 Hear what the radio said →
             </a>
           )}
-          {/* Radio defeat → Act 3 begins (act transition is server-side, just redirect to team page) */}
+          {/* Radio defeat → Act 3 begins (act transition already happened server-side) —
+              route through the intermission beat before the team sees the Act 3 map. */}
           {bossId === "the-radio" && (
             <a
-              href={`/game/${gameId}/team/${teamId}`}
+              href={`/game/${gameId}/team/${teamId}/intermission/the-radio`}
               className="mt-5 inline-block px-6 py-3 rounded-lg text-sm font-bold"
               style={{ background: "rgba(20,20,60,0.7)", border: "1px solid rgba(80,80,200,0.4)", color: "rgb(180,180,255)", fontFamily: "Georgia,serif" }}
             >
@@ -943,7 +943,7 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
                           className="w-full py-2 text-xs font-bold rounded-lg border border-stone-600/40 text-stone-300 disabled:opacity-50"
                           style={{ background: "rgba(18,16,12,0.85)", fontFamily: "Georgia, serif" }}
                         >
-                          {loading === action.id ? "…" : "Group Decision"}
+                          {loading === action.id ? "…" : "⚔️ Strike!"}
                         </button>
                       ) : action.type === "choice" && action.choices ? (
                         isExpanded ? (

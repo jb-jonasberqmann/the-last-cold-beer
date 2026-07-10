@@ -6,9 +6,10 @@ interface ClueCardProps {
   clue: Clue;
   discoveredAt?: string;
   className?: string;
+  descriptionOverride?: string; // e.g. the shed note's dynamically generated signature
 }
 
-export function ClueCard({ clue, discoveredAt, className }: ClueCardProps) {
+export function ClueCard({ clue, discoveredAt, className, descriptionOverride }: ClueCardProps) {
   return (
     <div
       className={cn(
@@ -28,7 +29,7 @@ export function ClueCard({ clue, discoveredAt, className }: ClueCardProps) {
               </span>
             )}
           </div>
-          <RichText as="p" className="text-stone-300 text-sm leading-relaxed" text={clue.description} />
+          <RichText as="p" className="text-stone-300 text-sm leading-relaxed" text={descriptionOverride ?? clue.description} />
         </div>
       </div>
       <div className="border-t border-stone-700 pt-2 flex justify-between items-center">

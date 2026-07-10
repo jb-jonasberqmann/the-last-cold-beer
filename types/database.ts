@@ -133,7 +133,8 @@ export type GameEventType =
   | "role_assigned"
   | "physical_challenge_started"
   | "ending_choice_made"       // culprit chose to drink alone (corrupted) or share a toast
-  | "gm_contacted";            // team requested GM help after 2 hints + a wrong answer
+  | "gm_contacted"             // team requested GM help after 2 hints + a wrong answer
+  | "intermission_roll";       // act-transition dice roll — team attacks the other team's sip count
 
 export interface DbGameEvent {
   id: string;

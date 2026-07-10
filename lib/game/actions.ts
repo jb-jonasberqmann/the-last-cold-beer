@@ -265,6 +265,11 @@ export async function submitQuestAnswer(
       ON CONFLICT (game_id, team_id, quest_id)
       DO UPDATE SET answer_submitted = ${answer}, wrong_attempts = quest_progress.wrong_attempts + 1
     `;
+    // Some puzzles (e.g. the foosball bent-rod angle guess) charge a fixed
+    // sip penalty per wrong attempt, mirroring the boss's punishWrongAnswers.
+    if (quest.wrongAnswerSips) {
+      await _logOffer(gameId, teamId, quest.wrongAnswerSips, `Wrong answer: ${quest.title}`, questId);
+    }
     return { success: true, data: { correct: false, failureText: quest.failureText } };
   }
 
@@ -461,7 +466,7 @@ export async function dealBossDamage(
   actionId: string,
   answer?: string,
   bypassOfferCost?: boolean
-): Promise<ActionResult<{ damage: number; newHp: number; defeated: boolean; rewardText?: string; failureText?: string; counterAttack?: { move: string; label: string; description: string; defense_multiplier?: number; team_offer_damage?: number; heal_amount?: number } | null }>> {
+): Promise<ActionResult<{ damage: number; newHp: number; defeated: boolean; rewardText?: string; failureText?: string; repeatToll?: number; counterAttack?: { move: string; label: string; description: string; defense_multiplier?: number; team_offer_damage?: number; heal_amount?: number } | null }>> {
   const boss = getBoss(bossId);
   if (!boss) return { success: false, error: "Boss not found." };
 
@@ -615,6 +620,31 @@ export async function dealBossDamage(
   // Offer boost cost
   if (foundAction.type === "offer_boost" && foundAction.offerCost && !bypassOfferCost) {
     await _logOffer(gameId, teamId, foundAction.offerCost, `Boss boost: ${foundAction.label}`, bossId);
+  }
+
+  // ── Escalating cost for repeated "Strike!" moves ─────────────────────────
+  // Social actions are free and repeatable — spamming the same one over and
+  // over used to be the path of least resistance. If the SAME social move
+  // was used the last 2 times in a row, this use and every one after it in
+  // the streak costs an escalating sip toll (3rd in a row = 1 sip, 4th = 2, …).
+  let repeatToll = 0;
+  if (foundAction.type === "social") {
+    const recentRows = await sql`
+      SELECT event_data->>'action_id' AS action_id FROM game_events
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND event_type = 'boss_damaged'
+        AND event_data->>'boss_id' = ${bossId}
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
+    let streak = 0;
+    for (const r of recentRows as { action_id: string }[]) {
+      if (r.action_id === actionId) streak++;
+      else break;
+    }
+    if (streak >= 2) {
+      repeatToll = streak - 1;
+      await _logOffer(gameId, teamId, repeatToll, `Repeated move: ${foundAction.label}`, bossId);
+    }
   }
 
   // ── Defense modifier ──────────────────────────────────────────────────────
@@ -818,7 +848,12 @@ export async function dealBossDamage(
 
   return {
     success: true,
-    data: { damage, newHp, defeated, rewardText: foundAction.rewardText, counterAttack: chosenCounter },
+    data: {
+      damage, newHp, defeated,
+      rewardText: foundAction.rewardText,
+      repeatToll: repeatToll > 0 ? repeatToll : undefined,
+      counterAttack: chosenCounter,
+    },
   };
 }
 
@@ -1093,15 +1128,31 @@ export async function setScaredSilent(gameId: string, playerId: string): Promise
 // ==========================================
 
 export async function setSunBlind(gameId: string, playerId: string): Promise<ActionResult> {
+  const setBlind = () => sql`
+    UPDATE players SET player_status = 'sun_blind'
+    WHERE id = ${playerId} AND game_id = ${gameId}
+  `;
   try {
-    await sql`
-      UPDATE players SET player_status = 'sun_blind'
-      WHERE id = ${playerId} AND game_id = ${gameId}
-    `;
+    await setBlind();
     return { success: true, data: undefined };
   } catch (e) {
-    console.error("setSunBlind failed (non-fatal — has the sun_blind migration been run?):", e);
-    return { success: false, error: "Could not set sun-blind status." };
+    // Most likely the DB's CHECK constraint hasn't been migrated to allow
+    // 'sun_blind' yet (see supabase/migration-2026-07-03-sunblind.sql).
+    // Self-heal it here so this never depends on someone remembering to run
+    // a manual Neon migration — relax the constraint once and retry.
+    console.error("setSunBlind: first attempt failed, relaxing player_status constraint:", e);
+    try {
+      await sql`ALTER TABLE players DROP CONSTRAINT IF EXISTS players_player_status_check`;
+      await sql`
+        ALTER TABLE players ADD CONSTRAINT players_player_status_check
+          CHECK (player_status IN ('normal', 'scared_silent', 'sun_blind'))
+      `;
+      await setBlind();
+      return { success: true, data: undefined };
+    } catch (e2) {
+      console.error("setSunBlind failed (non-fatal):", e2);
+      return { success: false, error: "Could not set sun-blind status." };
+    }
   }
 }
 
@@ -1628,6 +1679,57 @@ export async function getGmAlerts(gameId: string): Promise<ActionResult<import("
     LIMIT 50
   `;
   return { success: true, data: rows as import("@/types/database").DbGameEvent[] };
+}
+
+// ==========================================
+// INTERMISSION — story beat + dice roll between acts
+// Shown after a team defeats Mads (Act 1→2) or the Radio (Act 2→3), before
+// they walk into the next act. Purely a fun "attack": roll a flat 1-6, the
+// OTHER team drinks that many sips. One roll per team per transition.
+// ==========================================
+
+export async function getIntermissionRoll(
+  gameId: string,
+  teamId: TeamId,
+  bossId: string
+): Promise<ActionResult<{ roll: number } | null>> {
+  const rows = await sql`
+    SELECT event_data FROM game_events
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND event_type = 'intermission_roll'
+      AND event_data->>'boss_id' = ${bossId}
+    LIMIT 1
+  `;
+  if (rows.length === 0) return { success: true, data: null };
+  const data = (rows[0] as { event_data: { roll: number } }).event_data;
+  return { success: true, data: { roll: data.roll } };
+}
+
+export async function rollIntermissionAttack(
+  gameId: string,
+  teamId: TeamId,
+  bossId: string
+): Promise<ActionResult<{ roll: number; otherTeam: TeamId }>> {
+  // One roll per team per boss transition — idempotent against double-taps/refreshes.
+  const existing = await sql`
+    SELECT id FROM game_events
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND event_type = 'intermission_roll'
+      AND event_data->>'boss_id' = ${bossId}
+    LIMIT 1
+  `;
+  if (existing.length > 0) return { success: false, error: "Already rolled for this transition." };
+
+  const roll = Math.floor(Math.random() * 6) + 1; // flat 1-6, no scaling
+  const otherTeam: TeamId = teamId === "team-a" ? "team-b" : "team-a";
+
+  await _logOffer(gameId, otherTeam, roll, "Hit by the other team's toast roll", bossId);
+
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (${gameId}, ${teamId}, 'intermission_roll',
+            ${JSON.stringify({ boss_id: bossId, roll, target_team: otherTeam })}::jsonb)
+  `;
+
+  return { success: true, data: { roll, otherTeam } };
 }
 
 // ==========================================
