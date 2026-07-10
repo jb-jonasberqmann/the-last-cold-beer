@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, submitPrecisionStop, enterBedroom, setScaredSilent, setSunBlind, advanceAct, saveRitualPhoto } from "@/lib/game/actions";
+import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, submitPrecisionStop, enterBedroom, setScaredSilent, setSunBlind, advanceAct, saveRitualPhoto, contactGM } from "@/lib/game/actions";
 import { fileToJpegDataUrl } from "@/lib/photoCapture";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -96,6 +96,22 @@ export default function RoomPage({ params }: Props) {
           const key = ++tollKeyRef.current;
           setTollBanners((prev) => [...prev, { msg, key }]);
           setTimeout(() => setTollBanners((prev) => prev.filter((b) => b.key !== key)), 5000);
+        }
+      }
+      // The culprit's toast/drink-alone choice — game-wide, both teams get notified
+      // regardless of which team it happened on ("everyone gets a notification").
+      if (ev.event_type === "ending_choice_made" && !seenEventIdsRef.current.has(ev.id)) {
+        seenEventIdsRef.current.add(ev.id);
+        if (seenEventIdsRef.current.size > 1) {
+          const choice = ev.event_data?.choice as string | undefined;
+          const name = (ev.event_data?.player_name as string) ?? "Someone";
+          const msg =
+            choice === "alone"
+              ? `🍺 ${name} drank the last cold beer alone — corrupted.`
+              : `🥂 ${name} shared a toast with everyone. Cheers the GM!`;
+          const key = ++tollKeyRef.current;
+          setTollBanners((prev) => [...prev, { msg, key }]);
+          setTimeout(() => setTollBanners((prev) => prev.filter((b) => b.key !== key)), 7000);
         }
       }
     }
@@ -817,13 +833,24 @@ function QuestBlock({
   onMiss?: () => void;
   isScaredSilent?: boolean;
 }) {
+  const { session } = usePlayer();
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [shownHints, setShownHints] = useState<{ order: number; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [skipped, setSkipped] = useState(false);
+  const [gmContacted, setGmContacted] = useState(false);
+  const [gmContactLoading, setGmContactLoading] = useState(false);
 
   const hintsUsed = questState?.hints_used ?? 0;
+  const wrongAttempts = questState?.wrong_attempts ?? 0;
+
+  const handleContactGM = async () => {
+    setGmContactLoading(true);
+    const result = await contactGM(gameId, teamId, quest.id, session?.playerName ?? "A player");
+    setGmContactLoading(false);
+    if (result.success) setGmContacted(true);
+  };
 
   const handleSubmitAnswer = async () => {
     if (!answer.trim()) return;
@@ -942,6 +969,10 @@ function QuestBlock({
         onSubmit={handleSubmitAnswer}
         onHint={handleUseHint}
         isScaredSilent={isScaredSilent}
+        wrongAttempts={wrongAttempts}
+        gmContacted={gmContacted}
+        gmContactLoading={gmContactLoading}
+        onContactGM={handleContactGM}
       />
     );
   }
@@ -1552,13 +1583,19 @@ function HoldToReveal({ children }: { children: React.ReactNode }) {
 function StickyNoteArtifact({
   quest, isComplete, feedback, shownHints, answer, loading, isReadOnly,
   hintsUsed, offerDefinition, onAnswerChange, onSubmit, onHint, isScaredSilent,
+  wrongAttempts, gmContacted, gmContactLoading, onContactGM,
 }: ArtifactProps & {
   answer: string;
   onAnswerChange: (v: string) => void;
   onSubmit: () => void;
   onHint: (order: number) => void;
   isScaredSilent?: boolean;
+  wrongAttempts?: number;
+  gmContacted?: boolean;
+  gmContactLoading?: boolean;
+  onContactGM?: () => void;
 }) {
+  const canContactGM = (hintsUsed ?? 0) >= 2 && (wrongAttempts ?? 0) >= 1;
   return (
     <div className={cn("transition-all duration-300", isComplete && "opacity-55")}>
       <div className="flex items-center gap-1.5 mb-2">
@@ -1748,6 +1785,33 @@ function StickyNoteArtifact({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {!isComplete && !isReadOnly && canContactGM && (
+        <div className="mt-3 pt-3" style={{ borderTop: "1px dashed rgba(180,130,50,0.18)" }}>
+          {gmContacted ? (
+            <div
+              className="rounded px-3 py-2.5 text-sm text-center"
+              style={{ background: "rgba(20,60,80,0.2)", border: "1px solid rgba(80,150,180,0.3)", color: "rgba(150,200,220,0.85)", fontFamily: "Georgia,serif" }}
+            >
+              📞 GM notified — sit tight, they're on their way.
+            </div>
+          ) : (
+            <button
+              onClick={onContactGM}
+              disabled={gmContactLoading}
+              className="w-full rounded px-3 py-2.5 text-sm transition-colors disabled:opacity-50"
+              style={{
+                background: "rgba(20,60,80,0.15)",
+                border: "1px solid rgba(80,150,180,0.3)",
+                color: "rgba(150,200,220,0.85)",
+                fontFamily: "Georgia,serif",
+              }}
+            >
+              {gmContactLoading ? "…" : "📞 Contact the GM — properly stuck (2 sips)"}
+            </button>
+          )}
         </div>
       )}
     </div>

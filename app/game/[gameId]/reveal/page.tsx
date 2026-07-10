@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { usePlayer } from "@/hooks/usePlayer";
-import { getCulpritReveal } from "@/lib/game/actions";
+import { useRealtimeGame } from "@/hooks/useRealtimeGame";
+import { getCulpritReveal, getEndingChoice, submitEndingChoice } from "@/lib/game/actions";
 import { AgedPhoto } from "@/components/game/AgedPhoto";
 import type { TeamId } from "@/types/content";
 
@@ -29,6 +30,11 @@ function RevealContent() {
   const [isCulprit, setIsCulprit] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
 
+  // The culprit's final choice: drink alone (corrupted) or share a toast.
+  const [endingChoice, setEndingChoice] = useState<{ choice: "alone" | "toast"; playerName: string } | null>(null);
+  const [endingLoading, setEndingLoading] = useState<"alone" | "toast" | null>(null);
+  const [endingError, setEndingError] = useState<string | null>(null);
+
   // Fetch this TEAM's culprit + ritual photo once
   const fetchCulprit = useCallback(async () => {
     if (!gameId) return;
@@ -43,6 +49,34 @@ function RevealContent() {
   useEffect(() => {
     fetchCulprit();
   }, [fetchCulprit]);
+
+  // Poll for the ending choice — teammates need to see it land once the
+  // culprit decides, without a manual refresh.
+  const fetchEndingChoice = useCallback(async () => {
+    if (!gameId) return;
+    const result = await getEndingChoice(gameId, teamId);
+    if (result.success && result.data) setEndingChoice(result.data);
+  }, [gameId, teamId]);
+
+  useEffect(() => {
+    fetchEndingChoice();
+  }, [fetchEndingChoice]);
+
+  useRealtimeGame(gameId ?? undefined, fetchEndingChoice);
+
+  const handleEndingChoice = async (choice: "alone" | "toast") => {
+    if (!gameId || !playerId) return;
+    setEndingLoading(choice);
+    setEndingError(null);
+    const result = await submitEndingChoice(gameId, teamId, playerId, session?.playerName ?? "The culprit", choice);
+    setEndingLoading(null);
+    if (result.success) {
+      setEndingChoice({ choice, playerName: session?.playerName ?? "The culprit" });
+    } else {
+      setEndingError(result.error ?? "Something went wrong.");
+      fetchEndingChoice(); // in case someone else already chose
+    }
+  };
 
   // Sequence through radio lines, then reveal
   useEffect(() => {
@@ -184,7 +218,54 @@ function RevealContent() {
         </p>
 
         <div className="mt-10 border-t border-stone-800 pt-6">
-          <p className="text-stone-600 text-xs">The Last Cold Beer — 2026</p>
+          {endingChoice ? (
+            <div className="text-center">
+              {endingChoice.choice === "alone" ? (
+                <>
+                  <p className="text-red-400 text-sm font-semibold tracking-wide mb-1">🍺 Corrupted.</p>
+                  <p className="text-stone-400 text-xs leading-relaxed">
+                    {endingChoice.playerName} drank alone. An extra full drink for them — and their whole team takes a sip.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-amber-300 text-sm font-semibold tracking-wide mb-1">🥂 A toast, shared.</p>
+                  <p className="text-stone-400 text-xs leading-relaxed">
+                    {endingChoice.playerName} chose to share it. Everyone — both teams — raise a glass and cheer the GM.
+                  </p>
+                </>
+              )}
+            </div>
+          ) : isCulprit ? (
+            <div className="text-center">
+              <p className="text-stone-500 text-xs tracking-widest uppercase mb-4">One last choice</p>
+              <p className="text-stone-400 text-sm leading-relaxed mb-5">
+                It's the last cold beer. Drink it alone — or share a toast with everyone in the game.
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => handleEndingChoice("toast")}
+                  disabled={endingLoading !== null}
+                  className="bg-amber-900/40 border border-amber-700/60 text-amber-200 px-6 py-3 rounded-lg text-sm font-semibold hover:bg-amber-800/50 transition-colors disabled:opacity-50"
+                >
+                  {endingLoading === "toast" ? "…" : "🥂 Share a toast with everyone"}
+                </button>
+                <button
+                  onClick={() => handleEndingChoice("alone")}
+                  disabled={endingLoading !== null}
+                  className="bg-stone-900/60 border border-red-900/50 text-red-300/90 px-6 py-3 rounded-lg text-sm font-semibold hover:bg-red-950/40 transition-colors disabled:opacity-50"
+                >
+                  {endingLoading === "alone" ? "…" : "🍺 Drink it alone — become corrupted"}
+                </button>
+              </div>
+              {endingError && <p className="text-red-500 text-xs mt-3">{endingError}</p>}
+            </div>
+          ) : (
+            <p className="text-stone-600 text-xs italic">
+              Waiting for {culpritName ?? "the culprit"} to decide how this ends…
+            </p>
+          )}
+          <p className="text-stone-700 text-xs mt-6">The Last Cold Beer — 2026</p>
         </div>
       </div>
     </div>

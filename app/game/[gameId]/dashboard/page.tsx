@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { usePlayer, storeSession } from "@/hooks/usePlayer";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { LiveProgress } from "@/components/game/LiveProgress";
+import { getGmAlerts } from "@/lib/game/actions";
 import type { DbGame, DbGameEvent } from "@/types/database";
 import { relativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { getChapter } from "@/content/chapters";
 import { getBoss } from "@/content/bosses";
+import { getRoom } from "@/content/index";
 import { GameTimer } from "@/components/game/GameTimer";
 
 interface Props {
@@ -42,6 +44,15 @@ function eventLabel(event: DbGameEvent, offerDef: string): { icon: string; text:
       const label = (d?.label as string) ?? "a role";
       return { icon: "🎲", text: `${name} got a role`, detail: label };
     }
+    case "gm_contacted": {
+      const title = (d?.quest_title as string) ?? "a riddle";
+      return { icon: "📞", text: "Contacted the GM", detail: title };
+    }
+    case "ending_choice_made": {
+      const choice = d?.choice as string | undefined;
+      const name = (d?.player_name as string) ?? "Someone";
+      return { icon: choice === "alone" ? "🍺" : "🥂", text: choice === "alone" ? `${name} drank alone — corrupted` : `${name} shared a toast` };
+    }
     default:                 return { icon: "•", text: event.event_type };
   }
 }
@@ -59,6 +70,7 @@ export default function DashboardPage({ params }: Props) {
   const [game, setGame] = useState<DbGame | null>(null);
   const [events, setEvents] = useState<DbGameEvent[]>([]);
   const [teamProgress, setTeamProgress] = useState<import("@/types/database").DbTeamProgress[]>([]);
+  const [gmAlerts, setGmAlerts] = useState<DbGameEvent[]>([]);
   // Server-verified team — the only source of truth for navigation.
   // We never fall back to session.teamId; we wait for this to be confirmed.
   const [serverTeamId, setServerTeamId] = useState<string | null>(null);
@@ -92,6 +104,13 @@ export default function DashboardPage({ params }: Props) {
           storeSession(healed);
         }
       }
+    }
+
+    // GM alerts — dedicated fetch so a "contact the GM" request never rolls
+    // off the general 20-event feed during a busy stretch. Host-only.
+    if (sess?.isHost) {
+      const alertsRes = await getGmAlerts(gameId);
+      if (alertsRes.success) setGmAlerts(alertsRes.data);
     }
   }, [gameId, setSession]);
 
@@ -265,6 +284,11 @@ export default function DashboardPage({ params }: Props) {
               {myRoleData.effect}
             </div>
           </div>
+        )}
+
+        {/* ── GM alerts ── */}
+        {session.isHost && gmAlerts.length > 0 && (
+          <GMAlertsPanel alerts={gmAlerts} game={game} />
         )}
 
         {/* ── Team Quest Board CTA ── */}
@@ -526,6 +550,67 @@ function TeamScoreBar({ label, color, offerSpent, offerDef, rooms, isMe }: {
         style={{ color: isOrange ? "rgba(251,146,60,0.4)" : "rgba(34,211,238,0.4)", fontFamily: "Georgia,serif" }}
       >
         {offerSpent > 0 ? `${offerSpent}× ${offerDef}` : "Ingen sips endnu"}
+      </div>
+    </div>
+  );
+}
+
+function GMAlertsPanel({ alerts, game }: { alerts: DbGameEvent[]; game: DbGame }) {
+  return (
+    <div
+      className="rounded-xl p-4"
+      style={{
+        background: "linear-gradient(160deg, #052030 0%, #03141c 100%)",
+        border: "1.5px solid rgba(80,180,220,0.45)",
+        boxShadow: "0 0 20px rgba(80,180,220,0.1)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xl">📞</span>
+        <div
+          className="text-xs uppercase tracking-[0.2em] font-bold"
+          style={{ color: "rgba(150,210,230,0.85)", fontFamily: "Georgia,serif" }}
+        >
+          GM needed — {alerts.length} alert{alerts.length !== 1 ? "s" : ""}
+        </div>
+      </div>
+      <div className="space-y-2.5">
+        {alerts.map((ev) => {
+          const d = ev.event_data as Record<string, unknown> | null;
+          const teamName = ev.team_id === "team-a" ? game.team_a_name : ev.team_id === "team-b" ? game.team_b_name : "—";
+          const roomId = d?.room_id as string | undefined;
+          const room = roomId ? getRoom(roomId) : null;
+          return (
+            <div
+              key={ev.id}
+              className="rounded-lg p-3"
+              style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(80,180,220,0.2)" }}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span
+                  className={cn("text-xs font-bold", ev.team_id === "team-a" ? "text-orange-300" : "text-cyan-300")}
+                  style={{ fontFamily: "Georgia,serif" }}
+                >
+                  {teamName}{room ? ` · ${room.title}` : ""}
+                </span>
+                <span className="text-[10px] text-stone-500">{relativeTime(ev.created_at)}</span>
+              </div>
+              <div className="text-sm font-semibold mb-1" style={{ color: "rgba(200,230,240,0.9)", fontFamily: "Georgia,serif" }}>
+                {(d?.player_name as string) ?? "Someone"} is stuck on: {(d?.quest_title as string) ?? "a riddle"}
+              </div>
+              {d?.prompt ? (
+                <div className="text-xs italic mb-1.5" style={{ color: "rgba(150,190,210,0.65)" }}>
+                  &ldquo;{String(d.prompt)}&rdquo;
+                </div>
+              ) : null}
+              {d?.correct_answer ? (
+                <div className="text-xs font-mono" style={{ color: "rgba(140,220,160,0.85)" }}>
+                  Answer: {String(d.correct_answer)}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

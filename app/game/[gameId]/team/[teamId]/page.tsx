@@ -270,6 +270,19 @@ export default function TeamQuestBoardPage({ params }: Props) {
           setTollBanners((prev) => [...prev, { msg, key }]);
           setTimeout(() => setTollBanners((prev) => prev.filter((b) => b.key !== key)), 4500);
         }
+        // The culprit's toast/drink-alone choice — game-wide notification,
+        // shown to both teams regardless of which team it happened on.
+        if (!isFirstLoad && ev.event_type === "ending_choice_made") {
+          const choice = ev.event_data?.choice as string | undefined;
+          const name = (ev.event_data?.player_name as string) ?? "Someone";
+          const msg =
+            choice === "alone"
+              ? `🍺 ${name} drank the last cold beer alone — corrupted.`
+              : `🥂 ${name} shared a toast with everyone. Cheers the GM!`;
+          const key = ++tollKeyRef.current;
+          setTollBanners((prev) => [...prev, { msg, key }]);
+          setTimeout(() => setTollBanners((prev) => prev.filter((b) => b.key !== key)), 7000);
+        }
       }
     }
 

@@ -1495,6 +1495,142 @@ export async function getCulpritReveal(
 }
 
 // ==========================================
+// TOAST / CHEERS ENDING
+// ==========================================
+
+/**
+ * The revealed culprit's final choice: drink the last cold beer alone
+ * ("corrupted" — an extra full drink for them, plus their team each takes
+ * a sip) or share a toast with the whole game (both teams get a notified,
+ * game-styled cheers moment — no extra cost). One choice per team, logged
+ * as a game_event so every player's client picks it up on the next poll
+ * (see the toll-banner detection in the team map / room pages, which watch
+ * for this event_type game-wide, not just for their own team).
+ */
+export async function getEndingChoice(
+  gameId: string,
+  teamId: TeamId
+): Promise<ActionResult<{ choice: "alone" | "toast"; playerName: string } | null>> {
+  const rows = await sql`
+    SELECT event_data FROM game_events
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND event_type = 'ending_choice_made'
+    ORDER BY created_at ASC
+    LIMIT 1
+  `;
+  if (rows.length === 0) return { success: true, data: null };
+  const data = (rows[0] as { event_data: { choice: "alone" | "toast"; player_name: string } }).event_data;
+  return { success: true, data: { choice: data.choice, playerName: data.player_name } };
+}
+
+export async function submitEndingChoice(
+  gameId: string,
+  teamId: TeamId,
+  playerId: string,
+  playerName: string,
+  choice: "alone" | "toast"
+): Promise<ActionResult<{ choice: "alone" | "toast" }>> {
+  // Only the culprit may make this choice.
+  const culpritRows = await sql`
+    SELECT id FROM players WHERE id = ${playerId} AND game_id = ${gameId} AND is_culprit = TRUE LIMIT 1
+  `;
+  if (culpritRows.length === 0) return { success: false, error: "Only the culprit makes this choice." };
+
+  // One choice per team — idempotent against double-submits/refreshes.
+  const existing = await sql`
+    SELECT id FROM game_events
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND event_type = 'ending_choice_made'
+    LIMIT 1
+  `;
+  if (existing.length > 0) return { success: false, error: "The choice has already been made." };
+
+  if (choice === "alone") {
+    // Teammates (everyone but the culprit) each take a sip.
+    const teammateRows = await sql`
+      SELECT COUNT(*)::int AS n FROM players
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND id != ${playerId}
+    `;
+    const teammateCount = (teammateRows[0] as { n: number } | undefined)?.n ?? 0;
+    const EXTRA_DRINK_SIPS = 4; // flavor sip-count for "an extra full drink"
+    const totalSips = EXTRA_DRINK_SIPS + teammateCount;
+    await _logOffer(
+      gameId,
+      teamId,
+      totalSips,
+      `${playerName} drank alone — corrupted (1 extra full drink + ${teammateCount} team sip${teammateCount === 1 ? "" : "s"})`,
+      "ending-choice"
+    );
+  }
+
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (${gameId}, ${teamId}, 'ending_choice_made',
+            ${JSON.stringify({ choice, player_id: playerId, player_name: playerName })}::jsonb)
+  `;
+
+  return { success: true, data: { choice } };
+}
+
+// ==========================================
+// CONTACT THE GM
+// ==========================================
+
+/**
+ * A team can flag down the GM after getting genuinely stuck — gated in the
+ * UI to 2+ hints used and at least one wrong answer on the same quest.
+ * Costs the team 2 sips and posts an alert (with the exact riddle + correct
+ * answer for THIS team's quest variant) to the GM dashboard.
+ */
+export async function contactGM(
+  gameId: string,
+  teamId: TeamId,
+  questId: string,
+  playerName: string
+): Promise<ActionResult<{ ok: true }>> {
+  const quest = getQuest(questId);
+  if (!quest) return { success: false, error: "Quest not found." };
+
+  const CONTACT_GM_SIPS = 2;
+  await _logOffer(gameId, teamId, CONTACT_GM_SIPS, `Contacted the GM: ${quest.title}`, questId);
+
+  const correctAnswer = quest.answer
+    ? (Array.isArray(quest.answer.correct) ? quest.answer.correct[0] : quest.answer.correct)
+    : quest.type === "letter_tiles" && quest.letterTiles
+    ? quest.letterTiles.targetWord
+    : null;
+
+  await sql`
+    INSERT INTO game_events (game_id, team_id, event_type, event_data)
+    VALUES (${gameId}, ${teamId}, 'gm_contacted',
+            ${JSON.stringify({
+              quest_id: quest.id,
+              quest_title: quest.title,
+              room_id: quest.roomId,
+              player_name: playerName,
+              prompt: quest.prompt,
+              correct_answer: correctAnswer,
+            })}::jsonb)
+  `;
+
+  return { success: true, data: { ok: true } };
+}
+
+/**
+ * Dedicated fetch for GM alert events — deliberately NOT sourced from the
+ * general 20-event activity feed (getRecentGameEvents), which can roll an
+ * alert off-window during a busy stretch. The GM dashboard polls this
+ * directly so a "contact the GM" request is never silently missed.
+ */
+export async function getGmAlerts(gameId: string): Promise<ActionResult<import("@/types/database").DbGameEvent[]>> {
+  const rows = await sql`
+    SELECT * FROM game_events
+    WHERE game_id = ${gameId} AND event_type = 'gm_contacted'
+    ORDER BY created_at DESC
+    LIMIT 50
+  `;
+  return { success: true, data: rows as import("@/types/database").DbGameEvent[] };
+}
+
+// ==========================================
 // INTERNAL HELPERS
 // ==========================================
 

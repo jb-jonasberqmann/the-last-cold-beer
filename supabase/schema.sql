@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS game_events (
     -- room_unlocked | room_completed | clue_found | quest_completed
     -- boss_damaged | boss_phase_changed | boss_defeated
     -- chapter_complete | offer_paid | game_started | chapter_advanced
+    -- ending_choice_made | gm_contacted
   event_data JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

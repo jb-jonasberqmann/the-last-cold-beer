@@ -131,7 +131,9 @@ export type GameEventType =
   | "scared_silent_cleared"   // living room complete — player speaks again
   | "culprit_revealed"        // YOURSELVES boss defeated — culprit shown
   | "role_assigned"
-  | "physical_challenge_started";
+  | "physical_challenge_started"
+  | "ending_choice_made"       // culprit chose to drink alone (corrupted) or share a toast
+  | "gm_contacted";            // team requested GM help after 2 hints + a wrong answer
 
 export interface DbGameEvent {
   id: string;
