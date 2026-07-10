@@ -105,10 +105,15 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   // this boss throughout the fight AND at defeat, instead of a generic
   // placeholder image or a text-only "one missing from the photo" reveal.
   const [teamPhoto, setTeamPhoto] = useState<string | null>(null);
+  // Distinguishes "still fetching" from "fetched, and there really is no photo"
+  // so the fallback illustration can explain itself instead of silently
+  // looking like a bug when the Driveway photo quest was actually skipped.
+  const [teamPhotoChecked, setTeamPhotoChecked] = useState(false);
   useEffect(() => {
     if (bossId !== "yourselves" || !gameId || !teamId) return;
     getTeamPhoto(gameId, teamId, true).then((res) => {
       if (res.success && res.data?.photo) setTeamPhoto(res.data.photo);
+      setTeamPhotoChecked(true);
     });
   }, [bossId, gameId, teamId]);
 
@@ -450,14 +455,6 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
           35%     { transform: translateX(9px); }
           68%     { transform: translateX(-6px); }
         }
-        @keyframes lockGlow {
-          0%,100% { filter: drop-shadow(0 0 5px rgba(255,140,0,0.4)); }
-          50%     { filter: drop-shadow(0 0 16px rgba(255,140,0,0.85)) drop-shadow(0 0 28px rgba(255,80,0,0.3)); }
-        }
-        @keyframes lockGlowRed {
-          0%,100% { filter: drop-shadow(0 0 6px rgba(220,30,0,0.55)); }
-          50%     { filter: drop-shadow(0 0 20px rgba(220,30,0,0.95)) drop-shadow(0 0 38px rgba(180,0,0,0.35)); }
-        }
         @keyframes redPulse {
           0%,100% { opacity: 0;    }
           50%     { opacity: 0.12; }
@@ -592,16 +589,6 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
           }}
         />
 
-        {/* Lock medallion */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2">
-          <div
-            className="w-11 h-11 rounded-full bg-stone-900/90 border border-amber-700/50 flex items-center justify-center text-2xl"
-            style={{ animation: isLowHp ? "lockGlowRed 1.1s ease-in-out infinite" : "lockGlow 2.8s ease-in-out infinite" }}
-          >
-            {boss.look.icon}
-          </div>
-        </div>
-
         {/* ── Counter-attack image overlay (compact, always visible when active) ── */}
         {lastCounter && !isDefeated && (
           <div className="absolute left-2 right-2" style={{ bottom: 54 }}>
@@ -650,6 +637,18 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
           </p>
         </div>
       </div>{/* end hero image */}
+
+      {/* No ritual photo on file for this team — make the cause visible instead
+          of silently showing the generic illustration, since the most common
+          reason is the Driveway photo quest being skipped in Act 1. */}
+      {bossId === "yourselves" && teamPhotoChecked && !teamPhoto && (
+        <div
+          className="px-4 py-1.5 text-[11px] text-center"
+          style={{ background: "rgba(120,40,10,0.35)", color: "rgba(250,200,150,0.85)", fontFamily: "Georgia,serif" }}
+        >
+          📷 No ritual photo on file for this team — it was likely skipped during the Driveway quest in Act 1.
+        </div>
+      )}
 
       {/* ── HP bar (inside sticky wrapper) ── */}
       <div className="px-4 pt-2 pb-2.5" style={{ fontFamily: "Georgia, serif" }}>

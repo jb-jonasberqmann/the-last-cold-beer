@@ -66,6 +66,23 @@ export default function RoomPage({ params }: Props) {
     setTimeout(() => setCombatState("idle"), 550);
   };
 
+  // Special post-quest effects (scared-silent, sun-blind, act-1 -> act-2 advance).
+  // Must run for ANY completed quest — required (active-quest) or optional
+  // (bonus-quest) — since e.g. the sunroom's sun-blind dare and the wind/toast
+  // asides are all non-required and were previously only wired into the
+  // active-quest completion path, silently never firing for bonus quests.
+  const applyQuestSideEffects = async (q: Quest) => {
+    if (q.setsScaredSilent && session?.playerId) {
+      await setScaredSilent(gameId, session.playerId);
+    }
+    if (q.setsSunBlind && session?.playerId) {
+      await setSunBlind(gameId, session.playerId);
+    }
+    if (q.id === "front-door-keybox") {
+      await advanceAct(gameId, "act-1", "act-2", teamId);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     if (!gameId || !teamId) return;
     const res = await fetch(`/api/game/${gameId}/progress?teamId=${teamId}`);
@@ -731,16 +748,7 @@ export default function RoomPage({ params }: Props) {
                       // New clues are surfaced via the forced-clue modal when the
                       // player returns to the map, not here — they're unreadable
                       // this close to the completion overlay anyway.
-                      // Wire special post-quest effects
-                      if (activeQuest.setsScaredSilent && session?.playerId) {
-                        await setScaredSilent(gameId, session.playerId);
-                      }
-                      if (activeQuest.setsSunBlind && session?.playerId) {
-                        await setSunBlind(gameId, session.playerId);
-                      }
-                      if (activeQuest.id === "front-door-keybox") {
-                        await advanceAct(gameId, "act-1", "act-2", teamId);
-                      }
+                      await applyQuestSideEffects(activeQuest);
                       fetchData();
                     }}
                     onMiss={triggerMiss}
@@ -773,8 +781,9 @@ export default function RoomPage({ params }: Props) {
                         teamId={teamId}
                         isReadOnly={false}
                         challengeStartedAt={activeChallenges[quest.id] ?? null}
-                        onComplete={() => {
+                        onComplete={async () => {
                           triggerHit();
+                          await applyQuestSideEffects(quest);
                           fetchData();
                         }}
                         onMiss={triggerMiss}

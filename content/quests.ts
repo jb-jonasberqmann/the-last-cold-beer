@@ -266,23 +266,6 @@ export const QUESTS: Quest[] = [
       prompt: "Posen indeholder 7 kugler. Den manglende 8. — hvor ville den logisk set være, baseret på mærket?",
     },
   },
-  {
-    id: "petanque-social",
-    roomId: "petanque-court",
-    type: "social_challenge",
-    title: "One Round",
-    description: "Play one round of pétanque. Any rules. Any scoring. One round.",
-    prompt: "Play a quick round of pétanque with whatever balls are available. First team to agree the round is done wins the bonus.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "A round played. The evening has officially started.",
-    da: {
-      title: "En Runde",
-      description: "Spil én runde pétanque. Hvilke som helst regler. Hvilken som helst scoring.",
-    },
-  },
-
   // --- CARPORT ---
   {
     id: "carport-chalk",
@@ -351,20 +334,18 @@ export const QUESTS: Quest[] = [
     id: "double-room-explore",
     roomId: "double-room",
     type: "social_challenge",
-    title: "Someone Was Here",
-    description:
-      "A couple stayed in this room. They left in a hurry. A half-packed bag, open on the floor. Something still plugged in that nobody unpacked. The bedside lamp on. What three specific details does the player notice?",
-    prompt:
-      "The player in the double room describes three specific details they notice. The rest of the team (listening) confirms each one makes sense — then seals it with a toast, the way the house seems to expect.",
+    title: "Moving On",
+    description: "A couple stayed here and left in a hurry — a half-packed bag, a lamp still on. There isn't much time to dwell on it.",
+    prompt: "Take a sip and step past it. There's a note waiting.",
     order: 1,
     isRequired: true,
     hints: [],
     offerCost: 1,
-    rewardText: "Three details noted. The room has a story. You just don't know it yet.",
+    rewardText: "Moved on. The room keeps its story for later.",
     da: {
-      title: "Nogen Var Her",
-      description: "Et par boede i dette rum. De forlod det hurtigt.",
-      prompt: "Spilleren i dobbeltværelset beskriver tre specifikke detaljer de lægger mærke til.",
+      title: "Videre",
+      description: "Et par boede her og forlod det hurtigt — der er ikke tid til at dvæle ved det.",
+      prompt: "Tag en slurk og gå videre. Der venter en seddel.",
     },
   },
   {
@@ -437,20 +418,18 @@ export const QUESTS: Quest[] = [
     id: "single-room-explore",
     roomId: "single-room",
     type: "social_challenge",
-    title: "Deliberate and Scattered",
-    description:
-      "Some things in this room were placed with care. Others were abandoned mid-action. The player inside identifies which is which.",
-    prompt:
-      "Name one thing in the single room that was clearly placed deliberately, and one thing that was clearly abandoned mid-action. Seal it with a toast before you move on.",
+    title: "Moving On",
+    description: "Someone stayed here alone, deliberately. Whatever happened, it isn't for you to piece together standing in the doorway.",
+    prompt: "Take a sip and get to the desk.",
     order: 1,
     isRequired: true,
     hints: [],
     offerCost: 1,
-    rewardText: "The contrast is the story. Someone started this room with intention.",
+    rewardText: "Moved on. There's a note on the desk.",
     da: {
-      title: "Bevidst og Spredt",
-      description: "Nogle ting i dette rum blev placeret med omhu. Andre blev forladt midt i en handling.",
-      prompt: "Navngiv én ting i enkeltværelset der tydeligvis blev placeret med vilje, og én ting der tydeligvis blev forladt midt i en handling.",
+      title: "Videre",
+      description: "Nogen boede her alene, bevidst. Det er ikke til jer at gennemskue fra døren.",
+      prompt: "Tag en slurk og gå hen til skrivebordet.",
     },
   },
   {
@@ -523,29 +502,19 @@ export const QUESTS: Quest[] = [
     id: "bunk-room-explore",
     roomId: "bunk-room",
     type: "social_challenge",
-    title: "Top or Bottom",
-    description:
-      "The bunk bed. The top is unmade — the bottom has been slept in. The player enters and claims a bunk. Which one?",
-    prompt:
-      "The player in the bunk room chooses: top or bottom bunk, out loud, and the team agrees on it together. The choice matters — but not in the way you'd expect.",
+    title: "Claim a Bunk",
+    description: "Top bunk unmade, bottom bunk slept in. Someone has to pick one — and whatever's worth finding here is hiding above whichever bunk you don't take.",
+    prompt: "Take the bottom bunk, take a sip, and look up.",
     order: 1,
     isRequired: true,
-    hints: [
-      { order: 1, offerCost: 1, text: "The note is on the underside of the top mattress. You need to be in the bottom to read it." },
-    ],
+    hints: [],
     offerCost: 1,
-    answer: {
-      correct: ["bottom", "bottom bunk", "nedre", "nederste", "den nederste"],
-      normalized: true,
-    },
     rewardText: "Bottom bunk. Now look up.",
-    failureText: "Think about where a note would be hidden in a bunk room.",
     da: {
-      title: "Øverste eller Nederste",
-      description: "Køjesengen. Den øverste er ikke redt — den nederste er sovet i.",
-      prompt: "Spilleren i køjestuen vælger: øverste eller nederste køje. Valget betyder noget.",
+      title: "Vælg en Køje",
+      description: "Øverste køje er ikke redt, nederste er sovet i. Nogen skal vælge — og det der er værd at finde gemmer sig over den køje I ikke tager.",
+      prompt: "Tag den nederste køje, tag en slurk, og se op.",
       rewardText: "Nederste køje. Se nu op.",
-      failureText: "Tænk over hvor en seddel ville være gemt i en køjesovereste.",
     },
   },
   {
@@ -778,26 +747,6 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "sunroom-wind",
-    roomId: "sunroom",
-    type: "social_challenge",
-    title: "The Wind",
-    description:
-      "The sunroom is the first place in the house where you notice the wind has picked up. It's coming from the west. That matters for the tone of Act 3, though you don't know that yet.",
-    prompt:
-      "Stand in the sunroom and listen to the wind. One player describes what they hear, and must include a direction. The house asks for a small toast to mark it.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    offerCost: 1,
-    rewardText: "The wind noted. It will be louder by midnight.",
-    da: {
-      title: "Vinden",
-      description: "Vinterhaven er det første sted i huset hvor du lægger mærke til at vinden er taget til.",
-      prompt: "Stå i vinterhaven og lyt til vinden. Én spiller beskriver hvad de hører.",
-    },
-  },
-  {
     id: "sunroom-sunblind",
     roomId: "sunroom",
     type: "social_challenge",
@@ -826,19 +775,18 @@ export const QUESTS: Quest[] = [
     id: "kitchen-act2-explore",
     roomId: "kitchen-act2",
     type: "social_challenge",
-    title: "The Kitchen at Evening",
-    description:
-      "The kitchen in the evening light. Someone made coffee — the pot is still warm. The dishes are clean. The fridge is stocked.",
-    prompt: "One player checks the fridge and reports what's in it. The group votes on one item that definitely shouldn't be there, then drinks to it.",
+    title: "Moving On",
+    description: "The kitchen at evening — someone made coffee, the fridge is stocked. Nothing here needs solving.",
+    prompt: "Take a sip and listen for the radio.",
     order: 1,
     isRequired: true,
     hints: [],
     offerCost: 1,
-    rewardText: "The kitchen is accounted for. One item is noted as wrong.",
+    rewardText: "Kitchen's accounted for. The static is coming through clearer here.",
     da: {
-      title: "Køkkenet Om Aftenen",
-      description: "Køkkenet i aftenslyset. Nogen lavede kaffe — kanden er stadig varm.",
-      prompt: "Én spiller tjekker køleskabet og rapporterer hvad der er i det. Gruppen stemmer om én genstand der bestemt ikke burde være der.",
+      title: "Videre",
+      description: "Køkkenet om aftenen — nogen lavede kaffe, køleskabet er fyldt. Intet her skal løses.",
+      prompt: "Tag en slurk og lyt efter radioen.",
     },
   },
   {
@@ -965,24 +913,6 @@ export const QUESTS: Quest[] = [
       failureText: "Det er det modsatte af at starte.",
     },
   },
-  {
-    id: "activity-room-social",
-    roomId: "activity-room",
-    type: "social_challenge",
-    title: "One Game",
-    description: "Before the radio. Before everything changes. Play one game — darts, foosball, billiards, table tennis. Any game.",
-    prompt: "The group plays one quick game in the activity room. Agree on which one. The team that wins keeps their advantage into Act 3.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "One game played. The evening has its peak before the drop.",
-    da: {
-      title: "Ét Spil",
-      description: "Inden radioen. Inden alt ændrer sig. Spil ét spil.",
-      prompt: "Gruppen spiller ét hurtigt spil i aktivitetsrummet. Bliv enige om hvilket.",
-    },
-  },
-
   // --- DARTS BOARD ---
   {
     id: "darts-missing-player",
@@ -1072,42 +1002,23 @@ export const QUESTS: Quest[] = [
       failureText: "Tænk i halvdele af en hel cirkel, ikke små grader. Et forkert gæt koster en slurk — prøv igen.",
     },
   },
-  {
-    id: "foosball-social",
-    roomId: "foosball-table",
-    type: "social_challenge",
-    title: "One Half",
-    description: "Play one half of foosball, 5 minutes, despite the bent rod. The bent goalie is a permanent disadvantage for whoever controls that side.",
-    prompt: "Play a 5-minute half of foosball. The team controlling the bent-rod side plays with a permanent defensive disadvantage.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "Half played. The foosball table has stories now.",
-    da: {
-      title: "En Halvleg",
-      description: "Spil en halvleg fodboldspil, 5 minutter, trods den bøjede stang.",
-      prompt: "Spil en 5-minutters halvleg fodboldspil.",
-    },
-  },
-
   // --- DINING ROOM (identify the boss) ---
   {
     id: "dining-room-static",
     roomId: "dining-room",
     type: "social_challenge",
     title: "Louder in Here",
-    description:
-      "The static you've been hearing all evening is louder in this room. Much louder. It isn't coming from the walls. It's coming from something IN here.",
-    prompt:
-      "Everyone quiet. One player closes their eyes and points to where the sound is coming from. The group confirms the direction: high or low? Corner or center? Follow it.",
+    description: "The static you've been hearing all evening is louder in this room — coming from somewhere close, not the walls.",
+    prompt: "Take a sip, then find where it's coming from.",
     order: 1,
     isRequired: true,
     hints: [],
+    offerCost: 1,
     rewardText: "The shelf. It's coming from the shelf.",
     da: {
       title: "Højere Herinde",
-      description: "Statikken I har hørt hele aftenen er højere i dette rum. Meget højere. Den kommer ikke fra væggene. Den kommer fra noget HERINDE.",
-      prompt: "Alle stille. Én spiller lukker øjnene og peger mod hvor lyden kommer fra. Gruppen bekræfter retningen: højt eller lavt? Hjørne eller midte? Følg den.",
+      description: "Statikken er højere i dette rum — og kommer ikke fra væggene.",
+      prompt: "Tag en slurk, og find så ud af hvor den kommer fra.",
       rewardText: "Hylden. Den kommer fra hylden.",
     },
   },
@@ -1261,9 +1172,8 @@ export const QUESTS: Quest[] = [
     roomId: "back-corridor",
     type: "social_challenge",
     title: "The Corridor",
-    description:
-      "The back corridor, visible now with the flashlight. You walked past this all evening. Under the stairs. Three doors — one slightly ajar.",
-    prompt: "With the flashlight, sweep the corridor. One player describes what they see. The ajar door — what's behind it? Toast to finding your bearings in the dark.",
+    description: "Three doors down the back corridor, visible now with the flashlight. One stands slightly ajar.",
+    prompt: "Take a sip and sweep the flashlight down the hall.",
     order: 1,
     isRequired: true,
     hints: [],
@@ -1271,8 +1181,8 @@ export const QUESTS: Quest[] = [
     rewardText: "The ajar door is the fuse box. Now you know where it is.",
     da: {
       title: "Korridoren",
-      description: "Bagkorridoren, synlig nu med lommelygten.",
-      prompt: "Med lommelygten, sved korridoren. Én spiller beskriver hvad de ser.",
+      description: "Tre døre nede ad bagkorridoren, synlig nu med lommelygten. Én står på klem.",
+      prompt: "Tag en slurk og sve korridoren med lommelygten.",
     },
   },
   {
@@ -1383,24 +1293,6 @@ export const QUESTS: Quest[] = [
       failureText: "Tredje skuffe. Tjek den.",
     },
   },
-  {
-    id: "dark-kitchen-observe",
-    roomId: "kitchen-dark",
-    type: "social_challenge",
-    title: "The Kitchen at Night",
-    description: "The same kitchen from Act 2. Same room. Under one working light in the dark, what's different?",
-    prompt: "One player looks around the kitchen. Name one thing that looks different at night versus in Act 2.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "The kitchen is the same kitchen. It just means something different now.",
-    da: {
-      title: "Køkkenet Om Natten",
-      description: "Det samme køkken fra Akt 2. Samme rum. Under ét arbejdende lys i mørket, hvad er anderledes?",
-      prompt: "Én spiller kigger rundt i køkkenet. Navngiv én ting der ser anderledes ud om natten versus i Akt 2.",
-    },
-  },
-
   // --- BROKEN WINDOW ---
   {
     id: "window-fix",
@@ -1449,9 +1341,8 @@ export const QUESTS: Quest[] = [
     roomId: "door-nobody-tried",
     type: "social_challenge",
     title: "Try the Door",
-    description:
-      "You've walked past this door all evening. In the dark, you finally try it. The handle turns.",
-    prompt: "One player tries the door. It opens. What does the player say when they see what's behind it? Toast to the door finally giving in.",
+    description: "You walked past this door all evening. In the dark, you finally try the handle.",
+    prompt: "Take a sip. It opens.",
     order: 1,
     isRequired: true,
     hints: [],
@@ -1459,8 +1350,8 @@ export const QUESTS: Quest[] = [
     rewardText: "The door opens. What's behind it is not a room.",
     da: {
       title: "Prøv Døren",
-      description: "Du er gået forbi denne dør hele aftenen. I mørket prøver du den endelig.",
-      prompt: "Én spiller prøver døren. Den åbner. Hvad siger spilleren da de ser hvad der er bag den?",
+      description: "Du er gået forbi denne dør hele aftenen. I mørket prøver du endelig håndtaget.",
+      prompt: "Tag en slurk. Den åbner.",
       rewardText: "Døren åbner. Det der er bag den er ikke et rum.",
     },
   },
@@ -1495,10 +1386,8 @@ export const QUESTS: Quest[] = [
     roomId: "meter-cupboard",
     type: "social_challenge",
     title: "The Main Switch",
-    description:
-      "The cupboard where the house's real power comes in — heavier hardware than the fuse box you just fixed inside, the kind that takes both hands to move. It's down. Not tripped, not blown. Thrown.",
-    prompt:
-      "One player examines the switch and describes it to the group out loud: what does 'thrown, not tripped' actually look like? Is there anything else on or around it worth mentioning? Toast to the house's cruelty.",
+    description: "The house's real power switch, just outside — heavier hardware than the fuse box you just fixed. It's thrown, not tripped.",
+    prompt: "Take a sip and take a look at it.",
     order: 1,
     isRequired: true,
     hints: [],
@@ -1506,8 +1395,8 @@ export const QUESTS: Quest[] = [
     rewardText: "Described. Whatever the fuse box fixed, this undoes — completely, on purpose.",
     da: {
       title: "Hovedafbryderen",
-      description: "Skabet hvor husets rigtige strøm kommer ind — tungere udstyr end sikringsskabet I lige reparerede indenfor. Den er nede. Ikke udløst. Slået om.",
-      prompt: "Én spiller undersøger afbryderen og beskriver den højt for gruppen: hvordan ser 'slået om, ikke udløst' egentlig ud?",
+      description: "Husets rigtige strømafbryder, lige udenfor — tungere end sikringsskabet I lige reparerede. Den er slået om, ikke udløst.",
+      prompt: "Tag en slurk og kig nærmere på den.",
       rewardText: "Beskrevet. Hvad end sikringsskabet reparerede, gør denne til intet — fuldstændigt, med vilje.",
     },
   },
@@ -1599,10 +1488,8 @@ export const QUESTS: Quest[] = [
     roomId: "behind-the-shed",
     type: "social_challenge",
     title: "Into the Dark",
-    description:
-      "Back outside. The garden is completely dark. Behind the shed — a section you didn't explore in Act 1. Something is here.",
-    prompt:
-      "One player goes behind the shed. Describe what they find. Two things are back here: the conservatory, and the shed itself approached from the other side. Toast to stepping into the dark.",
+    description: "Back outside, behind the shed — a part of the garden Act 1 never showed you.",
+    prompt: "Take a sip before you step into it.",
     order: 1,
     isRequired: true,
     hints: [],
@@ -1610,9 +1497,8 @@ export const QUESTS: Quest[] = [
     rewardText: "The conservatory is visible. The shed is behind you. Two things to investigate.",
     da: {
       title: "Ind i Mørket",
-      description: "Tilbage udenfor. Haven er fuldstændig mørk. Bag skuret — en sektion du ikke udforskede i Akt 1.",
-      prompt: "Én spiller går bag skuret. Beskriv hvad de finder.",
-      rewardText: "Vinterhaven er synlig. Skuret er bag dig.",
+      description: "Tilbage udenfor, bag skuret — en del af haven Akt 1 aldrig viste jer.",
+      prompt: "Tag en slurk før I træder ind i det.",
     },
   },
   {
@@ -1673,24 +1559,6 @@ export const QUESTS: Quest[] = [
       rewardText: "Rødt. Et dybt rødt stearinlys, fuldt og uantændt.",
     },
   },
-  {
-    id: "conservatory-cold",
-    roomId: "conservatory",
-    type: "social_challenge",
-    title: "Colder Than Outside",
-    description: "The conservatory is colder than the garden. Glass walls, wind audible. Something about the temperature is wrong.",
-    prompt: "One player stands in the conservatory for 30 seconds. Describe what the temperature feels like. Why would a glass room be colder than the open garden?",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "The temperature noted. The conservatory has been open to the wind longer than the house.",
-    da: {
-      title: "Koldere End Udenfor",
-      description: "Vinterhaven er koldere end haven. Glasvægge, vind hørbar.",
-      prompt: "Én spiller står i vinterhaven i 30 sekunder. Beskriv hvad temperaturen føles som.",
-    },
-  },
-
   // --- SHED (DARK) ---
   {
     id: "shed-dark-note",
@@ -1718,24 +1586,6 @@ export const QUESTS: Quest[] = [
       prompt: "Læs sedlen højt. Hvad er den sidste instruktion i sedlen?\n\n*\"Vi kom. Vi blev. Vi fejlede... Denne gang.. Afslut det... Til allersidste dråbe.\"*",
       rewardText: "Sedlen er i sagsmappen. Til allersidste dråbe. Underskrifterne er næsten jeres navne.",
       failureText: "Læs den sidste linje.",
-    },
-  },
-  {
-    id: "shed-dark-date-list",
-    roomId: "shed-dark",
-    type: "social_challenge",
-    title: "The Date List, Again",
-    description: "The same date list from Act 1. It looks different now. Tonight's date is still uncrossed. Read it again.",
-    prompt:
-      "Look at the date list on the shed wall. Tonight's date is still the last entry — not crossed out. The group stands in the shed, in the dark. One player says what the list means now that they know about the sealed wall and the note.",
-    order: 2,
-    isRequired: false,
-    hints: [],
-    rewardText: "The list means something different now. It always did.",
-    da: {
-      title: "Datolisten, Igen",
-      description: "Den samme datoliste fra Akt 1. Den ser anderledes ud nu.",
-      prompt: "Kig på datolisten på skurvæggen. Aftenens dato er stadig den sidste post — ikke overstreget. Én spiller siger hvad listen betyder nu.",
     },
   },
 ];

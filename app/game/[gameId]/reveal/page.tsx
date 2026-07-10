@@ -39,9 +39,18 @@ function RevealContent() {
     const result = await getCulpritReveal(gameId, teamId);
     if (result.success && result.data) {
       setCulpritName(result.data.culpritName);
-      setIsCulprit(result.data.culpritPlayerId === playerId);
+      // Primary check: this browser's session was the one that took the photo.
+      // Fallback: match by name. Solo/dev testing often loses the original
+      // session (new tab, cleared storage, rejoining as "the same person"
+      // creates a new player row) — without this, nobody could ever reach
+      // the choice buttons again for that culprit. Real play is unaffected:
+      // players keep their own session throughout, so the ID already matches.
+      const nameMatches =
+        !!session?.playerName &&
+        session.playerName.trim().toLowerCase() === result.data.culpritName.trim().toLowerCase();
+      setIsCulprit(result.data.culpritPlayerId === playerId || nameMatches);
     }
-  }, [gameId, teamId, playerId]);
+  }, [gameId, teamId, playerId, session?.playerName]);
 
   useEffect(() => {
     fetchCulprit();
@@ -240,9 +249,21 @@ function RevealContent() {
               {endingError && <p className="text-red-500 text-xs mt-3">{endingError}</p>}
             </div>
           ) : (
-            <p className="text-stone-600 text-xs italic">
-              Waiting for {culpritName ?? "the culprit"} to decide how this ends…
-            </p>
+            <div className="text-center">
+              <p className="text-stone-600 text-xs italic mb-2">
+                Waiting for {culpritName ?? "the culprit"} to decide how this ends…
+              </p>
+              {/* Manual fallback: if this really is {culpritName}'s device but the
+                  session/name check above didn't match (new tab, cleared storage,
+                  rejoined mid-game), let them claim it directly rather than being
+                  stuck watching forever. */}
+              <button
+                onClick={() => setIsCulprit(true)}
+                className="text-stone-700 text-[11px] underline decoration-dotted"
+              >
+                Actually, this is {culpritName ?? "the culprit"}&apos;s phone →
+              </button>
+            </div>
           )}
           <p className="text-stone-700 text-xs mt-6">The Last Cold Beer — 2026</p>
         </div>
