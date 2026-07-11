@@ -5,8 +5,10 @@
 // the affected player is on — quest board, room view, boss fight, etc.
 // Purely visual (pointer-events: none) so it never blocks a player from
 // completing their own actions; it just makes everything hard to read,
-// which is the point. Clears automatically server-side the moment the
-// team reaches the Act 2 boss (see clearSunBlindForTeam).
+// which is the point. Clears automatically server-side once the team
+// completes 2 rooms after the sunroom (see the decay check inside
+// _checkAndCompleteRoom), with a reaching-the-Act-2-boss fallback
+// (see clearSunBlindForTeam).
 
 import { useCallback, useEffect, useState } from "react";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -74,9 +76,9 @@ export function SunBlindOverlay() {
           borderRadius: "999px",
           whiteSpace: "nowrap",
         }}
-        title="You stared into the low sun in the sunroom. You can't see straight until the house goes dark — and you still have to fetch drinks when asked."
+        title="You stared into the low sun in the sunroom. You can't see straight right now — and you still have to fetch drinks when asked. It'll probably wear off again before too long."
       >
-        🌇 Sun-blind — clears when the house goes dark
+        🌇 Sun-blind — will probably wear off again
       </div>
     </div>
   );

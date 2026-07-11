@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS players (
   is_host BOOLEAN NOT NULL DEFAULT false,
   is_culprit BOOLEAN NOT NULL DEFAULT false,       -- one player per game, randomly assigned at game creation
   player_status TEXT NOT NULL DEFAULT 'normal'
-    CHECK (player_status IN ('normal', 'scared_silent', 'sun_blind')), -- scared_silent: set on bunk room completion, cleared on living room. sun_blind: set on sunroom dare, cleared on reaching the Act 2 boss
+    CHECK (player_status IN ('normal', 'scared_silent', 'sun_blind')), -- scared_silent: set on bunk room completion, cleared on living room. sun_blind: set on sunroom dare, decays after 2 rooms completed (fallback: cleared on reaching the Act 2 boss)
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

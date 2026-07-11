@@ -754,19 +754,19 @@ export const QUESTS: Quest[] = [
     description:
       "The last direct sunlight of the day comes in low and level through the glass — the one moment tonight the sunroom actually earns its name. Looking straight at it hurts almost immediately.",
     prompt:
-      "One player looks straight into the low sun through the glass and holds it — out loud, counted to five, the rest of the team watching. From this point on, that player is sun-blind: for the rest of tonight, whenever a teammate asks them in person to grab a drink from the fridge, they go get it, no matter what they're doing. No arguing, no delegating. It clears the moment the house finally goes dark.",
+      "One player looks straight into the low sun through the glass and holds it — out loud, counted to five, the rest of the team watching. From this point on, that player is sun-blind: whenever a teammate asks them in person to grab a drink from the fridge, they go get it, no matter what they're doing. No arguing, no delegating. It'll probably wear off again before too long.",
     order: 3,
     isRequired: false,
     hints: [],
     setsSunBlind: true,
     rewardClueId: "sunroom-blind-mark",
     rewardText:
-      "Five seconds. The glare stays burned into your vision long after you look away. You can't really see straight anymore — not until the lights go out for good. But whatever you're about to face at the radio, losing a sense to this house once already will help.",
+      "Five seconds. The glare stays burned into your vision long after you look away. You can't really see straight anymore. But whatever you're about to face at the radio, losing a sense to this house once already will help.",
     da: {
       title: "Den Lave Sol",
       description: "Dagens sidste direkte sollys kommer lavt og lige ind gennem glasset — det ene øjeblik i aften hvor vinterhaven rent faktisk lever op til sit navn. At kigge lige på den gør ondt næsten med det samme.",
-      prompt: "Én spiller kigger lige ind i den lave sol gennem glasset og holder den — højt, talt til fem, resten af holdet ser på. Fra dette punkt er den spiller solblind: resten af aftenen, når en holdkammerat beder dem personligt om at hente en drik fra køleskabet, gør de det, uanset hvad. Ingen indvendinger, ingen uddelegering. Det ophører i det øjeblik huset endelig bliver mørkt.",
-      rewardText: "Fem sekunder. Blændingen bliver siddende i synet længe efter du kigger væk. Du kan ikke rigtig se ordentligt længere — ikke før lysene går ud for alvor. Men hvad end I møder ved radioen, hjælper det at have mistet en sans til dette hus allerede.",
+      prompt: "Én spiller kigger lige ind i den lave sol gennem glasset og holder den — højt, talt til fem, resten af holdet ser på. Fra dette punkt er den spiller solblind: når en holdkammerat beder dem personligt om at hente en drik fra køleskabet, gør de det, uanset hvad. Ingen indvendinger, ingen uddelegering. Det går sikkert væk igen om lidt.",
+      rewardText: "Fem sekunder. Blændingen bliver siddende i synet længe efter du kigger væk. Du kan ikke rigtig se ordentligt længere. Men hvad end I møder ved radioen, hjælper det at have mistet en sans til dette hus allerede.",
     },
   },
 

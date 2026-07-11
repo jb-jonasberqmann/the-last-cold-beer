@@ -1429,8 +1429,6 @@ function PrecisionStopChallenge({
   const [elapsed, setElapsed] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ completed: boolean; deltaSeconds: number; sips: number; rewardText?: string } | null>(null);
-  const target = config.targetStopSeconds ?? 0;
-  const targetLabel = `${Math.floor(target / 60)}:${String(Math.floor(target % 60)).padStart(2, "0")}`;
 
   useEffect(() => {
     if (!challengeStartedAt || result) return;
@@ -1500,7 +1498,7 @@ function PrecisionStopChallenge({
               {timeStr}
             </div>
             <div className="text-xs text-center" style={{ color: "rgba(220,185,120,0.8)" }}>
-              Stop it as close to <span className="font-bold text-amber-300">{targetLabel}</span> as you can.
+              Stop it as close as you can to the number your team worked out.
             </div>
             <button
               onClick={handleStop}

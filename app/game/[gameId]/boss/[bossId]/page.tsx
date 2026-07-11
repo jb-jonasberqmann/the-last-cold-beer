@@ -146,8 +146,10 @@ function BossFightContent({ gameId, bossId }: { gameId: string; bossId: string }
   const autoApplied = useRef<Set<string>>(new Set());
   const [autoApplyNotices, setAutoApplyNotices] = useState<{ actionId: string; label: string; damage: number }[]>([]);
 
-  // Sun-blind clears the moment a team reaches the Radio boss — the house
-  // going dark levels the playing field. Only needs to fire once per visit.
+  // Sun-blind normally decays on its own after 2 rooms (see
+  // _checkAndCompleteRoom), but this is a safety-net clear in case a team
+  // somehow reaches the Radio boss with it still active. Only needs to fire
+  // once per visit.
   const sunBlindCleared = useRef(false);
   useEffect(() => {
     if (bossId !== "the-radio" || !gameId || !teamId || sunBlindCleared.current) return;

@@ -612,7 +612,7 @@ export const BOSSES: Boss[] = [
             id: "yourselves-count-the-years",
             label: "Count the years",
             description:
-              "The shed's laminated date list, back in Act 1. Sixteen years of entries, all crossed out but the last one — tonight's, still uncrossed.",
+              "The shed's laminated date list, back in Act 1. Years of entries, all crossed out but the last one — tonight's, still uncrossed.",
             type: "puzzle",
             damage: 34,
             puzzle: {

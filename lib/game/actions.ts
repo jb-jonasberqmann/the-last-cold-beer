@@ -1132,8 +1132,11 @@ export async function setScaredSilent(gameId: string, playerId: string): Promise
 // ==========================================
 // SET / CLEAR SUN BLIND
 // Called by UI right after the sunroom dare succeeds — marks the specific
-// player who took it. Cleared team-wide the moment the team reaches the
-// Act 2 boss (the house going dark levels the playing field again).
+// player who took it. Primarily cleared team-wide once the team completes
+// 2 rooms after the sunroom (see the decay check inside
+// _checkAndCompleteRoom); clearSunBlindForTeam below is also called on
+// reaching the Act 2 boss as a safety net in case the effect somehow never
+// decayed naturally.
 // Non-fatal: requires the sun_blind migration on the live DB — if it
 // hasn't been run yet, this fails quietly rather than breaking the quest.
 // ==========================================
@@ -1879,6 +1882,42 @@ async function _checkAndCompleteRoom(gameId: string, teamId: TeamId, roomId: str
       if (clue?.revealedTo && clue.revealedTo !== teamId) continue;
       await _awardClue(gameId, teamId, clueId);
     }
+  }
+
+  // Sun-blind decay: the effect wears off on its own once the team has
+  // completed 2 rooms after the sunroom (rather than lingering all the way
+  // to the Act 2 boss, which could be many rooms later). Non-fatal — if the
+  // sun_blind migration hasn't landed yet this just no-ops.
+  try {
+    const blindRows = await sql`
+      SELECT id FROM players
+      WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'sun_blind'
+      LIMIT 1
+    `;
+    if (blindRows.length > 0) {
+      const sunroomRows = await sql`
+        SELECT completed_at FROM room_progress
+        WHERE game_id = ${gameId} AND team_id = ${teamId} AND room_id = 'sunroom' AND status = 'complete'
+        LIMIT 1
+      `;
+      const sunroomCompletedAt = sunroomRows[0]?.completed_at as string | undefined;
+      if (sunroomCompletedAt) {
+        const afterRows = await sql`
+          SELECT COUNT(*)::int AS count FROM room_progress
+          WHERE game_id = ${gameId} AND team_id = ${teamId} AND status = 'complete'
+            AND room_id != 'sunroom' AND completed_at > ${sunroomCompletedAt}
+        `;
+        const roomsSinceSunroom = (afterRows[0]?.count as number) ?? 0;
+        if (roomsSinceSunroom >= 2) {
+          await sql`
+            UPDATE players SET player_status = 'normal'
+            WHERE game_id = ${gameId} AND team_id = ${teamId} AND player_status = 'sun_blind'
+          `;
+        }
+      }
+    }
+  } catch (e) {
+    console.error("_checkAndCompleteRoom: sun-blind decay check failed (non-fatal):", e);
   }
 }
 
