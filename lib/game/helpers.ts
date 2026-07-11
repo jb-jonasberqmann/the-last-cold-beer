@@ -90,6 +90,38 @@ export function checkAnswer(
   return correctArr.some((c) => normalize(c) === submittedNorm);
 }
 
+/**
+ * Digit + English + Danish word forms for small integers (0-12).
+ * Used by quests with a `dynamicAnswer` config, where the correct value is
+ * computed at submission time (e.g. from the team's actual player count)
+ * rather than baked into content as a fixed string list.
+ */
+const NUMBER_WORDS: Record<number, string[]> = {
+  0: ["0", "zero", "nul"],
+  1: ["1", "one", "en", "et"],
+  2: ["2", "two", "to"],
+  3: ["3", "three", "tre"],
+  4: ["4", "four", "fire"],
+  5: ["5", "five", "fem"],
+  6: ["6", "six", "seks"],
+  7: ["7", "seven", "syv"],
+  8: ["8", "eight", "otte"],
+  9: ["9", "nine", "ni"],
+  10: ["10", "ten", "ti"],
+  11: ["11", "eleven", "elleve"],
+  12: ["12", "twelve", "tolv"],
+};
+
+/**
+ * Returns the accepted answer strings (digit + English + Danish word) for a
+ * small non-negative integer. Falls back to just the digit string for
+ * numbers outside the mapped range (0-12).
+ */
+export function numberWords(n: number): string[] {
+  const clamped = Math.max(0, n);
+  return NUMBER_WORDS[clamped] ?? [String(clamped)];
+}
+
 // ==========================================
 // ROOM CODE GENERATION
 // ==========================================

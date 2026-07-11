@@ -94,7 +94,8 @@ export interface Quest {
   order: number;
   isRequired: boolean; // must complete to mark room complete
   hints: Hint[];
-  answer?: QuestAnswer; // undefined for social challenges
+  answer?: QuestAnswer; // undefined for social challenges (and for quests using dynamicAnswer instead)
+  dynamicAnswer?: DynamicAnswerConfig; // if set, the correct answer is computed at submission time instead of read from `answer`
   choices?: QuestChoice[]; // for type === 'choice'
   slidingPuzzle?: SlidingPuzzleConfig; // for type === 'sliding_puzzle'
   letterTiles?: LetterTilesConfig; // for type === 'letter_tiles'
@@ -127,6 +128,18 @@ export interface QuestAnswer {
   correct: string | string[]; // accepted answers (case-insensitive)
   normalized?: boolean; // if true, strip spaces/punctuation before comparing
 }
+
+// A correct answer computed at submission time from live game state, rather
+// than a fixed string baked into content. Two formulas exist:
+// - "chairsRemaining" — a fixed total minus the submitting team's actual
+//   player count (e.g. the dining room's empty-chairs riddle).
+// - "teamSize" — just the submitting team's actual player count, unmodified
+//   (e.g. the boss fight's "how many of you are there" recall action).
+// Both mean each team's answer reflects who's really on their roster tonight
+// instead of a hardcoded lore number.
+export type DynamicAnswerConfig =
+  | { type: "chairsRemaining"; total: number }
+  | { type: "teamSize" };
 
 export interface SlidingPuzzleConfig {
   size: 3 | 4; // 3×3 (8-puzzle) or 4×4 (15-puzzle)
@@ -272,6 +285,7 @@ export interface BossAction {
   puzzle?: {
     prompt: string;
     answer: string | string[];
+    dynamicAnswer?: DynamicAnswerConfig; // if set, overrides `answer` — computed at submission time (e.g. real team headcount)
   };
   choices?: BossActionChoice[]; // for type === 'choice'
   physicalChallenge?: PhysicalChallengeConfig; // optional timer overlay (used alongside puzzle type)

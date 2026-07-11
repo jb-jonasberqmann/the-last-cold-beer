@@ -4,9 +4,9 @@
 // Uses Neon SQL tagged template literals.
 
 import { sql } from "@/lib/db";
-import { generateRoomCode, checkAnswer, isRoomComplete } from "@/lib/game/helpers";
+import { generateRoomCode, checkAnswer, isRoomComplete, numberWords } from "@/lib/game/helpers";
 import { getRoom, getQuest, getBoss, getChapter, getClue } from "@/content/index";
-import type { TeamId } from "@/types/content";
+import type { TeamId, DynamicAnswerConfig } from "@/types/content";
 import type { ActionResult, CreateGameResult, JoinGameResult } from "@/types/game";
 import type { DbTeamProgress, DbBossProgress, DbQuestProgress } from "@/types/database";
 
@@ -239,9 +239,17 @@ export async function submitQuestAnswer(
 ): Promise<ActionResult<{ correct: boolean; rewardText?: string; failureText?: string; clueId?: string }>> {
   const quest = getQuest(questId);
   if (!quest) return { success: false, error: "Quest not found." };
-  if (!quest.answer) return { success: false, error: "This quest has no answer to check." };
+  if (!quest.answer && !quest.dynamicAnswer) {
+    return { success: false, error: "This quest has no answer to check." };
+  }
 
-  let isCorrect = checkAnswer(answer, quest.answer.correct, quest.answer.normalized);
+  let isCorrect: boolean;
+  if (quest.dynamicAnswer) {
+    const accepted = await _resolveDynamicAnswer(gameId, teamId, quest.dynamicAnswer);
+    isCorrect = checkAnswer(answer, accepted, true);
+  } else {
+    isCorrect = checkAnswer(answer, quest.answer!.correct, quest.answer!.normalized);
+  }
 
   // Gimmick quests (e.g. Sunroom plant count): the first N attempts are
   // always wrong regardless of value, no matter what's typed. Once past
@@ -570,7 +578,10 @@ export async function dealBossDamage(
         data: { damage: 0, newHp: bp.current_hp, defeated: false, failureText: "Enter your answer first." },
       };
     }
-    const correct = checkAnswer(answer, foundAction.puzzle.answer, true);
+    const acceptedAnswers = foundAction.puzzle.dynamicAnswer
+      ? await _resolveDynamicAnswer(gameId, teamId, foundAction.puzzle.dynamicAnswer)
+      : foundAction.puzzle.answer;
+    const correct = checkAnswer(answer, acceptedAnswers, true);
     if (!correct) {
       // Some bosses (e.g. the Act 3 finale) punish wrong answers with a
       // random 1-3 sip penalty on top of the miss, making guessing costly.
@@ -1643,7 +1654,9 @@ export async function contactGM(
   const CONTACT_GM_SIPS = 2;
   await _logOffer(gameId, teamId, CONTACT_GM_SIPS, `Contacted the GM: ${quest.title}`, questId);
 
-  const correctAnswer = quest.answer
+  const correctAnswer = quest.dynamicAnswer
+    ? (await _resolveDynamicAnswer(gameId, teamId, quest.dynamicAnswer))[0]
+    : quest.answer
     ? (Array.isArray(quest.answer.correct) ? quest.answer.correct[0] : quest.answer.correct)
     : quest.type === "letter_tiles" && quest.letterTiles
     ? quest.letterTiles.targetWord
@@ -1758,6 +1771,35 @@ async function _logOffer(
     VALUES (${gameId}, ${teamId}, 'offer_paid',
             ${JSON.stringify({ amount, reason })}::jsonb)
   `;
+}
+
+/**
+ * Counts the actual players on a team (excludes the host, who doesn't play
+ * as part of either team). Used to resolve dynamicAnswer quests so the
+ * correct answer reflects who's really in the room tonight.
+ */
+async function _getTeamPlayerCount(gameId: string, teamId: TeamId): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int AS count FROM players
+    WHERE game_id = ${gameId} AND team_id = ${teamId} AND is_host = FALSE
+  `;
+  return (rows[0]?.count as number) ?? 0;
+}
+
+/**
+ * Resolves a quest's or boss action's dynamicAnswer config into the accepted
+ * answer strings for THIS team, right now — "chairsRemaining" computes a
+ * fixed total minus however many players are actually on the roster;
+ * "teamSize" is just the roster count itself.
+ */
+async function _resolveDynamicAnswer(
+  gameId: string,
+  teamId: TeamId,
+  config: DynamicAnswerConfig
+): Promise<string[]> {
+  const teamSize = await _getTeamPlayerCount(gameId, teamId);
+  const value = config.type === "teamSize" ? teamSize : Math.max(0, config.total - teamSize);
+  return numberWords(value);
 }
 
 async function _awardClue(gameId: string, teamId: TeamId, clueId: string) {

@@ -1082,29 +1082,29 @@ export const QUESTS: Quest[] = [
     id: "dark-dining-riddle",
     roomId: "dining-room-dark",
     type: "puzzle",
-    title: "Counted By Touch",
+    title: "The Empty Chairs",
     description:
-      "No light. No radio. Just the long pine table, exactly where it's always been. Something about it can be counted without seeing it.",
+      "No light. No radio. Just the long pine table, exactly where it's always been. Eight chairs, all the way round — you counted them once tonight already, in the light, for the sentence puzzle.",
     prompt:
-      "Feel your way around the table, touching the back of every chair as you go. How many chairs are you counting?",
+      "Picture your whole team sitting down around this table right now — each one of you takes a chair, and no more are taken than that. How many of the eight chairs would still sit empty?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "You sat around this same table for the sentence puzzle in Act 2. Nothing's moved since." },
+      { order: 1, offerCost: 1, text: "Count the people on your team standing in this room with you right now. Subtract that from eight." },
     ],
-    answer: {
-      correct: ["8", "eight", "otte"],
-      normalized: true,
+    dynamicAnswer: {
+      type: "chairsRemaining",
+      total: 8,
     },
-    rewardText: "Eight. The same eight chairs from Act 2 — the table hasn't changed. You have. Time to move.",
-    failureText: "Think back to the dining room in Act 2 — how many chairs were around this exact table?",
+    rewardText: "That's how many chairs are still empty. The table hasn't changed since Act 2. You have. Time to move.",
+    failureText: "Count your team — everyone here right now, no more, no less. Subtract that number from eight.",
     da: {
-      title: "Talt Ved Berøring",
-      description: "Intet lys. Ingen radio. Bare det lange fyrretræsbord, præcis hvor det altid har været.",
-      prompt: "Følg bordet rundt med hånden, rør ved ryggen af hver stol undervejs. Hvor mange stole tæller du?",
-      hints: ["I sad omkring det samme bord til sætningsgåden i Akt 2. Intet har flyttet sig siden."],
-      rewardText: "Otte. De samme otte stole fra Akt 2 — bordet har ikke ændret sig. Det har I.",
-      failureText: "Tænk tilbage til spisestuen i Akt 2 — hvor mange stole var der om dette bord?",
+      title: "De Tomme Stole",
+      description: "Intet lys. Ingen radio. Bare det lange fyrretræsbord, præcis hvor det altid har været. Otte stole, hele vejen rundt — I talte dem allerede i aften, i lyset, til sætningsgåden.",
+      prompt: "Forestil jer hele jeres hold sætte sig ned om dette bord lige nu — hver af jer tager en stol, og ikke flere end det. Hvor mange af de otte stole ville stadig stå tomme?",
+      hints: ["Tæl folkene på jeres hold der står i dette rum lige nu. Træk det fra otte."],
+      rewardText: "Sådan mange stole står stadig tomme. Bordet har ikke ændret sig siden Akt 2. Det har I. Tid til at gå videre.",
+      failureText: "Tæl jeres hold — alle der er her lige nu, ikke flere, ikke færre. Træk det tal fra otte.",
     },
   },
 
@@ -1186,8 +1186,9 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "corridor-door-check",
+    id: "corridor-door-check-a",
     roomId: "back-corridor",
+    forTeam: "team-a",
     type: "puzzle",
     title: "Three Doors",
     description:
@@ -1214,11 +1215,42 @@ export const QUESTS: Quest[] = [
       failureText: "Anden er sikringsskabet. Tredje er låst. Regn resten ud.",
     },
   },
+  {
+    id: "corridor-door-check-b",
+    roomId: "back-corridor",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "Three Doors, Reversed",
+    description:
+      "Three doors down the same corridor — but from where your team enters, you meet them in the opposite order. The flashlight finds them one at a time, closest first. One won't budge no matter what you try tonight — locked, and it's the very first one your light lands on. One stands ajar, second along — that's the fuse box. The third has never had a reason to be tried until now.",
+    prompt:
+      "Locked door: first position. Ajar door: second position. By elimination — which position, first, second, or third, is the door nobody tried?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "First is locked. Second is ajar. That only leaves one position free." },
+    ],
+    answer: {
+      correct: ["third", "3", "three", "tredje", "3.", "last", "sidste"],
+      normalized: true,
+    },
+    rewardText: "Third position. The door nobody tried is the last one down the hall — the one furthest from the dining room, easiest to walk straight past.",
+    failureText: "First is locked. Second is the fuse box. Work out what's left.",
+    da: {
+      title: "Tre Døre, Omvendt",
+      description: "Tre døre nede ad samme korridor — men fra det sted jeres hold træder ind, møder I dem i omvendt rækkefølge. Lommelygten finder dem én ad gangen, den nærmeste først. Én rører sig ikke uanset hvad I prøver i aften — låst, og det er den allerførste jeres lys rammer. Én står på klem, anden i rækken — det er sikringsskabet.",
+      prompt: "Låst dør: første position. Dør på klem: anden position. Ved udelukkelse — hvilken position, første, anden eller tredje, er døren ingen prøvede?",
+      hints: ["Første er låst. Anden er på klem. Der er kun én position tilbage."],
+      rewardText: "Tredje position. Døren ingen prøvede er den sidste nede ad gangen — den længst væk fra spisestuen.",
+      failureText: "Første er låst. Anden er sikringsskabet. Regn resten ud.",
+    },
+  },
 
   // --- FUSE BOX ---
   {
-    id: "fusebox-identify",
+    id: "fusebox-identify-a",
     roomId: "fuse-box",
+    forTeam: "team-a",
     type: "puzzle",
     title: "Identify the Problem",
     description:
@@ -1246,6 +1278,36 @@ export const QUESTS: Quest[] = [
     },
   },
   {
+    id: "fusebox-identify-b",
+    roomId: "fuse-box",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "Identify the Problem",
+    description:
+      "The fuse box panel. Four glass-tube fuses in a row, rated 3A, 6A, 10A and 20A. Three of them hum faintly warm under your fingers — still doing their job. The fourth is stone cold. Hold that one up to the flashlight and you can see straight through the glass: the hair-thin wire that should run its length is gone, snapped into two dead ends.",
+    prompt:
+      "Feel each of the four fuses, then hold the odd one up to the light. Which rating, in amps, is the blown fuse — 3A, 6A, 10A, or 20A?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Three are warm. Only one is cold — and it's the one you can see straight through." },
+    ],
+    answer: {
+      correct: ["6", "6a", "6 a", "six"],
+      normalized: true,
+    },
+    rewardText: "6A. Cold, broken, empty inside. There's a replacement taped inside the panel door.",
+    failureText: "Feel all four again — three are warm and working, one is cold and broken. That's the one.",
+    da: {
+      title: "Identificer Problemet",
+      description: "Sikringsskabets panel. Fire glasrørssikringer på række, mærket 3A, 6A, 10A og 20A. Tre af dem summer svagt varme under fingrene — stadig i gang. Den fjerde er stenkold. Hold den op mod lommelygten, og du kan se lige igennem glasset: den hårtynde tråd der skulle løbe hele vejen er væk.",
+      prompt: "Følg alle fire sikringer med fingrene, og hold den mærkelige en op mod lyset. Hvilken værdi, i ampere, er den sprungne sikring — 3A, 6A, 10A eller 20A?",
+      hints: ["Tre er varme. Kun én er kold — og det er den du kan se lige igennem."],
+      rewardText: "6A. Kold, sprunget, tom indeni. Der er en erstatning tapet fast inden i paneldøren.",
+      failureText: "Følg alle fire igen — tre er varme og virker, én er kold og sprunget. Det er den.",
+    },
+  },
+  {
     id: "fusebox-repair",
     roomId: "fuse-box",
     type: "social_challenge",
@@ -1268,29 +1330,63 @@ export const QUESTS: Quest[] = [
 
   // --- KITCHEN (DARK) ---
   {
-    id: "dark-kitchen-drawer",
+    id: "dark-kitchen-drawer-a",
     roomId: "kitchen-dark",
+    forTeam: "team-a",
     type: "puzzle",
-    title: "The Third Drawer",
+    title: "The Drawer Nearest the Sink",
     description:
-      "The kitchen has power now — one light. Check the drawers. The third drawer from the left holds something useful.",
-    prompt: "Open the third drawer from the left in the kitchen. What do you find?",
+      "The kitchen has power now — one light. Four drawers in a row beneath the counter. The outer two are easy to rule out: spare batteries in one, tea towels stuffed in the other. Whatever's useful is in one of the two middle drawers — whichever one sits closer to the sink. The sink is fixed to the right-hand end of the counter.",
+    prompt: "Four drawers, numbered 1 to 4, left to right. Batteries and tea towels take the two end drawers. Of the two middle drawers — 2 and 3 — which number sits closer to the sink on the right?",
     order: 1,
     isRequired: true,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "The sink is on the right. Between drawers 2 and 3, which one is nearer to it?" },
+    ],
     answer: {
-      correct: ["wrench", "skruenøgle", "tool", "the wrench", "a wrench", "et værktøj"],
+      correct: ["3", "three", "tre"],
       normalized: true,
     },
     rewardClueId: "artifact-wrench",
-    rewardText: "A wrench. The handle is worn — this tool has done a lot of work in this house.",
-    failureText: "Third drawer. Check it.",
+    rewardText: "The third drawer. A wrench — the handle is worn. This tool has done a lot of work in this house.",
+    failureText: "The sink is on the right. Between drawers 2 and 3, pick the one closer to it.",
     da: {
-      title: "Den Tredje Skuffe",
-      description: "Køkkenet har nu strøm — ét lys. Tjek skufferne.",
-      prompt: "Åbn den tredje skuffe fra venstre i køkkenet. Hvad finder du?",
-      rewardText: "En skruenøgle. Håndtaget er slidt.",
-      failureText: "Tredje skuffe. Tjek den.",
+      title: "Skuffen Nærmest Vasken",
+      description: "Køkkenet har nu strøm — ét lys. Fire skuffer på række under bordpladen. De to yderste er lette at udelukke: reservebatterier i den ene, viskestykker i den anden. Det nyttige er i én af de to midterste skuffer — den der sidder tættest på vasken. Vasken sidder i højre ende af bordpladen.",
+      prompt: "Fire skuffer, nummereret 1 til 4, fra venstre. Batterier og viskestykker fylder de to yderste. Af de to midterste — 2 og 3 — hvilket nummer sidder tættest på vasken til højre?",
+      hints: ["Vasken er til højre. Mellem skuffe 2 og 3, hvilken er nærmest?"],
+      rewardText: "Den tredje skuffe. En skruenøgle — håndtaget er slidt.",
+      failureText: "Vasken er til højre. Mellem skuffe 2 og 3, vælg den der er tættest.",
+    },
+  },
+  {
+    id: "dark-kitchen-drawer-b",
+    roomId: "kitchen-dark",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Drawer Nearest the Sink",
+    description:
+      "The kitchen has power now — one light. Four drawers in a row beneath the counter. The outer two are easy to rule out: spare batteries in one, tea towels stuffed in the other. Whatever's useful is in one of the two middle drawers — whichever one sits closer to the sink. The sink is fixed to the left-hand end of the counter.",
+    prompt: "Four drawers, numbered 1 to 4, left to right. Batteries and tea towels take the two end drawers. Of the two middle drawers — 2 and 3 — which number sits closer to the sink on the left?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "The sink is on the left. Between drawers 2 and 3, which one is nearer to it?" },
+    ],
+    answer: {
+      correct: ["2", "two", "to"],
+      normalized: true,
+    },
+    rewardClueId: "artifact-wrench",
+    rewardText: "The second drawer. A wrench — the handle is worn. This tool has done a lot of work in this house.",
+    failureText: "The sink is on the left. Between drawers 2 and 3, pick the one closer to it.",
+    da: {
+      title: "Skuffen Nærmest Vasken",
+      description: "Køkkenet har nu strøm — ét lys. Fire skuffer på række under bordpladen. De to yderste er lette at udelukke: reservebatterier i den ene, viskestykker i den anden. Det nyttige er i én af de to midterste skuffer — den der sidder tættest på vasken. Vasken sidder i venstre ende af bordpladen.",
+      prompt: "Fire skuffer, nummereret 1 til 4, fra venstre. Batterier og viskestykker fylder de to yderste. Af de to midterste — 2 og 3 — hvilket nummer sidder tættest på vasken til venstre?",
+      hints: ["Vasken er til venstre. Mellem skuffe 2 og 3, hvilken er nærmest?"],
+      rewardText: "Den anden skuffe. En skruenøgle — håndtaget er slidt.",
+      failureText: "Vasken er til venstre. Mellem skuffe 2 og 3, vælg den der er tættest.",
     },
   },
   // --- BROKEN WINDOW ---
@@ -1314,24 +1410,61 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "window-silence",
+    id: "window-rattle-a",
     roomId: "broken-window",
+    forTeam: "team-a",
     type: "puzzle",
-    title: "The Silence After",
-    description: "The latch is fixed. The rattling is gone. The silence is different now.",
-    prompt: "How long does the group stay in the silence after fixing the window? Describe what it sounds like.",
+    title: "The Rhythm of the Rattle",
+    description:
+      "The latch is fixed now, but before you tightened it, it had a rhythm — one rattle for every gust that hit the glass. Counting the rattles between each lull tonight: 3, 6, 9, 12, then a gap where you weren't listening, then 18.",
+    prompt: "What number rattle is missing from the sequence — 3, 6, 9, 12, __, 18?",
     order: 2,
     isRequired: false,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "Each number is exactly 3 more than the last." },
+    ],
     answer: {
-      correct: ["wind", "vind", "nothing", "ingenting", "quiet", "stille", "still", "distant", "fjernt", "outside", "udenfor"],
+      correct: ["15", "fifteen", "femten"],
       normalized: true,
     },
-    rewardText: "The silence holds. The house sounds different without the rattle.",
+    rewardText: "Fifteen. The rattle kept perfect time, right up until you silenced it for good.",
+    failureText: "Each step adds exactly 3. What comes between 12 and 18?",
     da: {
-      title: "Stilheden Bagefter",
-      description: "Hængslen er fikset. Knatringen er væk. Stilheden er anderledes nu.",
-      prompt: "Beskriv hvad det lyder som nu.",
+      title: "Rytmen I Raslen",
+      description: "Hængslen er fikset nu, men før I strammede den, havde den en rytme — ét rasl for hvert vindstød mod glasset. Raslene mellem hver pause i aften: 3, 6, 9, 12, så et hul hvor I ikke lyttede, så 18.",
+      prompt: "Hvilket tal mangler i rækken — 3, 6, 9, 12, __, 18?",
+      hints: ["Hvert tal er præcis 3 mere end det forrige."],
+      rewardText: "Femten. Raslen holdt perfekt takt, lige indtil I fik den til at tie helt.",
+      failureText: "Hvert trin lægger præcis 3 til. Hvad kommer mellem 12 og 18?",
+    },
+  },
+  {
+    id: "window-rattle-b",
+    roomId: "broken-window",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Rhythm of the Rattle",
+    description:
+      "The latch is fixed now, but before you tightened it, it had a rhythm — one rattle for every gust that hit the glass. Counting the rattles between each lull tonight: 4, 8, 12, 16, then a gap where you weren't listening, then 24.",
+    prompt: "What number rattle is missing from the sequence — 4, 8, 12, 16, __, 24?",
+    order: 2,
+    isRequired: false,
+    hints: [
+      { order: 1, offerCost: 1, text: "Each number is exactly 4 more than the last." },
+    ],
+    answer: {
+      correct: ["20", "twenty", "tyve"],
+      normalized: true,
+    },
+    rewardText: "Twenty. The rattle kept perfect time, right up until you silenced it for good.",
+    failureText: "Each step adds exactly 4. What comes between 16 and 24?",
+    da: {
+      title: "Rytmen I Raslen",
+      description: "Hængslen er fikset nu, men før I strammede den, havde den en rytme — ét rasl for hvert vindstød mod glasset. Raslene mellem hver pause i aften: 4, 8, 12, 16, så et hul hvor I ikke lyttede, så 24.",
+      prompt: "Hvilket tal mangler i rækken — 4, 8, 12, 16, __, 24?",
+      hints: ["Hvert tal er præcis 4 mere end det forrige."],
+      rewardText: "Tyve. Raslen holdt perfekt takt, lige indtil I fik den til at tie helt.",
+      failureText: "Hvert trin lægger præcis 4 til. Hvad kommer mellem 16 og 24?",
     },
   },
 
@@ -1356,8 +1489,9 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "door-nobody-tried-examine",
+    id: "door-nobody-tried-examine-a",
     roomId: "door-nobody-tried",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Sealed Entrance",
     description:
@@ -1366,17 +1500,52 @@ export const QUESTS: Quest[] = [
       "You can see the ghost of a doorframe — the outline, the seams, the traces of a threshold. What does this look like to you? How was it done?",
     order: 2,
     isRequired: true,
-    hints: [],
+    hints: [
+      { order: 1, offerCost: 1, text: "Think of the process, not the material — what would you call a doorway that's been closed off for good?" },
+    ],
     answer: {
       correct: ["walled", "bricked", "sealed", "plastered", "blocked", "muret", "forseglet", "lukket", "mur"],
       normalized: true,
     },
     rewardText: "Walled up from the inside. Someone sealed themselves out. The door leads somewhere that used to exist.",
+    failureText: "Think about what happens to a doorway when nobody wants it opened again.",
     da: {
       title: "Den Forseglede Indgang",
       description: "Ikke et rum. Indgangen er forseglet — den gamle dørrammekontur synlig, tærsklen muret til indefra.",
       prompt: "Du kan se spøgelset af en dørramme — konturen, sømmene, sporene af en tærskel. Hvad ser dette ud som for dig?",
+      hints: ["Tænk på processen, ikke materialet — hvad ville du kalde en døråbning der er lukket for altid?"],
       rewardText: "Muret til indefra. Nogen forseglede sig selv ude.",
+      failureText: "Tænk på hvad der sker med en døråbning når ingen vil have den åbnet igen.",
+    },
+  },
+  {
+    id: "door-nobody-tried-examine-b",
+    roomId: "door-nobody-tried",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "The Material, Not the Method",
+    description:
+      "Not a room. The entrance has been closed off from the inside. Run your hand across the surface directly behind the frame — rough, gritty, cold. Not smooth like plaster. Not grained like wood.",
+    prompt:
+      "What material does this surface feel like — the thing actually filling the doorway where a room used to be?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Rough and gritty, laid in rows, held together with something that's gone crumbly with age." },
+    ],
+    answer: {
+      correct: ["brick", "bricks", "brickwork", "mursten", "murværk", "brick wall", "en mur af mursten"],
+      normalized: true,
+    },
+    rewardText: "Brick. Someone bricked this doorway shut from the inside, by hand, a long time ago.",
+    failureText: "Rough, gritty, laid in rows — think of what a wall like that is actually built from.",
+    da: {
+      title: "Materialet, Ikke Metoden",
+      description: "Ikke et rum. Indgangen er lukket til indefra. Før hånden hen over fladen direkte bag rammen — ru, grynet, kold. Ikke glat som puds. Ikke året som træ.",
+      prompt: "Hvilket materiale føles denne overflade som — det der faktisk fylder døråbningen hvor et rum plejede at være?",
+      hints: ["Ru og grynet, lagt i rækker, holdt sammen af noget der er blevet smuldrende med alderen."],
+      rewardText: "Mursten. Nogen murede denne døråbning til indefra, i hånden, for lang tid siden.",
+      failureText: "Ru, grynet, lagt i rækker — tænk på hvad sådan en mur egentlig er bygget af.",
     },
   },
 
@@ -1401,8 +1570,9 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "meter-cupboard-candle-hint",
+    id: "meter-cupboard-candle-hint-a",
     roomId: "meter-cupboard",
+    forTeam: "team-a",
     type: "puzzle",
     title: "Wet Mud",
     description:
@@ -1431,6 +1601,39 @@ export const QUESTS: Quest[] = [
       failureText: "Tænk på hvilken lyskilde der slet ikke behøver strøm — og hvor I ville finde en stående fremme, uantændt.",
     },
   },
+  {
+    id: "meter-cupboard-candle-hint-b",
+    roomId: "meter-cupboard",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "Which Room Waits",
+    description:
+      "A smear of mud across the handle. Fresh — still wet. Whoever did this didn't want the fuse box's fix to last. They wanted you doing something else instead — something that only works without electric light, waiting in a room you haven't reached yet tonight.",
+    prompt:
+      "It's unlit, on a windowsill, in the coldest, glassiest room on the whole property — the one furthest from this cupboard, tucked in behind the shed. What do you call that room?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Glass on three sides. Cold. Not the sunroom from Act 2 — this one's outside, past the shed." },
+      { order: 2, offerCost: 2, text: "It's a small glass structure, half-swallowed by overgrowth. Plants used to live in it." },
+    ],
+    answer: {
+      correct: ["conservatory", "the conservatory", "orangeriet", "orangeriets", "et orangeri"],
+      normalized: true,
+    },
+    rewardClueId: "meter-cupboard-cut",
+    rewardText:
+      "The conservatory. Behind the shed, glass on three sides — that's where you'll find what you need to read the sealed wall.",
+    failureText: "Glass room, behind the shed, colder than everywhere else. Not the Act 2 sunroom — the other one.",
+    da: {
+      title: "Hvilket Rum Venter",
+      description: "En klat mudder tværs over håndtaget. Frisk — stadig vådt. Den der gjorde dette ville ikke have sikringsskabets reparation til at holde — de ville have jer til noget andet, noget der kun virker uden elektrisk lys, ventende i et rum I ikke har nået endnu i aften.",
+      prompt: "Det er uantændt, på en vindueskarm, i det koldeste, mest glasklare rum på hele grunden — det der ligger længst væk fra dette skab, gemt bag skuret. Hvad kalder I det rum?",
+      hints: ["Glas på tre sider. Koldt. Ikke Akt 2's vinterhave — det her er udenfor, forbi skuret.", "En lille glasstruktur, halvt opslugt af vækst. Planter boede her engang."],
+      rewardText: "Orangeriet. Bag skuret, glas på tre sider — der finder I det I skal bruge for at læse den forseglede væg.",
+      failureText: "Glasrum, bag skuret, koldere end alle andre steder. Ikke Akt 2's vinterhave — den anden en.",
+    },
+  },
 
   // --- SEALED WALL ---
   {
@@ -1455,8 +1658,9 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "sealed-wall-understand",
+    id: "sealed-wall-understand-a",
     roomId: "sealed-wall",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Date",
     description: "The first line is a date. Match it to something you found earlier.",
@@ -1467,18 +1671,47 @@ export const QUESTS: Quest[] = [
       { order: 1, offerCost: 1, text: "The shed. Act 1. The date list on the wall." },
     ],
     answer: {
-      correct: ["shed", "the shed", "skuret", "det skur", "date list", "the date list", "datolisten",
+      correct: ["shed", "the shed", "in the shed", "on the shed", "at the shed", "shed wall", "skuret", "det skur", "i skuret", "på skuret", "ved skuret",
+                "date list", "the date list", "datolisten", "the shed's date list",
                 "the list", "listen", "act 1", "akt 1", "shed date list", "shed list", "the shed date list"],
       normalized: true,
     },
     rewardText: "The shed date list. The oldest entry — the first date. This wall was sealed on the first visit.",
-    failureText: "You've seen this date before. Think back to Act 1.",
+    failureText: "You've seen this date before. Think back to Act 1 — a laminated list, pinned to a wall.",
     da: {
       title: "Datoen",
       description: "Den første linje er en dato. Match den til noget du fandt tidligere.",
       prompt: "Den første linje af vægskriften er en dato: *19. juli 2010.* Hvor har du set denne dato før i aften?",
       rewardText: "Skurets datoliste. Den ældste post — den første dato.",
-      failureText: "Du har set denne dato før. Tænk tilbage til Akt 1.",
+      failureText: "Du har set denne dato før. Tænk tilbage til Akt 1 — en lamineret liste, fastgjort til en væg.",
+    },
+  },
+  {
+    id: "sealed-wall-understand-b",
+    roomId: "sealed-wall",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "Sixteen Years",
+    description: "The first line is a date, held close by candlelight. Nothing about it is random — you've seen a whole column of dates like this before tonight, every single year, right up until the one still uncrossed.",
+    prompt: "From July 19th 2010 to tonight — how many years have passed?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Check the shed date list — count the entries, or just subtract 2010 from this year." },
+    ],
+    answer: {
+      correct: ["16", "sixteen", "seksten"],
+      normalized: true,
+    },
+    rewardText: "Sixteen years. Sixteen dates on that list, every one crossed out but tonight's. This wall was sealed on the very first visit.",
+    failureText: "Subtract 2010 from this year. Or count the entries on the shed's date list.",
+    da: {
+      title: "Seksten År",
+      description: "Den første linje er en dato, holdt tæt i lysets skær. Intet ved den er tilfældigt — I har set en hel kolonne af datoer som denne før i aften, hvert eneste år, lige indtil den der stadig ikke er overstreget.",
+      prompt: "Fra 19. juli 2010 til i aften — hvor mange år er gået?",
+      hints: ["Tjek skurets datoliste — tæl posterne, eller træk 2010 fra i år."],
+      rewardText: "Seksten år. Seksten datoer på den liste, hver eneste overstreget undtagen i aftenens. Denne væg blev forseglet ved det allerførste besøg.",
+      failureText: "Træk 2010 fra i år. Eller tæl posterne på skurets datoliste.",
     },
   },
 
@@ -1502,39 +1735,71 @@ export const QUESTS: Quest[] = [
     },
   },
   {
-    id: "behind-shed-dark",
+    id: "behind-shed-dark-a",
     roomId: "behind-the-shed",
+    forTeam: "team-a",
     type: "puzzle",
-    title: "The Oak in the Dark",
+    title: "What the Oak Told You",
     description:
-      "The darkness behind the shed is different from any other darkness tonight — no walls to catch a sound and throw it back at you. But this ground isn't unfamiliar. Somewhere out here, past the fence line, stands the same tree that already had something to say to you once tonight.",
+      "The darkness behind the shed is different from any other darkness tonight — no walls to catch a sound and throw it back at you. But this ground isn't unfamiliar. Somewhere out here, past the fence line, stands the same tree that already spoke to you once tonight, back when you could still see it.",
     prompt:
-      "Reach out into the dark, toward the back fence. What tree are you feeling for — the same one that had a digit carved into its bark, back in Act 1?",
+      "That tree gave your team a single digit, half in riddle, back in Act 1. What digit was it?",
     order: 2,
     isRequired: true,
     hints: [
-      { order: 1, offerCost: 1, text: "Garden. Back fence. Something you read the bark of, hours ago." },
+      { order: 1, offerCost: 1, text: "Garden. Back fence. Check the Case File — you solved this one in daylight." },
     ],
     answer: {
-      correct: ["oak", "the oak", "old oak", "the old oak", "oak tree", "egetræet", "egen", "det gamle egetræ"],
+      correct: ["1", "one", "en", "et"],
       normalized: true,
     },
-    rewardText: "The old oak. Same tree, same fence line — just impossible to see now. The garden hasn't changed. You have.",
-    failureText: "Think back to Act 1's garden — one tree there had something carved into it.",
+    rewardText: "One. The same digit, the same tree, the same fence line — just impossible to see now. The garden hasn't changed. You have.",
+    failureText: "Check the Case File for the garden riddle you solved in Act 1 — what digit did the oak give you?",
     da: {
-      title: "Egetræet i Mørket",
-      description: "Mørket bag skuret er anderledes end noget andet mørke i aften — ingen vægge til at fange en lyd og kaste den tilbage. Men denne jord er ikke ukendt. Et sted herude, bag hegnet, står det samme træ der allerede havde noget at sige til jer én gang i aften.",
-      prompt: "Ræk ud i mørket, mod baghegnet. Hvilket træ leder du efter — det samme som havde et ciffer ridset i barken, tilbage i Akt 1?",
-      hints: ["Haven. Baghegnet. Noget du læste barken af, timer siden."],
-      rewardText: "Det gamle egetræ. Samme træ, samme hegn — bare umuligt at se nu. Haven har ikke ændret sig. Det har I.",
-      failureText: "Tænk tilbage til Akt 1's have — ét træ der havde noget ridset ind i sig.",
+      title: "Hvad Egen Fortalte Jer",
+      description: "Mørket bag skuret er anderledes end noget andet mørke i aften — ingen vægge til at fange en lyd og kaste den tilbage. Men denne jord er ikke ukendt. Et sted herude, bag hegnet, står det samme træ der allerede talte til jer én gang i aften, dengang I stadig kunne se det.",
+      prompt: "Det træ gav jeres hold ét ciffer, halvt i gådeform, tilbage i Akt 1. Hvilket ciffer var det?",
+      hints: ["Haven. Baghegnet. Tjek sagsmappen — I løste den her i dagslys."],
+      rewardText: "Ét. Det samme ciffer, det samme træ, det samme hegn — bare umuligt at se nu. Haven har ikke ændret sig. Det har I.",
+      failureText: "Tjek sagsmappen for havens gåde fra Akt 1 — hvilket ciffer gav egen jer?",
+    },
+  },
+  {
+    id: "behind-shed-dark-b",
+    roomId: "behind-the-shed",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "What the Oak Told You",
+    description:
+      "The darkness behind the shed is different from any other darkness tonight — no walls to catch a sound and throw it back at you. But this ground isn't unfamiliar. Somewhere out here, past the fence line, stands the same tree that already spoke to you once tonight, back when you could still see it.",
+    prompt:
+      "That tree gave your team a single digit, half in riddle, back in Act 1. What digit was it?",
+    order: 2,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Garden. Back fence. Check the Case File — you solved this one in daylight." },
+    ],
+    answer: {
+      correct: ["8", "eight", "otte"],
+      normalized: true,
+    },
+    rewardText: "Eight. The same digit, the same tree, the same fence line — just impossible to see now. The garden hasn't changed. You have.",
+    failureText: "Check the Case File for the garden riddle you solved in Act 1 — what digit did the oak give you?",
+    da: {
+      title: "Hvad Egen Fortalte Jer",
+      description: "Mørket bag skuret er anderledes end noget andet mørke i aften — ingen vægge til at fange en lyd og kaste den tilbage. Men denne jord er ikke ukendt. Et sted herude, bag hegnet, står det samme træ der allerede talte til jer én gang i aften, dengang I stadig kunne se det.",
+      prompt: "Det træ gav jeres hold ét ciffer, halvt i gådeform, tilbage i Akt 1. Hvilket ciffer var det?",
+      hints: ["Haven. Baghegnet. Tjek sagsmappen — I løste den her i dagslys."],
+      rewardText: "Otte. Det samme ciffer, det samme træ, det samme hegn — bare umuligt at se nu. Haven har ikke ændret sig. Det har I.",
+      failureText: "Tjek sagsmappen for havens gåde fra Akt 1 — hvilket ciffer gav egen jer?",
     },
   },
 
   // --- CONSERVATORY ---
   {
-    id: "conservatory-find-candle",
+    id: "conservatory-find-candle-a",
     roomId: "conservatory",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Candle on the Windowsill",
     description:
@@ -1552,17 +1817,51 @@ export const QUESTS: Quest[] = [
     },
     rewardClueId: "artifact-candle",
     rewardText: "Red. A deep red candle, full and unlit. Someone brought this specifically for something.",
+    failureText: "Think of the colour that means danger, not the colour that means love.",
     da: {
       title: "Stearinlyset på Vindueskarmens",
       description: "Glas på tre sider. Koldt. Vinden hørbar. På vindueskarmens — et stearinlys i en lysestage, fuldt og uantændt, med en tændstikæske ved siden af.",
       prompt: "Hold lyset op mod det svage lys der slipper ind. Voksen har farven af et stopskilt, af en brandbil, af advarselslampen på et instrumentbræt. Ikke pink. Ikke orange. Hvilken farve er det, præcist?",
       rewardText: "Rødt. Et dybt rødt stearinlys, fuldt og uantændt.",
+      failureText: "Tænk på farven der betyder fare, ikke farven der betyder kærlighed.",
+    },
+  },
+  {
+    id: "conservatory-find-candle-b",
+    roomId: "conservatory",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "What's Left in the Box",
+    description:
+      "Glass on three sides. Cold. The wind audible. On the windowsill — a candle in a holder, full and unlit, and beside it, a small box of matches. Someone placed both here deliberately.",
+    prompt:
+      "Slide the matchbox open. It holds 7 matches — but one is already used, snapped and blackened at the tip, sitting apart from the rest. How many good matches are left?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Seven, minus the one that's already spent." },
+    ],
+    answer: {
+      correct: ["6", "six", "seks"],
+      normalized: true,
+    },
+    rewardClueId: "artifact-candle",
+    rewardText: "Six. Enough for tonight, and then some. Someone was planning ahead — and left a full candle beside them.",
+    failureText: "Seven matches, one already used. Simple subtraction.",
+    da: {
+      title: "Hvad Der Er Tilbage I Æsken",
+      description: "Glas på tre sider. Koldt. Vinden hørbar. På vindueskarmens — et stearinlys i en lysestage, fuldt og uantændt, og ved siden af, en lille æske tændstikker. Nogen placerede begge dele bevidst.",
+      prompt: "Skub tændstikæsken op. Den rummer 7 tændstikker — men én er allerede brugt, knækket og sort i spidsen, liggende for sig selv. Hvor mange brugbare tændstikker er der tilbage?",
+      hints: ["Syv, minus den der allerede er brugt."],
+      rewardText: "Seks. Nok til i aften, og lidt til. Nogen planlagde fremad — og efterlod et helt stearinlys ved siden af.",
+      failureText: "Syv tændstikker, én allerede brugt. Simpel subtraktion.",
     },
   },
   // --- SHED (DARK) ---
   {
-    id: "shed-dark-note",
+    id: "shed-dark-note-a",
     roomId: "shed-dark",
+    forTeam: "team-a",
     type: "puzzle",
     title: "The Note on the Floor",
     description:
@@ -1586,6 +1885,38 @@ export const QUESTS: Quest[] = [
       prompt: "Læs sedlen højt. Hvad er den sidste instruktion i sedlen?\n\n*\"Vi kom. Vi blev. Vi fejlede... Denne gang.. Afslut det... Til allersidste dråbe.\"*",
       rewardText: "Sedlen er i sagsmappen. Til allersidste dråbe. Underskrifterne er næsten jeres navne.",
       failureText: "Læs den sidste linje.",
+    },
+  },
+  {
+    id: "shed-dark-note-b",
+    roomId: "shed-dark",
+    forTeam: "team-b",
+    type: "puzzle",
+    title: "Counting the Last Line",
+    description:
+      "The shed from Act 1. The date list is still on the wall. But on the floor, just under the date list — something you didn't notice before. A note. Signed with names that are almost yours.",
+    prompt:
+      "Read the note aloud:\n\n*\"We came. We stayed. We failed... This time.. Finish it... Every last drop.\"*\n\nHow many words make up the very last sentence — 'Every last drop'?",
+    order: 1,
+    isRequired: true,
+    hints: [
+      { order: 1, offerCost: 1, text: "Every. Last. Drop. Count them." },
+    ],
+    answer: {
+      correct: ["3", "three", "tre"],
+      normalized: true,
+    },
+    rewardClueId: "artifact-final-note",
+    rewardText:
+      "Three words. Every last drop. The note is in the Case File. The signatures are almost your names. This is the final artifact.",
+    failureText: "Count the words in 'Every last drop' — just those three.",
+    da: {
+      title: "At Tælle Den Sidste Linje",
+      description: "Skuret fra Akt 1. Datolisten er stadig på væggen. Men på gulvet, lige under datolisten — noget du ikke lagde mærke til før. En seddel, underskrevet med navne der er næsten jeres.",
+      prompt: "Læs sedlen højt:\n\n*\"Vi kom. Vi blev. Vi fejlede... Denne gang.. Afslut det... Til allersidste dråbe.\"*\n\nHvor mange ord består den allersidste sætning af — 'Til allersidste dråbe'?",
+      hints: ["Til. Allersidste. Dråbe. Tæl dem."],
+      rewardText: "Tre ord. Til allersidste dråbe. Sedlen er i sagsmappen. Underskrifterne er næsten jeres navne. Dette er det endelige artefakt.",
+      failureText: "Tæl ordene i 'til allersidste dråbe' — kun de tre.",
     },
   },
 ];

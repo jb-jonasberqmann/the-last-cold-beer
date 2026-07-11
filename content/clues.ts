@@ -385,7 +385,7 @@ export const CLUES: Clue[] = [
     isArtifact: true,
     da: {
       title: "Lysestagen",
-      description: "Et halvt brændt stearinlys fra vinterhaven, med en tændstikæske. Voksen er dyb rød. Nogen bragte dette specifikt.",
+      description: "Et halvt brændt stearinlys fra orangeriet, med en tændstikæske. Voksen er dyb rød. Nogen bragte dette specifikt.",
       flavor: "Flammen får væggene til at se anderledes ud.",
     },
   },

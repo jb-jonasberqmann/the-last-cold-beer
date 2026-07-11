@@ -1731,7 +1731,7 @@ function StickyNoteArtifact({
         </div>
       ))}
 
-      {!isComplete && !isReadOnly && quest.answer && (
+      {!isComplete && !isReadOnly && (quest.answer || quest.dynamicAnswer) && (
         <div className="flex gap-2">
           {isScaredSilent ? (
             <div className="flex-1 rounded px-3 py-2.5 text-sm italic"
