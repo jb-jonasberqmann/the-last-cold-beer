@@ -1184,8 +1184,10 @@ export async function clearSunBlindForTeam(gameId: string, teamId: TeamId): Prom
 }
 
 // ==========================================
-// ENTER SINGLE-OCCUPANCY BEDROOM
-// First player to call this claims the room; all other team members are locked out.
+// ENTER ROOM (single occupancy, all rooms)
+// First player to call this claims the room; all other team members are locked out
+// until the room is reset (host force-unlock) — applies to every room, not just
+// the Act 2 bedrooms that originally introduced this mechanic.
 // ==========================================
 
 export async function enterBedroom(
@@ -1195,7 +1197,7 @@ export async function enterBedroom(
   roomId: string
 ): Promise<ActionResult<{ claimed: boolean; occupantName?: string }>> {
   const room = getRoom(roomId);
-  if (!room?.isSingleOccupancy) return { success: false, error: "Not a single-occupancy room." };
+  if (!room) return { success: false, error: "Room not found." };
 
   const existing = await sql`
     SELECT status, occupant_player_id FROM room_progress

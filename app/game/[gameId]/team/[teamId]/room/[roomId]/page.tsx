@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { submitQuestAnswer, completeQuest, useHint, startPhysicalChallenge, submitPrecisionStop, enterBedroom, setScaredSilent, setSunBlind, advanceAct, saveRitualPhoto, contactGM } from "@/lib/game/actions";
-import { fileToJpegDataUrl } from "@/lib/photoCapture";
+import { fileToJpegDataUrl, NotLandscapeError } from "@/lib/photoCapture";
 import { useRealtimeGame } from "@/hooks/useRealtimeGame";
 import { usePlayer } from "@/hooks/usePlayer";
 import { Button } from "@/components/ui/Button";
@@ -160,19 +160,21 @@ export default function RoomPage({ params }: Props) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Single-occupancy: try to claim the room on mount
+  // Single-occupancy: try to claim the room on mount — applies to every room,
+  // not just the Act 2 bedrooms that originally introduced this mechanic.
   const rawRoomForMount = roomId ? getRoom(roomId) : null;
   useEffect(() => {
-    if (!rawRoomForMount?.isSingleOccupancy || !session?.playerId || !gameId || !teamId || !roomId) return;
+    if (!rawRoomForMount || !session?.playerId || !gameId || !teamId || !roomId) return;
     enterBedroom(gameId, teamId, session.playerId, roomId).then((res) => {
-      if (!res.success && res.error === "occupied") {
+      // enterBedroom always resolves success:true; whether the room was
+      // actually claimed lives in res.data.claimed — check that, not res.error.
+      if (res.success && !res.data.claimed) {
         // Room is claimed by a teammate — show the blocked screen
-        // The occupant name will be derived from players state once loaded
-        setRoomOccupiedBy("teammate"); // placeholder; refined below
+        setRoomOccupiedBy(res.data.occupantName ?? "your teammate");
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawRoomForMount?.isSingleOccupancy, session?.playerId, gameId, teamId, roomId]);
+  }, [rawRoomForMount?.id, session?.playerId, gameId, teamId, roomId]);
 
   // Poll every 5 seconds so all players see toll notifications
   useRealtimeGame(gameId, fetchData);
@@ -213,8 +215,9 @@ export default function RoomPage({ params }: Props) {
   }
 
   // Single-occupancy: blocked screen if a different player claims the room
-  if (room.isSingleOccupancy && roomOccupiedBy && session?.playerId) {
-    const occupantName = players.find((p) => p.id !== session.playerId && p.team_id === teamId)?.name ?? "your teammate";
+  // (applies to every room — see enterBedroom claim logic above)
+  if (roomOccupiedBy && session?.playerId) {
+    const occupantName = roomOccupiedBy;
     return (
       <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center p-8 text-center">
         <div className="text-5xl mb-6">🛏️</div>
@@ -1171,7 +1174,7 @@ function PhotoQuestBlock({
     setLoading(true);
     setFeedback(null);
     try {
-      const dataUrl = await fileToJpegDataUrl(file);
+      const dataUrl = await fileToJpegDataUrl(file, 1024, true);
       const saveRes = await saveRitualPhoto(gameId, teamId, session.playerId, dataUrl);
       if (!saveRes.success) {
         setFailCount((n) => n + 1);
@@ -1179,9 +1182,12 @@ function PhotoQuestBlock({
         return;
       }
       await finishQuest();
-    } catch {
+    } catch (e) {
       setFailCount((n) => n + 1);
-      setFeedback({ type: "error", text: "The photo failed — try again." });
+      setFeedback({
+        type: "error",
+        text: e instanceof NotLandscapeError ? e.message : "The photo failed — try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -1280,6 +1286,12 @@ function PhotoQuestBlock({
           >
             {loading ? "Recording…" : failCount > 0 ? "📷 Try the photo again" : "📷 Take the photo"}
           </button>
+          <p
+            className="text-center text-xs"
+            style={{ fontFamily: "Georgia,serif", color: "rgba(180,140,70,0.6)" }}
+          >
+            Turn your phone sideways — landscape only.
+          </p>
           {failCount > 0 ? (
             <button
               onClick={handleSkip}
